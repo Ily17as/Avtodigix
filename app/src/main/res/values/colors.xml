@@ -1,0 +1,6 @@
+<resources>
+    <color name="traffic_green">#2E7D32</color>
+    <color name="traffic_yellow">#F9A825</color>
+    <color name="traffic_red">#C62828</color>
+    <color name="warning_text">#B00020</color>
+</resources>
