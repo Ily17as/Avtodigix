@@ -9,6 +9,10 @@ class ScanSnapshotRepository(private val dao: ScanSnapshotDao) {
         return dao.getAll().map { it.toModel() }
     }
 
+    suspend fun getLatestSnapshot(): ScanSnapshot? {
+        return dao.getLatest()?.toModel()
+    }
+
     suspend fun getSnapshot(id: Long): ScanSnapshot? {
         return dao.getById(id)?.toModel()
     }

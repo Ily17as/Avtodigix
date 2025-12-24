@@ -10,6 +10,7 @@
     <string name="action_disconnect">Disconnect</string>
     <string name="action_details">Подробнее</string>
     <string name="action_what_to_do">Что делать</string>
+    <string name="action_delete_history">Удалить историю</string>
 
     <string name="welcome_title">Welcome to Avtodigix</string>
     <string name="welcome_subtitle">Стартовая инструкция для быстрой диагностики состояния автомобиля.</string>
