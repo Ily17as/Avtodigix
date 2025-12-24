@@ -44,6 +44,9 @@ From the repository root:
 ## UI stack
 - **View Binding** is enabled for layouts (see `buildFeatures { viewBinding true }`).
 
+## Data persistence
+- **Room** is used for scan snapshots (latest scan and history).
+
 ### Limitations
 - **Adapter variability**: Some low-cost ELM327 clones may not fully support all PIDs or protocols.
 - **Vehicle variability**: Supported PIDs depend on ECU capabilities; not all vehicles expose all sensors.

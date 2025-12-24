@@ -12,6 +12,9 @@ interface ScanSnapshotDao {
     @Query("SELECT * FROM scan_snapshots ORDER BY timestampMillis DESC")
     suspend fun getAll(): List<ScanSnapshotEntity>
 
+    @Query("SELECT * FROM scan_snapshots ORDER BY timestampMillis DESC LIMIT 1")
+    suspend fun getLatest(): ScanSnapshotEntity?
+
     @Query("SELECT * FROM scan_snapshots WHERE id = :id")
     suspend fun getById(id: Long): ScanSnapshotEntity?
 
