@@ -6,49 +6,70 @@
     <string name="action_next">Next</string>
     <string name="action_back">Back</string>
     <string name="action_finish">Finish</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="action_details">Подробнее</string>
+    <string name="action_what_to_do">Что делать</string>
 
     <string name="welcome_title">Welcome to Avtodigix</string>
-    <string name="welcome_subtitle">A guided start for your vehicle health session.</string>
-    <string name="welcome_highlights">You will review: connection setup, a traffic-light summary, live metrics, and diagnostic trouble codes.</string>
-    <string name="welcome_safety">Safety reminder: keep the vehicle in Park, engage the parking brake, and work in a well-ventilated area.</string>
+    <string name="welcome_subtitle">Стартовая инструкция для быстрой диагностики состояния автомобиля.</string>
+    <string name="welcome_highlights">Вы пройдете: подключение адаптера, светофорный обзор, live-метрики и коды неисправностей.</string>
+    <string name="welcome_checklist">Перед стартом: заглушите двигатель, подключите адаптер OBD-II и включите Bluetooth на телефоне.</string>
+    <string name="welcome_safety">Предупреждение: проверка выполняется на стоящем автомобиле с затянутым стояночным тормозом.</string>
+    <string name="welcome_warning">Не оставляйте адаптер подключенным при длительной стоянке — это может разрядить аккумулятор.</string>
 
-    <string name="connection_title">Connection</string>
-    <string name="connection_status">Status: Not connected</string>
-    <string name="connection_status_detail">Plug in the OBD-II adapter, enable Bluetooth, and select “Avtodigix” to pair.</string>
-    <string name="connection_checklist">Connection checklist: adapter powered, Bluetooth on, VIN detected, and data link stable.</string>
-    <string name="connection_warning">Warning: do not drive while pairing or running diagnostics.</string>
+    <string name="connection_title">Подключение</string>
+    <string name="connection_adapter_title">Выбор адаптера</string>
+    <string name="connection_adapter_detail">Рекомендуется ELM327 v1.5. В списке устройств выберите «Avtodigix OBD».</string>
+    <string name="connection_status">Статус: не подключено</string>
+    <string name="connection_status_detail">Подключите адаптер, включите Bluetooth и выполните сопряжение.</string>
+    <string name="connection_status_log">Лог: ожидание адаптера → поиск → сопряжение → проверка связи.</string>
+    <string name="connection_checklist">Чек-лист: питание адаптера, Bluetooth включен, VIN найден, связь стабильна.</string>
+    <string name="connection_warning">Предупреждение: не выполняйте подключение во время движения.</string>
 
-    <string name="summary_title">System Summary</string>
-    <string name="summary_subtitle">Traffic-light status cards highlight urgency.</string>
-    <string name="summary_footer">Tap Next to review live metrics and thresholds.</string>
+    <string name="summary_title">Сводка</string>
+    <string name="summary_subtitle">Светофорный индикатор показывает приоритеты.</string>
+    <string name="summary_footer">Нажмите Далее, чтобы открыть live-метрики.</string>
 
-    <string name="powertrain_title">Powertrain</string>
-    <string name="powertrain_status">GREEN — Stable</string>
-    <string name="powertrain_description">RPM, oil pressure, and throttle readings are within expected range.</string>
+    <string name="engine_title">Engine</string>
+    <string name="engine_status">GREEN — нормальный режим</string>
+    <string name="engine_description">Обороты, температура и давление в норме.</string>
 
-    <string name="emissions_title">Emissions</string>
-    <string name="emissions_status">YELLOW — Needs attention</string>
-    <string name="emissions_description">O2 sensor warming cycle incomplete; schedule a check within 7 days.</string>
+    <string name="cooling_title">Cooling</string>
+    <string name="cooling_status">YELLOW — требуется внимание</string>
+    <string name="cooling_description">Температура охлаждающей жидкости повышена, проверьте вентилятор.</string>
 
-    <string name="braking_title">Braking</string>
-    <string name="braking_status">RED — Critical</string>
-    <string name="braking_description">ABS fault detected; avoid highway driving and service immediately.</string>
+    <string name="fuel_title">Fuel</string>
+    <string name="fuel_status">RED — критично</string>
+    <string name="fuel_description">Высокая коррекция топлива, возможна утечка воздуха.</string>
+
+    <string name="battery_title">Battery</string>
+    <string name="battery_status">GREEN — заряд стабильный</string>
+    <string name="battery_description">Напряжение и ток зарядки в пределах нормы.</string>
+
+    <string name="dtc_summary_title">DTC</string>
+    <string name="dtc_summary_status">YELLOW — есть активные коды</string>
+    <string name="dtc_summary_description">Обнаружены 2 кода, рекомендуется диагностика.</string>
 
     <string name="metrics_title">Live Metrics</string>
-    <string name="metrics_subtitle">Streaming data with thresholds and context.</string>
-    <string name="metric_engine_temp">Engine temperature: 92°C (Normal)</string>
-    <string name="metric_battery_voltage">Battery voltage: 12.1V (Low — charge soon)</string>
-    <string name="metric_fuel_trim">Fuel trim: +8% (Within range)</string>
-    <string name="metric_oil_pressure">Oil pressure: 28 psi (Observe — low at idle)</string>
-    <string name="metrics_warning">Warning: if a metric turns red, pull over and review DTCs.</string>
+    <string name="metrics_subtitle">Таблица актуальных значений с обновлением в реальном времени.</string>
+    <string name="metrics_table_header_metric">Параметр</string>
+    <string name="metrics_table_header_value">Значение</string>
+    <string name="metric_engine_temp">Engine temp</string>
+    <string name="metric_engine_temp_value">92°C · Normal</string>
+    <string name="metric_battery_voltage">Battery voltage</string>
+    <string name="metric_battery_voltage_value">12.1V · Low</string>
+    <string name="metric_fuel_trim">Fuel trim</string>
+    <string name="metric_fuel_trim_value">+8% · OK</string>
+    <string name="metric_oil_pressure">Oil pressure</string>
+    <string name="metric_oil_pressure_value">28 psi · Observe</string>
+    <string name="metrics_status">Статус обновления: подключено, последняя синхронизация 5 сек назад.</string>
 
     <string name="dtc_title">Diagnostic Trouble Codes</string>
-    <string name="dtc_subtitle">Active and stored codes with severity and guidance.</string>
-    <string name="dtc_code_one">P0301 — Misfire detected (Cylinder 1) • Severity: Critical</string>
-    <string name="dtc_action_one">Action: reduce speed and service as soon as possible.</string>
-    <string name="dtc_code_two">P0420 — Catalyst efficiency below threshold • Severity: Moderate</string>
-    <string name="dtc_action_two">Action: schedule service within the next 2 weeks.</string>
-    <string name="dtc_code_three">U0121 — Lost communication with ABS module • Severity: Critical</string>
-    <string name="dtc_action_three">Action: ABS disabled; drive cautiously and service immediately.</string>
-    <string name="dtc_footer">Explanation: clearing codes does not fix the root cause. Resolve faults before clearing.</string>
+    <string name="dtc_subtitle">Храненные и ожидающие коды с расшифровкой.</string>
+    <string name="dtc_stored_title">Stored DTC</string>
+    <string name="dtc_stored_detail">P0301 — пропуски зажигания (цилиндр 1). Проверьте свечи и катушки.</string>
+    <string name="dtc_pending_title">Pending DTC</string>
+    <string name="dtc_pending_detail">P0420 — эффективность катализатора ниже нормы. Нужна диагностика.</string>
+    <string name="dtc_footer">Расшифровка: удаление кодов не устраняет причину, сначала устраните неисправность.</string>
 </resources>

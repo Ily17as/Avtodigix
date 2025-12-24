@@ -50,11 +50,28 @@
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
                 <TextView
+                    android:id="@+id/welcomeChecklist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/welcome_checklist"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                <TextView
                     android:id="@+id/welcomeSafety"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/welcome_safety"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/warning_text" />
+
+                <TextView
+                    android:id="@+id/welcomeWarning"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/welcome_warning"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                     android:textColor="@color/warning_text" />
 
@@ -106,6 +123,36 @@
                         android:padding="16dp">
 
                         <TextView
+                            android:id="@+id/connectionAdapterTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/connection_adapter_title"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                        <TextView
+                            android:id="@+id/connectionAdapterDetail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/connection_adapter_detail"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
                             android:id="@+id/connectionStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -118,6 +165,14 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:text="@string/connection_status_detail"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                        <TextView
+                            android:id="@+id/connectionStatusLog"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/connection_status_log"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -138,6 +193,27 @@
                     android:text="@string/connection_warning"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                     android:textColor="@color/warning_text" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="space_between"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/connectionConnect"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/action_connect" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/connectionDisconnect"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/action_disconnect" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -203,28 +279,28 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/powertrainTitle"
+                            android:id="@+id/engineTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/powertrain_title"
+                            android:text="@string/engine_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                             android:textColor="@android:color/white" />
 
                         <TextView
-                            android:id="@+id/powertrainStatus"
+                            android:id="@+id/engineStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/powertrain_status"
+                            android:text="@string/engine_status"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/white" />
 
                         <TextView
-                            android:id="@+id/powertrainDescription"
+                            android:id="@+id/engineDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/powertrain_description"
+                            android:text="@string/engine_description"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/white" />
                     </LinearLayout>
@@ -245,28 +321,28 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/emissionsTitle"
+                            android:id="@+id/coolingTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/emissions_title"
+                            android:text="@string/cooling_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                             android:textColor="@android:color/black" />
 
                         <TextView
-                            android:id="@+id/emissionsStatus"
+                            android:id="@+id/coolingStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/emissions_status"
+                            android:text="@string/cooling_status"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/black" />
 
                         <TextView
-                            android:id="@+id/emissionsDescription"
+                            android:id="@+id/coolingDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/emissions_description"
+                            android:text="@string/cooling_description"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/black" />
                     </LinearLayout>
@@ -287,30 +363,114 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/brakingTitle"
+                            android:id="@+id/fuelTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/braking_title"
+                            android:text="@string/fuel_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                             android:textColor="@android:color/white" />
 
                         <TextView
-                            android:id="@+id/brakingStatus"
+                            android:id="@+id/fuelStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/braking_status"
+                            android:text="@string/fuel_status"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/white" />
 
                         <TextView
-                            android:id="@+id/brakingDescription"
+                            android:id="@+id/fuelDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/braking_description"
+                            android:text="@string/fuel_description"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/white" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/traffic_green"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/batteryTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/battery_title"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                            android:textColor="@android:color/white" />
+
+                        <TextView
+                            android:id="@+id/batteryStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/battery_status"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="@android:color/white" />
+
+                        <TextView
+                            android:id="@+id/batteryDescription"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/battery_description"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/traffic_yellow"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/dtcSummaryTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dtc_summary_title"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:id="@+id/dtcSummaryStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/dtc_summary_status"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:id="@+id/dtcSummaryDescription"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/dtc_summary_description"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                            android:textColor="@android:color/black" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -321,6 +481,14 @@
                     android:layout_marginTop="16dp"
                     android:text="@string/summary_footer"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/summaryDetails"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/action_details" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -371,52 +539,119 @@
                     android:text="@string/metrics_subtitle"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:orientation="vertical">
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
 
-                    <TextView
-                        android:id="@+id/metricEngineTemp"
+                    <TableLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/metric_engine_temp"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                        android:padding="16dp"
+                        android:stretchColumns="1">
 
-                    <TextView
-                        android:id="@+id/metricBatteryVoltage"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/metric_battery_voltage"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                        <TableRow>
 
-                    <TextView
-                        android:id="@+id/metricFuelTrim"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/metric_fuel_trim"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/metrics_table_header_metric"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                    <TextView
-                        android:id="@+id/metricOilPressure"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/metric_oil_pressure"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
-                </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/metrics_table_header_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                        </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricEngineTemp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/metric_engine_temp"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricEngineTempValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/metric_engine_temp_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricBatteryVoltage"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_battery_voltage"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricBatteryVoltageValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_battery_voltage_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricFuelTrim"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_fuel_trim"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricFuelTrimValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_fuel_trim_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricOilPressure"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_oil_pressure"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricOilPressureValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_oil_pressure_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
+                    </TableLayout>
+                </com.google.android.material.card.MaterialCardView>
 
                 <TextView
-                    android:id="@+id/metricsWarning"
+                    android:id="@+id/metricsStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="@string/metrics_warning"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                    android:textColor="@color/warning_text" />
+                    android:text="@string/metrics_status"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -481,18 +716,18 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/dtcCodeOne"
+                            android:id="@+id/dtcStoredTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/dtc_code_one"
+                            android:text="@string/dtc_stored_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
                         <TextView
-                            android:id="@+id/dtcActionOne"
+                            android:id="@+id/dtcStoredDetail"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/dtc_action_one"
+                            android:text="@string/dtc_stored_detail"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -511,48 +746,18 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/dtcCodeTwo"
+                            android:id="@+id/dtcPendingTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/dtc_code_two"
+                            android:text="@string/dtc_pending_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
                         <TextView
-                            android:id="@+id/dtcActionTwo"
+                            android:id="@+id/dtcPendingDetail"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/dtc_action_two"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:cardElevation="2dp"
-                    app:cardUseCompatPadding="true">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:id="@+id/dtcCodeThree"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dtc_code_three"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-                        <TextView
-                            android:id="@+id/dtcActionThree"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="@string/dtc_action_three"
+                            android:text="@string/dtc_pending_detail"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -564,6 +769,14 @@
                     android:layout_marginTop="16dp"
                     android:text="@string/dtc_footer"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dtcWhatToDo"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/action_what_to_do" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
