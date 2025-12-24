@@ -7,8 +7,8 @@ Avto-scan app for car users.
 - **JDK** 17 (Android Studio embedded JDK is fine)
 - **Gradle** (uses the Gradle wrapper in this repo)
 - **Android SDK** with:
-  - Android SDK Platform 33+
-  - Android SDK Build-Tools 33+
+  - Android SDK Platform 34+
+  - Android SDK Build-Tools 34+
   - Android SDK Platform-Tools
 
 ## Build commands
@@ -39,7 +39,10 @@ From the repository root:
 ### Supported parameters
 - **OBD-II PIDs**: Standard OBD-II PID requests (e.g., speed, RPM, coolant temperature) supported by the connected vehicle/ECU.
 - **Connection types**: Bluetooth OBD-II adapters (classic Bluetooth) are the primary target.
-- **Android versions**: Android 8.0 (API 26) and above.
+- **Android versions**: Android 10 (API 29) and above.
+
+## UI stack
+- **View Binding** is enabled for layouts (see `buildFeatures { viewBinding true }`).
 
 ### Limitations
 - **Adapter variability**: Some low-cost ELM327 clones may not fully support all PIDs or protocols.
