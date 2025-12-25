@@ -27,6 +27,8 @@ class BluetoothConnectionManager(
     private val scope = parentScope ?: CoroutineScope(SupervisorJob() + ioDispatcher)
     private val _status = MutableStateFlow<ConnectionStatus>(ConnectionStatus.NoConnection)
     val status: StateFlow<ConnectionStatus> = _status
+    private val _socketState = MutableStateFlow<BluetoothSocket?>(null)
+    val socketState: StateFlow<BluetoothSocket?> = _socketState
 
     private var socket: BluetoothSocket? = null
     private var connectionJob: Job? = null
@@ -100,6 +102,7 @@ class BluetoothConnectionManager(
         return@withContext try {
             createdSocket.connect()
             _status.value = ConnectionStatus.Connected
+            _socketState.value = createdSocket
             true
         } catch (error: IOException) {
             _status.value = ConnectionStatus.NoConnection
@@ -126,6 +129,7 @@ class BluetoothConnectionManager(
                 runCatching { current.close() }
             }
             socket = null
+            _socketState.value = null
         }
     }
 }
