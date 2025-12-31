@@ -1,9 +1,12 @@
 package com.example.avtodigix
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
 import android.widget.ViewFlipper
@@ -14,9 +17,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.avtodigix.connection.ConnectionPhase
 import com.example.avtodigix.connection.ConnectionUiState
 import com.example.avtodigix.connection.ConnectionViewModel
+import com.example.avtodigix.connection.PermissionStatus
 import com.example.avtodigix.databinding.ActivityMainBinding
 import com.example.avtodigix.storage.AppDatabase
 import com.example.avtodigix.storage.ScanSnapshot
@@ -35,6 +40,8 @@ class MainActivity : AppCompatActivity() {
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var connectionViewModel: ConnectionViewModel
     private var permissionsRequestInFlight = false
+    private var permissionDialogStatus: PermissionStatus? = null
+    private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +58,10 @@ class MainActivity : AppCompatActivity() {
         ) { results ->
             permissionsRequestInFlight = false
             val granted = results.values.all { it }
-            connectionViewModel.onPermissionsResult(granted)
+            val permanentlyDenied = results.any { (permission, isGranted) ->
+                !isGranted && !shouldShowRequestPermissionRationale(permission)
+            }
+            connectionViewModel.onPermissionsResult(granted, permanentlyDenied)
         }
 
         bindNavigation(binding.welcomeNext, flipper, 1)
@@ -184,7 +194,9 @@ class MainActivity : AppCompatActivity() {
             ConnectionPhase.PermissionsRequired -> {
                 binding.connectionStatus.text = "Статус: требуется доступ к Bluetooth"
                 binding.connectionStatusDetail.text = "Подтвердите разрешения для подключения."
-                requestBluetoothPermissions(permissionsLauncher)
+                if (state.permissionStatus != PermissionStatus.PermanentlyDenied) {
+                    requestBluetoothPermissions(permissionsLauncher)
+                }
             }
             ConnectionPhase.Connecting -> {
                 val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
@@ -228,6 +240,8 @@ class MainActivity : AppCompatActivity() {
         if (state.pendingDtcs.isNotEmpty()) {
             binding.dtcPendingDetail.text = state.pendingDtcs.joinToString(separator = "\n")
         }
+
+        renderPermissionDialog(state.permissionStatus, permissionsLauncher)
     }
 
     private fun requestBluetoothPermissions(
@@ -253,6 +267,50 @@ class MainActivity : AppCompatActivity() {
             permissionsRequestInFlight = true
             permissionsLauncher.launch(permissions)
         }
+    }
+
+    private fun renderPermissionDialog(
+        status: PermissionStatus,
+        permissionsLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
+    ) {
+        if (status == permissionDialogStatus) {
+            return
+        }
+        permissionDialog?.dismiss()
+        permissionDialog = null
+        permissionDialogStatus = status
+
+        when (status) {
+            PermissionStatus.Denied -> {
+                permissionDialog = MaterialAlertDialogBuilder(this)
+                    .setTitle(getString(R.string.permission_denied_title))
+                    .setMessage(getString(R.string.permission_denied_message))
+                    .setPositiveButton(getString(R.string.action_retry)) { _, _ ->
+                        connectionViewModel.onPermissionsRetryRequested()
+                        requestBluetoothPermissions(permissionsLauncher)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            PermissionStatus.PermanentlyDenied -> {
+                permissionDialog = MaterialAlertDialogBuilder(this)
+                    .setTitle(getString(R.string.permission_denied_title))
+                    .setMessage(getString(R.string.permission_permanently_denied_message))
+                    .setPositiveButton(getString(R.string.action_open_settings)) { _, _ ->
+                        openAppSettings()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            else -> Unit
+        }
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        startActivity(intent)
     }
 
     private fun requiredBluetoothPermissions(): Array<String> {
