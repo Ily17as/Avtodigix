@@ -69,28 +69,50 @@ class ConnectionViewModel(
         updateState {
             copy(
                 phase = ConnectionPhase.PermissionsRequired,
+                permissionStatus = PermissionStatus.Requested,
                 errorMessage = null,
                 log = appendLog("Запрос разрешений Bluetooth.")
             )
         }
     }
 
-    fun onPermissionsResult(granted: Boolean) {
+    fun onPermissionsResult(granted: Boolean, permanentlyDenied: Boolean) {
         if (!granted) {
             updateState {
                 copy(
                     phase = ConnectionPhase.Error,
-                    errorMessage = "Разрешения Bluetooth не выданы."
+                    permissionStatus = if (permanentlyDenied) {
+                        PermissionStatus.PermanentlyDenied
+                    } else {
+                        PermissionStatus.Denied
+                    },
+                    errorMessage = if (permanentlyDenied) {
+                        "Разрешение Bluetooth отключено в настройках."
+                    } else {
+                        "Разрешения Bluetooth не выданы."
+                    }
                 )
             }
             return
         }
+        updateState { copy(permissionStatus = PermissionStatus.None) }
         if (connectJob?.isActive == true) {
             return
         }
         connectJob?.cancel()
         connectJob = viewModelScope.launch {
             connectToDevice()
+        }
+    }
+
+    fun onPermissionsRetryRequested() {
+        updateState {
+            copy(
+                phase = ConnectionPhase.PermissionsRequired,
+                permissionStatus = PermissionStatus.Requested,
+                errorMessage = null,
+                log = appendLog("Повторный запрос разрешений Bluetooth.")
+            )
         }
     }
 
@@ -103,13 +125,14 @@ class ConnectionViewModel(
             session = null
             obdService = null
             connectionManager.disconnect()
-            updateState {
-                copy(
-                    phase = ConnectionPhase.Idle,
-                    log = appendLog("Соединение завершено пользователем.")
-                )
-            }
+        updateState {
+            copy(
+                phase = ConnectionPhase.Idle,
+                permissionStatus = PermissionStatus.None,
+                log = appendLog("Соединение завершено пользователем.")
+            )
         }
+    }
     }
 
     override fun onCleared() {
@@ -259,7 +282,8 @@ data class ConnectionUiState(
     val liveSnapshot: LivePidSnapshot? = null,
     val storedDtcs: List<String> = emptyList(),
     val pendingDtcs: List<String> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val permissionStatus: PermissionStatus = PermissionStatus.None
 )
 
 enum class ConnectionPhase {
@@ -269,4 +293,11 @@ enum class ConnectionPhase {
     Connected,
     AdapterUnavailable,
     Error
+}
+
+enum class PermissionStatus {
+    None,
+    Requested,
+    Denied,
+    PermanentlyDenied
 }

@@ -11,6 +11,8 @@
     <string name="action_details">Подробнее</string>
     <string name="action_what_to_do">Что делать</string>
     <string name="action_delete_history">Удалить историю</string>
+    <string name="action_retry">Повторить</string>
+    <string name="action_open_settings">Открыть настройки</string>
 
     <string name="welcome_title">Welcome to Avtodigix</string>
     <string name="welcome_subtitle">Стартовая инструкция для быстрой диагностики состояния автомобиля.</string>
@@ -27,6 +29,9 @@
     <string name="connection_status_log">Лог: ожидание адаптера → поиск → сопряжение → проверка связи.</string>
     <string name="connection_checklist">Чек-лист: питание адаптера, Bluetooth включен, VIN найден, связь стабильна.</string>
     <string name="connection_warning">Предупреждение: не выполняйте подключение во время движения.</string>
+    <string name="permission_denied_title">Доступ к Bluetooth</string>
+    <string name="permission_denied_message">Без разрешения Bluetooth подключение невозможно. Нажмите «Повторить», чтобы снова запросить доступ.</string>
+    <string name="permission_permanently_denied_message">Разрешение Bluetooth отключено. Откройте настройки приложения и включите доступ к Bluetooth.</string>
 
     <string name="summary_title">Сводка</string>
     <string name="summary_subtitle">Светофорный индикатор показывает приоритеты.</string>
