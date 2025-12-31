@@ -50,9 +50,18 @@ class ElmSession(
 
     val queueSize: StateFlow<Int> = queueSizeState
 
-    suspend fun initialize(): List<String> {
+    suspend fun initialize(includeHeadersOff: Boolean = false): List<String> {
         val responses = mutableListOf<String>()
-        val initCommands = listOf("ATZ", "ATE0", "ATL0", "ATS0", "ATSP0", "ATST")
+        val initCommands = buildList {
+            add("ATZ")
+            add("ATE0")
+            add("ATL0")
+            add("ATS0")
+            if (includeHeadersOff) {
+                add("ATH0")
+            }
+            add("ATSP0")
+        }
         for (command in initCommands) {
             val response = execute(command)
             responses.addAll(response.lines)
@@ -81,14 +90,25 @@ class ElmSession(
                 return sendCommand(command)
             } catch (error: TimeoutCancellationException) {
                 lastError = error
+                resetAdapter()
             } catch (error: IOException) {
                 lastError = error
+                if (!command.equals("ATZ", ignoreCase = true)) {
+                    resetAdapter()
+                }
             }
         }
         throw lastError ?: IllegalStateException("ELM command failed: $command")
     }
 
-    private suspend fun sendCommand(command: String): ElmResponse = withContext(ioDispatcher) {
+    private suspend fun resetAdapter() {
+        runCatching { sendCommand("ATZ", allowEmpty = true) }
+    }
+
+    private suspend fun sendCommand(
+        command: String,
+        allowEmpty: Boolean = false
+    ): ElmResponse = withContext(ioDispatcher) {
         enforceRateLimit()
         val normalizedCommand = command.trim()
         val payload = "$normalizedCommand\r"
@@ -96,6 +116,9 @@ class ElmSession(
         output.flush()
         val raw = readUntilPrompt()
         val parsed = parseResponse(normalizedCommand, raw)
+        if (parsed.isEmpty() && !allowEmpty) {
+            throw IOException("ELM returned empty response for $normalizedCommand")
+        }
         ElmResponse(raw, parsed)
     }
 
@@ -145,7 +168,7 @@ class ElmSession(
         val normalizedCommand = normalizeLine(command)
         return lines.filter { line ->
             val normalizedLine = normalizeLine(line)
-            normalizedLine != normalizedCommand
+            normalizedLine != normalizedCommand && !normalizedLine.startsWith("SEARCHING")
         }
     }
 
