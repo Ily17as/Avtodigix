@@ -23,7 +23,8 @@ import java.io.IOException
 import java.util.UUID
 
 class ConnectionViewModel(
-    private val connectionManager: BluetoothConnectionManager = BluetoothConnectionManager()
+    private val connectionManager: BluetoothConnectionManager = BluetoothConnectionManager(),
+    private val selectedDeviceStore: SelectedDeviceStore
 ) : ViewModel() {
     private val _state = MutableStateFlow(ConnectionUiState())
     val state: StateFlow<ConnectionUiState> = _state
@@ -34,6 +35,10 @@ class ConnectionViewModel(
     private var obdService: ObdService? = null
 
     init {
+        updateState {
+            copy(selectedDeviceAddress = selectedDeviceStore.getSelectedDeviceAddress())
+        }
+        refreshPairedDevices()
         viewModelScope.launch {
             connectionManager.status.collect { status ->
                 when (status) {
@@ -96,6 +101,7 @@ class ConnectionViewModel(
             return
         }
         updateState { copy(permissionStatus = PermissionStatus.None) }
+        refreshPairedDevices()
         if (connectJob?.isActive == true) {
             return
         }
@@ -125,14 +131,39 @@ class ConnectionViewModel(
             session = null
             obdService = null
             connectionManager.disconnect()
-        updateState {
-            copy(
-                phase = ConnectionPhase.Idle,
-                permissionStatus = PermissionStatus.None,
-                log = appendLog("Соединение завершено пользователем.")
-            )
+            updateState {
+                copy(
+                    phase = ConnectionPhase.Idle,
+                    permissionStatus = PermissionStatus.None,
+                    log = appendLog("Соединение завершено пользователем.")
+                )
+            }
         }
     }
+
+    fun refreshPairedDevices() {
+        viewModelScope.launch {
+            val devices = connectionManager.getPairedDevices()
+            val selectedAddress = state.value.selectedDeviceAddress
+            val selectedDevice = devices.firstOrNull { it.address == selectedAddress }
+            updateState {
+                copy(
+                    pairedDevices = devices,
+                    selectedDeviceName = selectedDevice?.name
+                )
+            }
+        }
+    }
+
+    fun onPairedDeviceSelected(device: PairedDevice) {
+        selectedDeviceStore.setSelectedDeviceAddress(device.address)
+        updateState {
+            copy(
+                selectedDeviceAddress = device.address,
+                selectedDeviceName = device.name,
+                errorMessage = null
+            )
+        }
     }
 
     override fun onCleared() {
@@ -146,6 +177,16 @@ class ConnectionViewModel(
     }
 
     private suspend fun connectToDevice() {
+        val selectedAddress = state.value.selectedDeviceAddress
+        if (selectedAddress.isNullOrBlank()) {
+            updateState {
+                copy(
+                    phase = ConnectionPhase.Error,
+                    errorMessage = "Выберите Bluetooth-устройство из списка."
+                )
+            }
+            return
+        }
         updateState {
             copy(
                 phase = ConnectionPhase.Connecting,
@@ -154,12 +195,13 @@ class ConnectionViewModel(
             )
         }
         val devices = connectionManager.getPairedDevices()
-        val selected = selectDevice(devices)
+        updateState { copy(pairedDevices = devices) }
+        val selected = devices.firstOrNull { it.address == selectedAddress }
         if (selected == null) {
             updateState {
                 copy(
                     phase = ConnectionPhase.Error,
-                    errorMessage = "Нет сопряженных Bluetooth-устройств."
+                    errorMessage = "Выбранное устройство не найдено в списке сопряженных."
                 )
             }
             return
@@ -247,15 +289,6 @@ class ConnectionViewModel(
         }
     }
 
-    private fun selectDevice(devices: List<PairedDevice>): PairedDevice? {
-        if (devices.isEmpty()) return null
-        val preferred = devices.firstOrNull { device ->
-            val name = device.name.lowercase()
-            name.contains("avtodigix") || name.contains("obd")
-        }
-        return preferred ?: devices.first()
-    }
-
     private fun updateState(transform: ConnectionUiState.() -> ConnectionUiState) {
         _state.value = _state.value.transform()
     }
@@ -278,6 +311,8 @@ class ConnectionViewModel(
 data class ConnectionUiState(
     val phase: ConnectionPhase = ConnectionPhase.Idle,
     val selectedDeviceName: String? = null,
+    val selectedDeviceAddress: String? = null,
+    val pairedDevices: List<PairedDevice> = emptyList(),
     val log: String = "",
     val liveSnapshot: LivePidSnapshot? = null,
     val storedDtcs: List<String> = emptyList(),

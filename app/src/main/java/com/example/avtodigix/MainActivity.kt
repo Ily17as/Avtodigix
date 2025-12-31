@@ -13,15 +13,20 @@ import android.widget.ViewFlipper
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.avtodigix.connection.ConnectionPhase
 import com.example.avtodigix.connection.ConnectionUiState
+import com.example.avtodigix.connection.ConnectionViewModelFactory
 import com.example.avtodigix.connection.ConnectionViewModel
+import com.example.avtodigix.connection.PairedDeviceAdapter
 import com.example.avtodigix.connection.PermissionStatus
+import com.example.avtodigix.connection.SelectedDeviceStore
 import com.example.avtodigix.databinding.ActivityMainBinding
 import com.example.avtodigix.storage.AppDatabase
 import com.example.avtodigix.storage.ScanSnapshot
@@ -39,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var repository: ScanSnapshotRepository
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var connectionViewModel: ConnectionViewModel
+    private lateinit var pairedDeviceAdapter: PairedDeviceAdapter
     private var permissionsRequestInFlight = false
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
@@ -52,7 +58,19 @@ class MainActivity : AppCompatActivity() {
         repository = ScanSnapshotRepository(database.scanSnapshotDao())
 
         val flipper = binding.screenFlipper
-        connectionViewModel = ViewModelProvider(this)[ConnectionViewModel::class.java]
+        val selectedDeviceStore = SelectedDeviceStore(applicationContext)
+        connectionViewModel = ViewModelProvider(
+            this,
+            ConnectionViewModelFactory(selectedDeviceStore = selectedDeviceStore)
+        )[ConnectionViewModel::class.java]
+        pairedDeviceAdapter = PairedDeviceAdapter { device ->
+            connectionViewModel.onPairedDeviceSelected(device)
+        }
+        binding.connectionPairedList.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = pairedDeviceAdapter
+            setHasFixedSize(false)
+        }
         val permissionsLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { results ->
@@ -224,6 +242,8 @@ class MainActivity : AppCompatActivity() {
         binding.connectionAdapterDetail.text = state.selectedDeviceName?.let { name ->
             "Выбран адаптер: $name"
         } ?: getString(R.string.connection_adapter_detail)
+        pairedDeviceAdapter.submitList(state.pairedDevices, state.selectedDeviceAddress)
+        binding.connectionPairedEmpty.isVisible = state.pairedDevices.isEmpty()
 
         binding.connectionConnect.isEnabled = state.phase == ConnectionPhase.Idle ||
             state.phase == ConnectionPhase.Error ||
