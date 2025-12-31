@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.InputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.util.UUID
 
 class BluetoothConnectionManager(
@@ -29,6 +31,8 @@ class BluetoothConnectionManager(
     val status: StateFlow<ConnectionStatus> = _status
     private val _socketState = MutableStateFlow<BluetoothSocket?>(null)
     val socketState: StateFlow<BluetoothSocket?> = _socketState
+    private val _transportState = MutableStateFlow<BluetoothTransport?>(null)
+    val transportState: StateFlow<BluetoothTransport?> = _transportState
 
     private var socket: BluetoothSocket? = null
     private var connectionJob: Job? = null
@@ -108,6 +112,11 @@ class BluetoothConnectionManager(
             createdSocket.connect()
             _status.value = ConnectionStatus.Connected
             _socketState.value = createdSocket
+            _transportState.value = BluetoothTransport(
+                socket = createdSocket,
+                input = createdSocket.inputStream,
+                output = createdSocket.outputStream
+            )
             true
         } catch (error: IOException) {
             _status.value = ConnectionStatus.NoConnection
@@ -135,6 +144,7 @@ class BluetoothConnectionManager(
             }
             socket = null
             _socketState.value = null
+            _transportState.value = null
         }
     }
 }
@@ -148,4 +158,10 @@ sealed class ConnectionStatus {
 data class PairedDevice(
     val name: String,
     val address: String
+)
+
+data class BluetoothTransport(
+    val socket: BluetoothSocket,
+    val input: InputStream,
+    val output: OutputStream
 )
