@@ -7,6 +7,8 @@ import com.example.avtodigix.bluetooth.BluetoothConnectionManager
 import com.example.avtodigix.bluetooth.ConnectionStatus
 import com.example.avtodigix.bluetooth.PairedDevice
 import com.example.avtodigix.elm.ElmSession
+import com.example.avtodigix.obd.DEFAULT_LIVE_METRICS
+import com.example.avtodigix.obd.LiveMetricDefinition
 import com.example.avtodigix.obd.LivePidSnapshot
 import com.example.avtodigix.obd.ObdService
 import kotlinx.coroutines.Job
@@ -253,13 +255,19 @@ class ConnectionViewModel(
 
         val service = ObdService(newSession)
         obdService = service
+        val supportedPids = runCatching { service.readSupportedPids() }.getOrDefault(emptyMap())
+        val availableMetrics = DEFAULT_LIVE_METRICS.filter { metric ->
+            supportedPids.containsKey(metric.pid)
+        }
+        val supportedPidSet = supportedPids.keys.takeIf { it.isNotEmpty() }
         updateState {
             copy(
                 phase = ConnectionPhase.Connected,
+                supportedMetrics = availableMetrics,
                 log = appendLog("OBD сервис готов, начинаем чтение данных.")
             )
         }
-        startReading(service)
+        startReading(service, supportedPidSet)
     }
 
     private suspend fun waitForTransport(): BluetoothTransport {
@@ -268,11 +276,11 @@ class ConnectionViewModel(
         }
     }
 
-    private fun startReading(service: ObdService) {
+    private fun startReading(service: ObdService, supportedPids: Set<Int>?) {
         readJob?.cancel()
         readJob = viewModelScope.launch {
             while (isActive) {
-                val liveSnapshot = runCatching { service.readLiveData() }.getOrNull()
+                val liveSnapshot = runCatching { service.readLiveData(supportedPids) }.getOrNull()
                 val storedDtcs = runCatching { service.readStoredDtcs() }.getOrDefault(emptyList())
                 val pendingDtcs = runCatching { service.readPendingDtcs() }.getOrDefault(emptyList())
                 if (liveSnapshot != null) {
@@ -304,7 +312,7 @@ class ConnectionViewModel(
     companion object {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
         private const val CONNECTION_TIMEOUT_MILLIS = 15_000L
-        private const val LIVE_DATA_REFRESH_MILLIS = 2_000L
+        private const val LIVE_DATA_REFRESH_MILLIS = 1_000L
     }
 }
 
@@ -315,6 +323,7 @@ data class ConnectionUiState(
     val pairedDevices: List<PairedDevice> = emptyList(),
     val log: String = "",
     val liveSnapshot: LivePidSnapshot? = null,
+    val supportedMetrics: List<LiveMetricDefinition> = emptyList(),
     val storedDtcs: List<String> = emptyList(),
     val pendingDtcs: List<String> = emptyList(),
     val errorMessage: String? = null,
