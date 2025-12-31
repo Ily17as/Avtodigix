@@ -34,21 +34,21 @@ class ObdService(
         return supported.associateWith { true }
     }
 
-    suspend fun readLiveData(): LivePidSnapshot {
+    suspend fun readLiveData(supportedPids: Set<Int>? = null): LivePidSnapshot {
         return LivePidSnapshot(
-            engineRpm = readPid(0x0C)?.let { bytes ->
+            engineRpm = readPidIfSupported(0x0C, supportedPids)?.let { bytes ->
                 if (bytes.size >= 4) ((bytes[2] * 256) + bytes[3]) / 4.0 else null
             },
-            vehicleSpeedKph = readPid(0x0D)?.getOrNull(2),
-            coolantTempCelsius = readPid(0x05)?.getOrNull(2)?.minus(40),
-            intakeTempCelsius = readPid(0x0F)?.getOrNull(2)?.minus(40),
-            engineLoadPercent = readPid(0x04)?.getOrNull(2)?.let { value ->
+            vehicleSpeedKph = readPidIfSupported(0x0D, supportedPids)?.getOrNull(2),
+            coolantTempCelsius = readPidIfSupported(0x05, supportedPids)?.getOrNull(2)?.minus(40),
+            intakeTempCelsius = readPidIfSupported(0x0F, supportedPids)?.getOrNull(2)?.minus(40),
+            engineLoadPercent = readPidIfSupported(0x04, supportedPids)?.getOrNull(2)?.let { value ->
                 value * 100.0 / 255.0
             },
-            shortTermFuelTrimPercent = readPid(0x06)?.getOrNull(2)?.let { value ->
+            shortTermFuelTrimPercent = readPidIfSupported(0x06, supportedPids)?.getOrNull(2)?.let { value ->
                 (value - 128) * 100.0 / 128.0
             },
-            longTermFuelTrimPercent = readPid(0x07)?.getOrNull(2)?.let { value ->
+            longTermFuelTrimPercent = readPidIfSupported(0x07, supportedPids)?.getOrNull(2)?.let { value ->
                 (value - 128) * 100.0 / 128.0
             }
         )
@@ -87,6 +87,13 @@ class ObdService(
         return response.lines
             .mapNotNull { parseHexBytes(it) }
             .firstOrNull { it.size >= 3 && it[0] == 0x41 && it[1] == pid }
+    }
+
+    private suspend fun readPidIfSupported(pid: Int, supportedPids: Set<Int>?): List<Int>? {
+        if (supportedPids != null && pid !in supportedPids) {
+            return null
+        }
+        return readPid(pid)
     }
 
     private suspend fun readDtcs(command: String, modeByte: Int): List<String> {
@@ -158,4 +165,19 @@ data class LivePidSnapshot(
     val engineLoadPercent: Double?,
     val shortTermFuelTrimPercent: Double?,
     val longTermFuelTrimPercent: Double?
+)
+
+data class LiveMetricDefinition(
+    val pid: Int,
+    val name: String
+)
+
+val DEFAULT_LIVE_METRICS = listOf(
+    LiveMetricDefinition(0x0C, "Обороты двигателя"),
+    LiveMetricDefinition(0x0D, "Скорость автомобиля"),
+    LiveMetricDefinition(0x05, "Температура охлаждающей жидкости"),
+    LiveMetricDefinition(0x0F, "Температура впуска"),
+    LiveMetricDefinition(0x04, "Нагрузка двигателя"),
+    LiveMetricDefinition(0x06, "Краткосрочная коррекция топлива"),
+    LiveMetricDefinition(0x07, "Долгосрочная коррекция топлива")
 )
