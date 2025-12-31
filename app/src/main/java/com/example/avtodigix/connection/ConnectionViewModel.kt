@@ -1,8 +1,8 @@
 package com.example.avtodigix.connection
 
-import android.bluetooth.BluetoothSocket
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.avtodigix.bluetooth.BluetoothTransport
 import com.example.avtodigix.bluetooth.BluetoothConnectionManager
 import com.example.avtodigix.bluetooth.ConnectionStatus
 import com.example.avtodigix.bluetooth.PairedDevice
@@ -215,8 +215,8 @@ class ConnectionViewModel(
         }
 
         connectionManager.connect(selected.address, SPP_UUID)
-        val socket = try {
-            waitForSocket()
+        val transport = try {
+            waitForTransport()
         } catch (error: TimeoutCancellationException) {
             updateState {
                 copy(
@@ -227,7 +227,7 @@ class ConnectionViewModel(
             return
         }
 
-        val newSession = ElmSession(socket.inputStream, socket.outputStream, parentScope = viewModelScope)
+        val newSession = ElmSession(transport.input, transport.output, parentScope = viewModelScope)
         session = newSession
         updateState { copy(log = appendLog("Инициализация ELM327.")) }
 
@@ -262,9 +262,9 @@ class ConnectionViewModel(
         startReading(service)
     }
 
-    private suspend fun waitForSocket(): BluetoothSocket {
+    private suspend fun waitForTransport(): BluetoothTransport {
         return withTimeout(CONNECTION_TIMEOUT_MILLIS) {
-            connectionManager.socketState.filterNotNull().first { it.isConnected }
+            connectionManager.transportState.filterNotNull().first { it.socket.isConnected }
         }
     }
 
