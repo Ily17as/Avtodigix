@@ -27,6 +27,8 @@
     <string name="connection_status">Статус: не подключено</string>
     <string name="connection_status_detail">Подключите адаптер, включите Bluetooth и выполните сопряжение.</string>
     <string name="connection_status_log">Лог: ожидание адаптера → поиск → сопряжение → проверка связи.</string>
+    <string name="connection_paired_title">Сопряженные устройства</string>
+    <string name="connection_paired_empty">Список пуст. Сначала выполните сопряжение в настройках Bluetooth.</string>
     <string name="connection_checklist">Чек-лист: питание адаптера, Bluetooth включен, VIN найден, связь стабильна.</string>
     <string name="connection_warning">Предупреждение: не выполняйте подключение во время движения.</string>
     <string name="permission_denied_title">Доступ к Bluetooth</string>

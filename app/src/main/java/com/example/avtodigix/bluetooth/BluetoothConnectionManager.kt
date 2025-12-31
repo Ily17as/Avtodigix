@@ -40,11 +40,16 @@ class BluetoothConnectionManager(
             return@withContext emptyList()
         }
 
-        bluetoothAdapter.bondedDevices.map { device ->
-            PairedDevice(
-                name = device.name ?: "Unknown",
-                address = device.address
-            )
+        return@withContext runCatching {
+            bluetoothAdapter.bondedDevices.map { device ->
+                PairedDevice(
+                    name = device.name ?: "Unknown",
+                    address = device.address
+                )
+            }
+        }.getOrElse {
+            _status.value = ConnectionStatus.NoConnection
+            emptyList()
         }
     }
 
