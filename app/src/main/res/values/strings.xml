@@ -78,7 +78,12 @@
     <string name="metric_fuel_trim_value">+8% · норма</string>
     <string name="metric_fuel_trim_long">Долгосрочная топливная коррекция</string>
     <string name="metric_fuel_trim_long_value">+3% · норма</string>
-    <string name="metrics_status">Статус обновления: подключено, последняя синхронизация 5 сек назад.</string>
+    <string name="metrics_status">Данные актуальны.</string>
+    <string name="metrics_status_stale">Данные устарели.</string>
+    <string name="metrics_status_lost">Соединение потеряно.</string>
+    <string name="metrics_updated">Обновлено %1$d сек назад.</string>
+    <string name="metrics_updated_placeholder">Обновлено недавно.</string>
+    <string name="action_reconnect">Переподключиться</string>
 
     <string name="dtc_title">Коды неисправностей</string>
     <string name="dtc_subtitle">Храненные и ожидающие коды с расшифровкой.</string>

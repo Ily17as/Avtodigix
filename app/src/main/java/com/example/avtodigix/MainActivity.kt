@@ -111,6 +111,10 @@ class MainActivity : AppCompatActivity() {
             connectionViewModel.onDisconnectRequested()
         }
 
+        binding.metricsReconnect.setOnClickListener {
+            connectionViewModel.onConnectRequested()
+        }
+
         binding.bluetoothEnableButton.setOnClickListener {
             startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
         }
@@ -414,6 +418,21 @@ class MainActivity : AppCompatActivity() {
         state.metrics?.let { snapshot ->
             updateLiveMetrics(snapshot)
         }
+        val secondsSinceUpdate = state.lastUpdatedMillis?.let { lastUpdated ->
+            ((System.currentTimeMillis() - lastUpdated) / 1000).coerceAtLeast(0)
+        }
+        binding.metricsUpdated.text = if (secondsSinceUpdate != null) {
+            getString(R.string.metrics_updated, secondsSinceUpdate)
+        } else {
+            getString(R.string.metrics_updated_placeholder)
+        }
+        val statusResId = when {
+            secondsSinceUpdate != null && secondsSinceUpdate > 15 -> R.string.metrics_status_lost
+            secondsSinceUpdate != null && secondsSinceUpdate > 5 -> R.string.metrics_status_stale
+            else -> R.string.metrics_status
+        }
+        binding.metricsStatus.text = getString(statusResId)
+        binding.metricsReconnect.isVisible = secondsSinceUpdate != null && secondsSinceUpdate > 15
         binding.dtcStoredDetail.text = if (state.storedDtcs.isNotEmpty()) {
             formatDtcList(state.storedDtcs)
         } else {
