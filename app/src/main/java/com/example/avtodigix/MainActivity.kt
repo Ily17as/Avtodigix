@@ -254,11 +254,15 @@ class MainActivity : AppCompatActivity() {
         state.liveSnapshot?.let { snapshot ->
             updateLiveMetrics(snapshot)
         }
-        if (state.storedDtcs.isNotEmpty()) {
-            binding.dtcStoredDetail.text = state.storedDtcs.joinToString(separator = "\n")
+        binding.dtcStoredDetail.text = if (state.storedDtcs.isNotEmpty()) {
+            state.storedDtcs.joinToString(separator = "\n")
+        } else {
+            getString(R.string.dtc_no_codes)
         }
-        if (state.pendingDtcs.isNotEmpty()) {
-            binding.dtcPendingDetail.text = state.pendingDtcs.joinToString(separator = "\n")
+        binding.dtcPendingDetail.text = if (state.pendingDtcs.isNotEmpty()) {
+            state.pendingDtcs.joinToString(separator = "\n")
+        } else {
+            getString(R.string.dtc_no_codes)
         }
 
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)

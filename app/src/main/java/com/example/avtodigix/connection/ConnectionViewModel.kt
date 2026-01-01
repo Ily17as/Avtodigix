@@ -283,14 +283,12 @@ class ConnectionViewModel(
                 val liveSnapshot = runCatching { service.readLiveData(supportedPids) }.getOrNull()
                 val storedDtcs = runCatching { service.readStoredDtcs() }.getOrDefault(emptyList())
                 val pendingDtcs = runCatching { service.readPendingDtcs() }.getOrDefault(emptyList())
-                if (liveSnapshot != null) {
-                    updateState {
-                        copy(
-                            liveSnapshot = liveSnapshot,
-                            storedDtcs = storedDtcs,
-                            pendingDtcs = pendingDtcs
-                        )
-                    }
+                updateState {
+                    copy(
+                        liveSnapshot = liveSnapshot ?: this.liveSnapshot,
+                        storedDtcs = storedDtcs,
+                        pendingDtcs = pendingDtcs
+                    )
                 }
                 delay(LIVE_DATA_REFRESH_MILLIS)
             }

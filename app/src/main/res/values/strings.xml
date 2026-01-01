@@ -79,5 +79,6 @@
     <string name="dtc_stored_detail">P0301 — пропуски зажигания (цилиндр 1). Проверьте свечи и катушки.</string>
     <string name="dtc_pending_title">Pending DTC</string>
     <string name="dtc_pending_detail">P0420 — эффективность катализатора ниже нормы. Нужна диагностика.</string>
+    <string name="dtc_no_codes">нет кодов</string>
     <string name="dtc_footer">Расшифровка: удаление кодов не устраняет причину, сначала устраните неисправность.</string>
 </resources>
