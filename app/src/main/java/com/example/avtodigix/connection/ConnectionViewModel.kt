@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ConnectionViewModel(
     private val connectionManager: BluetoothConnectionManager = BluetoothConnectionManager(),
@@ -38,6 +39,8 @@ class ConnectionViewModel(
     private var session: ElmSession? = null
     private var obdService: ObdService? = null
     private var supportedPids: Set<Int>? = null
+    private val dtcRefreshRequested = AtomicBoolean(false)
+    private var lastDtcReadMillis = 0L
 
     init {
         updateConnectionState {
@@ -156,6 +159,8 @@ class ConnectionViewModel(
                     log = appendLog("Соединение завершено пользователем.")
                 )
             }
+            dtcRefreshRequested.set(false)
+            lastDtcReadMillis = 0L
             _obdState.value = ObdState()
         }
     }
@@ -171,6 +176,10 @@ class ConnectionViewModel(
             return
         }
         startReading(service, supportedPids)
+    }
+
+    fun requestDtcRefresh() {
+        dtcRefreshRequested.set(true)
     }
 
     fun refreshPairedDevices() {
@@ -326,8 +335,21 @@ class ConnectionViewModel(
         readJob = viewModelScope.launch {
             while (isActive) {
                 val liveSnapshot = runCatching { service.readLiveData(supportedPids) }.getOrNull()
-                val storedDtcs = runCatching { service.readStoredDtcs() }.getOrDefault(emptyList())
-                val pendingDtcs = runCatching { service.readPendingDtcs() }.getOrDefault(emptyList())
+                val nowMillis = System.currentTimeMillis()
+                val shouldReadDtcs = shouldReadDtcs(nowMillis)
+                val storedDtcs = if (shouldReadDtcs) {
+                    runCatching { service.readStoredDtcs() }.getOrElse { _obdState.value.storedDtcs }
+                } else {
+                    _obdState.value.storedDtcs
+                }
+                val pendingDtcs = if (shouldReadDtcs) {
+                    runCatching { service.readPendingDtcs() }.getOrElse { _obdState.value.pendingDtcs }
+                } else {
+                    _obdState.value.pendingDtcs
+                }
+                if (shouldReadDtcs) {
+                    lastDtcReadMillis = nowMillis
+                }
                 _obdState.value = _obdState.value.copy(
                     metrics = liveSnapshot ?: _obdState.value.metrics,
                     storedDtcs = storedDtcs,
@@ -337,6 +359,13 @@ class ConnectionViewModel(
                 delay(LIVE_DATA_REFRESH_MILLIS)
             }
         }
+    }
+
+    private fun shouldReadDtcs(nowMillis: Long): Boolean {
+        if (dtcRefreshRequested.getAndSet(false)) {
+            return true
+        }
+        return nowMillis - lastDtcReadMillis >= DTC_REFRESH_MILLIS
     }
 
     private fun updateConnectionState(transform: ConnectionState.() -> ConnectionState) {
@@ -355,6 +384,7 @@ class ConnectionViewModel(
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
         private const val CONNECTION_TIMEOUT_MILLIS = 15_000L
         private const val LIVE_DATA_REFRESH_MILLIS = 1_000L
+        private const val DTC_REFRESH_MILLIS = 20_000L
     }
 }
 
