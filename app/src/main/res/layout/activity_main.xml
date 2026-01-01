@@ -605,10 +605,48 @@
                         <TableRow>
 
                             <TextView
-                                android:id="@+id/metricEngineTemp"
+                                android:id="@+id/metricEngineRpm"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
+                                android:text="@string/metric_engine_rpm"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricEngineRpmValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/metric_engine_rpm_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricVehicleSpeed"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_vehicle_speed"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricVehicleSpeedValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_vehicle_speed_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricEngineTemp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
                                 android:text="@string/metric_engine_temp"
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
@@ -616,7 +654,7 @@
                                 android:id="@+id/metricEngineTempValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
+                                android:layout_marginTop="8dp"
                                 android:text="@string/metric_engine_temp_value"
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                         </TableRow>
