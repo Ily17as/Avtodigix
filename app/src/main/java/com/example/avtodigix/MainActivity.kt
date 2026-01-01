@@ -1,6 +1,7 @@
 package com.example.avtodigix
 
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -108,6 +109,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.connectionDisconnect.setOnClickListener {
             connectionViewModel.onDisconnectRequested()
+        }
+
+        binding.bluetoothEnableButton.setOnClickListener {
+            startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        }
+
+        binding.bluetoothSettingsButton.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
         }
 
         binding.summaryClearHistory.setOnClickListener {
@@ -279,6 +288,8 @@ class MainActivity : AppCompatActivity() {
         binding.connectionAdapterDetail.text = state.selectedDeviceName?.let { name ->
             "Выбран адаптер: $name"
         } ?: getString(R.string.connection_adapter_detail)
+        val adapterEnabled = BluetoothAdapter.getDefaultAdapter()?.isEnabled == true
+        binding.bluetoothDisabledGroup.isVisible = !adapterEnabled
         pairedDeviceAdapter.submitList(state.pairedDevices, state.selectedDeviceAddress)
         binding.connectionPairedEmpty.isVisible = state.pairedDevices.isEmpty()
 

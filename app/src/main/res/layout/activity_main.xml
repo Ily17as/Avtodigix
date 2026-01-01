@@ -178,6 +178,37 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <LinearLayout
+                    android:id="@+id/bluetoothDisabledGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/bluetoothDisabledText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Bluetooth выключен"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bluetoothEnableButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Включить Bluetooth" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bluetoothSettingsButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Открыть настройки Bluetooth" />
+                </LinearLayout>
+
                 <TextView
                     android:id="@+id/connectionPairedTitle"
                     android:layout_width="match_parent"
