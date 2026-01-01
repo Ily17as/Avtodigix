@@ -1,22 +1,22 @@
 <resources>
     <string name="app_name">Avtodigix</string>
-    <string name="hello_world">Hello Android</string>
+    <string name="hello_world">Привет, Android</string>
 
-    <string name="action_get_started">Get started</string>
-    <string name="action_next">Next</string>
-    <string name="action_back">Back</string>
-    <string name="action_finish">Finish</string>
-    <string name="action_connect">Connect</string>
-    <string name="action_disconnect">Disconnect</string>
+    <string name="action_get_started">Начать</string>
+    <string name="action_next">Далее</string>
+    <string name="action_back">Назад</string>
+    <string name="action_finish">Завершить</string>
+    <string name="action_connect">Подключить</string>
+    <string name="action_disconnect">Отключить</string>
     <string name="action_details">Подробнее</string>
     <string name="action_what_to_do">Что делать</string>
     <string name="action_delete_history">Удалить историю</string>
     <string name="action_retry">Повторить</string>
     <string name="action_open_settings">Открыть настройки</string>
 
-    <string name="welcome_title">Welcome to Avtodigix</string>
+    <string name="welcome_title">Добро пожаловать в Avtodigix</string>
     <string name="welcome_subtitle">Стартовая инструкция для быстрой диагностики состояния автомобиля.</string>
-    <string name="welcome_highlights">Вы пройдете: подключение адаптера, светофорный обзор, live-метрики и коды неисправностей.</string>
+    <string name="welcome_highlights">Вы пройдете: подключение адаптера, светофорный обзор, метрики в реальном времени и коды неисправностей.</string>
     <string name="welcome_checklist">Перед стартом: заглушите двигатель, подключите адаптер OBD-II и включите Bluetooth на телефоне.</string>
     <string name="welcome_safety">Предупреждение: проверка выполняется на стоящем автомобиле с затянутым стояночным тормозом.</string>
     <string name="welcome_warning">Не оставляйте адаптер подключенным при длительной стоянке — это может разрядить аккумулятор.</string>
@@ -37,52 +37,52 @@
 
     <string name="summary_title">Сводка</string>
     <string name="summary_subtitle">Светофорный индикатор показывает приоритеты.</string>
-    <string name="summary_footer">Нажмите Далее, чтобы открыть live-метрики.</string>
-    <string name="health_status_green">GREEN — в норме</string>
-    <string name="health_status_yellow">YELLOW — требуется внимание</string>
-    <string name="health_status_red">RED — критично</string>
+    <string name="summary_footer">Нажмите Далее, чтобы открыть метрики в реальном времени.</string>
+    <string name="health_status_green">ЗЕЛЕНЫЙ — в норме</string>
+    <string name="health_status_yellow">ЖЕЛТЫЙ — требуется внимание</string>
+    <string name="health_status_red">КРАСНЫЙ — критично</string>
 
-    <string name="engine_title">Engine</string>
-    <string name="engine_status">GREEN — нормальный режим</string>
+    <string name="engine_title">Двигатель</string>
+    <string name="engine_status">ЗЕЛЕНЫЙ — нормальный режим</string>
     <string name="engine_description">Обороты, температура и давление в норме.</string>
 
-    <string name="cooling_title">Cooling</string>
-    <string name="cooling_status">YELLOW — требуется внимание</string>
+    <string name="cooling_title">Охлаждение</string>
+    <string name="cooling_status">ЖЕЛТЫЙ — требуется внимание</string>
     <string name="cooling_description">Температура охлаждающей жидкости повышена, проверьте вентилятор.</string>
 
-    <string name="fuel_title">Fuel</string>
-    <string name="fuel_status">RED — критично</string>
+    <string name="fuel_title">Топливо</string>
+    <string name="fuel_status">КРАСНЫЙ — критично</string>
     <string name="fuel_description">Высокая коррекция топлива, возможна утечка воздуха.</string>
 
-    <string name="battery_title">Battery</string>
-    <string name="battery_status">GREEN — заряд стабильный</string>
+    <string name="battery_title">Аккумулятор</string>
+    <string name="battery_status">ЗЕЛЕНЫЙ — заряд стабильный</string>
     <string name="battery_description">Напряжение и ток зарядки в пределах нормы.</string>
 
-    <string name="dtc_summary_title">DTC</string>
-    <string name="dtc_summary_status">YELLOW — есть активные коды</string>
+    <string name="dtc_summary_title">Коды неисправностей</string>
+    <string name="dtc_summary_status">ЖЕЛТЫЙ — есть активные коды</string>
     <string name="dtc_summary_description">Обнаружены 2 кода, рекомендуется диагностика.</string>
 
-    <string name="metrics_title">Live Metrics</string>
+    <string name="metrics_title">Метрики в реальном времени</string>
     <string name="metrics_subtitle">Таблица актуальных значений с обновлением в реальном времени.</string>
     <string name="metrics_table_header_metric">Параметр</string>
     <string name="metrics_table_header_value">Значение</string>
-    <string name="metric_engine_rpm">Engine RPM</string>
-    <string name="metric_engine_rpm_value">760 rpm</string>
-    <string name="metric_vehicle_speed">Speed</string>
-    <string name="metric_vehicle_speed_value">0 km/h</string>
-    <string name="metric_engine_temp">Engine temp</string>
-    <string name="metric_engine_temp_value">92°C · Normal</string>
-    <string name="metric_battery_voltage">Battery voltage</string>
-    <string name="metric_battery_voltage_value">12.1V · Low</string>
-    <string name="metric_fuel_trim">Fuel trim</string>
-    <string name="metric_fuel_trim_value">+8% · OK</string>
+    <string name="metric_engine_rpm">Обороты двигателя</string>
+    <string name="metric_engine_rpm_value">760 об/мин</string>
+    <string name="metric_vehicle_speed">Скорость</string>
+    <string name="metric_vehicle_speed_value">0 км/ч</string>
+    <string name="metric_engine_temp">Температура двигателя</string>
+    <string name="metric_engine_temp_value">92°C · норма</string>
+    <string name="metric_battery_voltage">Напряжение аккумулятора</string>
+    <string name="metric_battery_voltage_value">12,1 В · низкое</string>
+    <string name="metric_fuel_trim">Топливная коррекция</string>
+    <string name="metric_fuel_trim_value">+8% · норма</string>
     <string name="metrics_status">Статус обновления: подключено, последняя синхронизация 5 сек назад.</string>
 
-    <string name="dtc_title">Diagnostic Trouble Codes</string>
+    <string name="dtc_title">Коды неисправностей</string>
     <string name="dtc_subtitle">Храненные и ожидающие коды с расшифровкой.</string>
-    <string name="dtc_stored_title">Stored DTC</string>
+    <string name="dtc_stored_title">Сохраненные коды</string>
     <string name="dtc_stored_detail">P0301 — пропуски зажигания (цилиндр 1). Проверьте свечи и катушки.</string>
-    <string name="dtc_pending_title">Pending DTC</string>
+    <string name="dtc_pending_title">Ожидающие коды</string>
     <string name="dtc_pending_detail">P0420 — эффективность катализатора ниже нормы. Нужна диагностика.</string>
     <string name="dtc_no_codes">нет кодов</string>
     <string name="dtc_footer">Расшифровка: удаление кодов не устраняет причину, сначала устраните неисправность.</string>
