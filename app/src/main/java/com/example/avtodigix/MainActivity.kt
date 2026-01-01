@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.card.MaterialCardView
 import com.example.avtodigix.connection.ConnectionPhase
 import com.example.avtodigix.connection.ConnectionUiState
 import com.example.avtodigix.connection.ConnectionViewModelFactory
@@ -28,6 +29,9 @@ import com.example.avtodigix.connection.PairedDeviceAdapter
 import com.example.avtodigix.connection.PermissionStatus
 import com.example.avtodigix.connection.SelectedDeviceStore
 import com.example.avtodigix.databinding.ActivityMainBinding
+import com.example.avtodigix.domain.HealthAssessment
+import com.example.avtodigix.domain.HealthRules
+import com.example.avtodigix.domain.TrafficLightStatus
 import com.example.avtodigix.storage.AppDatabase
 import com.example.avtodigix.storage.ScanSnapshot
 import com.example.avtodigix.storage.ScanSnapshotRepository
@@ -182,6 +186,14 @@ class MainActivity : AppCompatActivity() {
         if (snapshot.dtcList.isNotEmpty()) {
             binding.dtcStoredDetail.text = snapshot.dtcList.joinToString(separator = "\n")
         }
+
+        renderHealthSummary(
+            coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp)?.toInt(),
+            batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
+            shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
+            longTermFuelTrimPercent = null,
+            dtcCount = snapshot.dtcList.size
+        )
     }
 
     private fun updateMetricValue(
@@ -194,6 +206,10 @@ class MainActivity : AppCompatActivity() {
         val current = valueView.text.toString()
         val updated = NUMBER_REGEX.replaceFirst(current, value.toString())
         valueView.text = if (updated == current) value.toString() else updated
+    }
+
+    private fun readSnapshotMetric(snapshot: ScanSnapshot, labelRes: Int): Double? {
+        return snapshot.keyMetrics[getString(labelRes)]
     }
 
     private fun parseFirstDouble(text: CharSequence): Double? {
@@ -265,6 +281,7 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.dtc_no_codes)
         }
 
+        renderHealthSummaryForState(state)
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
     }
 
@@ -354,6 +371,95 @@ class MainActivity : AppCompatActivity() {
         }
         snapshot.shortTermFuelTrimPercent?.let { value ->
             updateMetricValue(binding.metricFuelTrimValue, value)
+        }
+        snapshot.batteryVoltageVolts?.let { value ->
+            updateMetricValue(binding.metricBatteryVoltageValue, value)
+        }
+    }
+
+    private fun renderHealthSummaryForState(state: ConnectionUiState) {
+        val dtcCount = if (state.phase == ConnectionPhase.Connected) {
+            (state.storedDtcs + state.pendingDtcs).distinct().size
+        } else {
+            null
+        }
+        renderHealthSummary(
+            coolantTempCelsius = state.liveSnapshot?.coolantTempCelsius,
+            batteryVoltage = state.liveSnapshot?.batteryVoltageVolts,
+            shortTermFuelTrimPercent = state.liveSnapshot?.shortTermFuelTrimPercent,
+            longTermFuelTrimPercent = state.liveSnapshot?.longTermFuelTrimPercent,
+            dtcCount = dtcCount
+        )
+    }
+
+    private fun renderHealthSummary(
+        coolantTempCelsius: Int?,
+        batteryVoltage: Double?,
+        shortTermFuelTrimPercent: Double?,
+        longTermFuelTrimPercent: Double?,
+        dtcCount: Int?
+    ) {
+        updateHealthCard(
+            assessment = HealthRules.evaluateCooling(coolantTempCelsius),
+            card = binding.coolingCard,
+            titleView = binding.coolingTitle,
+            statusView = binding.coolingStatus,
+            descriptionView = binding.coolingDescription
+        )
+        updateHealthCard(
+            assessment = HealthRules.evaluateFuelTrims(shortTermFuelTrimPercent, longTermFuelTrimPercent),
+            card = binding.fuelCard,
+            titleView = binding.fuelTitle,
+            statusView = binding.fuelStatus,
+            descriptionView = binding.fuelDescription
+        )
+        updateHealthCard(
+            assessment = HealthRules.evaluateBatteryVoltage(batteryVoltage),
+            card = binding.batteryCard,
+            titleView = binding.batteryTitle,
+            statusView = binding.batteryStatus,
+            descriptionView = binding.batteryDescription
+        )
+        updateHealthCard(
+            assessment = HealthRules.evaluateDtcCount(dtcCount),
+            card = binding.dtcSummaryCard,
+            titleView = binding.dtcSummaryTitle,
+            statusView = binding.dtcSummaryStatus,
+            descriptionView = binding.dtcSummaryDescription
+        )
+    }
+
+    private fun updateHealthCard(
+        assessment: HealthAssessment,
+        card: MaterialCardView,
+        titleView: TextView,
+        statusView: TextView,
+        descriptionView: TextView
+    ) {
+        val backgroundColor = when (assessment.status) {
+            TrafficLightStatus.GREEN -> R.color.traffic_green
+            TrafficLightStatus.YELLOW -> R.color.traffic_yellow
+            TrafficLightStatus.RED -> R.color.traffic_red
+        }
+        val textColor = when (assessment.status) {
+            TrafficLightStatus.YELLOW -> android.R.color.black
+            TrafficLightStatus.GREEN,
+            TrafficLightStatus.RED -> android.R.color.white
+        }
+        card.setCardBackgroundColor(ContextCompat.getColor(this, backgroundColor))
+        statusView.text = statusLabel(assessment.status)
+        descriptionView.text = assessment.message
+        val resolvedTextColor = ContextCompat.getColor(this, textColor)
+        titleView.setTextColor(resolvedTextColor)
+        statusView.setTextColor(resolvedTextColor)
+        descriptionView.setTextColor(resolvedTextColor)
+    }
+
+    private fun statusLabel(status: TrafficLightStatus): String {
+        return when (status) {
+            TrafficLightStatus.GREEN -> getString(R.string.health_status_green)
+            TrafficLightStatus.YELLOW -> getString(R.string.health_status_yellow)
+            TrafficLightStatus.RED -> getString(R.string.health_status_red)
         }
     }
 

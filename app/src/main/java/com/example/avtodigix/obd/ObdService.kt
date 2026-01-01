@@ -50,6 +50,9 @@ class ObdService(
             },
             longTermFuelTrimPercent = readPidIfSupported(0x07, supportedPids)?.getOrNull(2)?.let { value ->
                 (value - 128) * 100.0 / 128.0
+            },
+            batteryVoltageVolts = readPidIfSupported(0x42, supportedPids)?.let { bytes ->
+                if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 1000.0 else null
             }
         )
     }
@@ -164,7 +167,8 @@ data class LivePidSnapshot(
     val intakeTempCelsius: Int?,
     val engineLoadPercent: Double?,
     val shortTermFuelTrimPercent: Double?,
-    val longTermFuelTrimPercent: Double?
+    val longTermFuelTrimPercent: Double?,
+    val batteryVoltageVolts: Double?
 )
 
 data class LiveMetricDefinition(
@@ -179,5 +183,6 @@ val DEFAULT_LIVE_METRICS = listOf(
     LiveMetricDefinition(0x0F, "Температура впуска"),
     LiveMetricDefinition(0x04, "Нагрузка двигателя"),
     LiveMetricDefinition(0x06, "Краткосрочная коррекция топлива"),
-    LiveMetricDefinition(0x07, "Долгосрочная коррекция топлива")
+    LiveMetricDefinition(0x07, "Долгосрочная коррекция топлива"),
+    LiveMetricDefinition(0x42, "Напряжение модуля управления")
 )
