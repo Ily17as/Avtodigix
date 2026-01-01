@@ -191,6 +191,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         renderHealthSummary(
+            engineRpm = null,
+            vehicleSpeedKph = null,
             coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp)?.toInt(),
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
@@ -390,6 +392,8 @@ class MainActivity : AppCompatActivity() {
         }
         val dtcCount = (state.storedDtcs + state.pendingDtcs).distinct().size
         renderHealthSummary(
+            engineRpm = state.metrics?.engineRpm,
+            vehicleSpeedKph = state.metrics?.vehicleSpeedKph,
             coolantTempCelsius = state.metrics?.coolantTempCelsius,
             batteryVoltage = state.metrics?.batteryVoltageVolts,
             shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
@@ -399,12 +403,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderHealthSummary(
+        engineRpm: Int?,
+        vehicleSpeedKph: Int?,
         coolantTempCelsius: Int?,
         batteryVoltage: Double?,
         shortTermFuelTrimPercent: Double?,
         longTermFuelTrimPercent: Double?,
         dtcCount: Int?
     ) {
+        val dtcAssessment = HealthRules.evaluateDtcCount(dtcCount)
+        updateHealthCard(
+            assessment = HealthRules.evaluateEngine(
+                engineRpm = engineRpm,
+                vehicleSpeedKph = vehicleSpeedKph,
+                coolantTempCelsius = coolantTempCelsius,
+                dtcCount = dtcCount
+            ),
+            card = binding.engineCard,
+            titleView = binding.engineTitle,
+            statusView = binding.engineStatus,
+            descriptionView = binding.engineDescription
+        )
         updateHealthCard(
             assessment = HealthRules.evaluateCooling(coolantTempCelsius),
             card = binding.coolingCard,
@@ -427,7 +446,7 @@ class MainActivity : AppCompatActivity() {
             descriptionView = binding.batteryDescription
         )
         updateHealthCard(
-            assessment = HealthRules.evaluateDtcCount(dtcCount),
+            assessment = dtcAssessment,
             card = binding.dtcSummaryCard,
             titleView = binding.dtcSummaryTitle,
             statusView = binding.dtcSummaryStatus,

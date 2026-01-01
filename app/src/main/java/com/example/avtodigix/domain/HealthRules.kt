@@ -3,6 +3,43 @@ package com.example.avtodigix.domain
 import kotlin.math.abs
 
 object HealthRules {
+    fun evaluateEngine(
+        engineRpm: Int?,
+        vehicleSpeedKph: Int?,
+        coolantTempCelsius: Int?,
+        dtcCount: Int?
+    ): HealthAssessment {
+        if (engineRpm == null || vehicleSpeedKph == null || coolantTempCelsius == null) {
+            return HealthAssessment(
+                category = HealthCategory.ENGINE,
+                status = TrafficLightStatus.YELLOW,
+                message = "Недостаточно данных для оценки двигателя."
+            )
+        }
+
+        val dtcStatus = dtcCount
+            ?.takeIf { it > 0 }
+            ?.let { count -> evaluateDtcCount(count).status }
+
+        val status = when (dtcStatus) {
+            TrafficLightStatus.RED -> TrafficLightStatus.RED
+            TrafficLightStatus.YELLOW -> TrafficLightStatus.YELLOW
+            null -> TrafficLightStatus.GREEN
+            TrafficLightStatus.GREEN -> TrafficLightStatus.GREEN
+        }
+
+        val message = when (status) {
+            TrafficLightStatus.GREEN ->
+                "Двигатель работает штатно: обороты, скорость и температура в норме."
+            TrafficLightStatus.YELLOW ->
+                "Обнаружены диагностические коды, рекомендуется проверка двигателя."
+            TrafficLightStatus.RED ->
+                "Обнаружены критические диагностические коды, требуется срочная диагностика двигателя."
+        }
+
+        return HealthAssessment(HealthCategory.ENGINE, status, message)
+    }
+
     fun evaluateCooling(coolantTempCelsius: Int?): HealthAssessment {
         if (coolantTempCelsius == null) {
             return HealthAssessment(
