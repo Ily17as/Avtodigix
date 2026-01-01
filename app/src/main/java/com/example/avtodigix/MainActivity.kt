@@ -119,6 +119,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
         }
 
+        binding.connectionPairedSettingsButton.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+        }
+
         binding.summaryClearHistory.setOnClickListener {
             ioScope.launch {
                 repository.clearHistory()
@@ -292,6 +296,7 @@ class MainActivity : AppCompatActivity() {
         binding.bluetoothDisabledGroup.isVisible = !adapterEnabled
         pairedDeviceAdapter.submitList(state.pairedDevices, state.selectedDeviceAddress)
         binding.connectionPairedEmpty.isVisible = state.pairedDevices.isEmpty()
+        binding.connectionPairedSettingsButton.isVisible = state.pairedDevices.isEmpty()
 
         binding.connectionConnect.isEnabled = state.status == ConnectionState.Status.Idle ||
             state.status == ConnectionState.Status.Error
