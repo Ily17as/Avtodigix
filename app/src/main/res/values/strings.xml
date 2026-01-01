@@ -74,8 +74,10 @@
     <string name="metric_engine_temp_value">92°C · норма</string>
     <string name="metric_battery_voltage">Напряжение аккумулятора</string>
     <string name="metric_battery_voltage_value">12,1 В · низкое</string>
-    <string name="metric_fuel_trim">Топливная коррекция</string>
+    <string name="metric_fuel_trim">Краткосрочная топливная коррекция</string>
     <string name="metric_fuel_trim_value">+8% · норма</string>
+    <string name="metric_fuel_trim_long">Долгосрочная топливная коррекция</string>
+    <string name="metric_fuel_trim_long_value">+3% · норма</string>
     <string name="metrics_status">Статус обновления: подключено, последняя синхронизация 5 сек назад.</string>
 
     <string name="dtc_title">Коды неисправностей</string>

@@ -196,6 +196,9 @@ class MainActivity : AppCompatActivity() {
             metrics.shortTermFuelTrimPercent?.let { value ->
                 put(getString(R.string.metric_fuel_trim), value)
             }
+            metrics.longTermFuelTrimPercent?.let { value ->
+                put(getString(R.string.metric_fuel_trim_long), value)
+            }
         }
     }
 
@@ -212,6 +215,7 @@ class MainActivity : AppCompatActivity() {
         updateMetricValue(binding.metricEngineTemp, binding.metricEngineTempValue, snapshot)
         updateMetricValue(binding.metricBatteryVoltage, binding.metricBatteryVoltageValue, snapshot)
         updateMetricValue(binding.metricFuelTrim, binding.metricFuelTrimValue, snapshot)
+        updateMetricValue(binding.metricFuelTrimLong, binding.metricFuelTrimLongValue, snapshot)
 
         if (snapshot.dtcList.isNotEmpty()) {
             binding.dtcStoredDetail.text = formatDtcList(snapshot.dtcList)
@@ -223,7 +227,7 @@ class MainActivity : AppCompatActivity() {
             coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp),
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
-            longTermFuelTrimPercent = null,
+            longTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim_long),
             dtcCount = snapshot.dtcList.size
         )
     }
@@ -388,21 +392,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateLiveMetrics(snapshot: com.example.avtodigix.obd.LivePidSnapshot) {
-        snapshot.engineRpm?.let { value ->
-            updateMetricValue(binding.metricEngineRpmValue, value.toDouble())
-        }
-        snapshot.vehicleSpeedKph?.let { value ->
-            updateMetricValue(binding.metricVehicleSpeedValue, value.toDouble())
-        }
-        snapshot.coolantTempCelsius?.let { value ->
-            updateMetricValue(binding.metricEngineTempValue, value.toDouble())
-        }
-        snapshot.shortTermFuelTrimPercent?.let { value ->
-            updateMetricValue(binding.metricFuelTrimValue, value)
-        }
-        snapshot.batteryVoltageVolts?.let { value ->
-            updateMetricValue(binding.metricBatteryVoltageValue, value)
-        }
+        updateMetricValueOrPlaceholder(binding.metricEngineRpmValue, snapshot.engineRpm)
+        updateMetricValueOrPlaceholder(
+            binding.metricVehicleSpeedValue,
+            snapshot.vehicleSpeedKph?.toDouble()
+        )
+        updateMetricValueOrPlaceholder(
+            binding.metricEngineTempValue,
+            snapshot.coolantTempCelsius?.toDouble()
+        )
+        updateMetricValueOrPlaceholder(binding.metricFuelTrimValue, snapshot.shortTermFuelTrimPercent)
+        updateMetricValueOrPlaceholder(binding.metricFuelTrimLongValue, snapshot.longTermFuelTrimPercent)
+        updateMetricValueOrPlaceholder(
+            binding.metricBatteryVoltageValue,
+            snapshot.batteryVoltageVolts
+        )
     }
 
     private fun renderObdState(state: ObdState) {
@@ -529,6 +533,14 @@ class MainActivity : AppCompatActivity() {
         valueView.text = if (updated == current) formatted else updated
     }
 
+    private fun updateMetricValueOrPlaceholder(valueView: TextView, value: Double?) {
+        if (value == null) {
+            valueView.text = PLACEHOLDER_VALUE
+        } else {
+            updateMetricValue(valueView, value)
+        }
+    }
+
     private fun formatDtcList(codes: List<String>): String {
         return codes
             .map { code ->
@@ -562,5 +574,6 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
+        const val PLACEHOLDER_VALUE = "—"
     }
 }
