@@ -166,6 +166,12 @@ class MainActivity : AppCompatActivity() {
     private fun buildKeyMetricsFromState(state: ObdState): Map<String, Double> {
         val metrics = state.metrics ?: return emptyMap()
         return buildMap {
+            metrics.engineRpm?.let { value ->
+                put(getString(R.string.metric_engine_rpm), value.toDouble())
+            }
+            metrics.vehicleSpeedKph?.let { value ->
+                put(getString(R.string.metric_vehicle_speed), value.toDouble())
+            }
             metrics.coolantTempCelsius?.let { value ->
                 put(getString(R.string.metric_engine_temp), value.toDouble())
             }
@@ -186,6 +192,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applySnapshotToUi(snapshot: ScanSnapshot) {
+        updateMetricValue(binding.metricEngineRpm, binding.metricEngineRpmValue, snapshot)
+        updateMetricValue(binding.metricVehicleSpeed, binding.metricVehicleSpeedValue, snapshot)
         updateMetricValue(binding.metricEngineTemp, binding.metricEngineTempValue, snapshot)
         updateMetricValue(binding.metricBatteryVoltage, binding.metricBatteryVoltageValue, snapshot)
         updateMetricValue(binding.metricFuelTrim, binding.metricFuelTrimValue, snapshot)
@@ -195,8 +203,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         renderHealthSummary(
-            engineRpm = null,
-            vehicleSpeedKph = null,
+            engineRpm = readSnapshotMetric(snapshot, R.string.metric_engine_rpm)?.toInt(),
+            vehicleSpeedKph = readSnapshotMetric(snapshot, R.string.metric_vehicle_speed)?.toInt(),
             coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp)?.toInt(),
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
