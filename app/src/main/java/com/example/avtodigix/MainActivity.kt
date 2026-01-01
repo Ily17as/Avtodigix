@@ -21,10 +21,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.card.MaterialCardView
-import com.example.avtodigix.connection.ConnectionPhase
-import com.example.avtodigix.connection.ConnectionUiState
+import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.ConnectionViewModelFactory
 import com.example.avtodigix.connection.ConnectionViewModel
+import com.example.avtodigix.connection.ObdState
 import com.example.avtodigix.connection.PairedDeviceAdapter
 import com.example.avtodigix.connection.PermissionStatus
 import com.example.avtodigix.connection.SelectedDeviceStore
@@ -123,8 +123,15 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                connectionViewModel.state.collect { state ->
-                    renderConnectionState(state, permissionsLauncher)
+                launch {
+                    connectionViewModel.connectionState.collect { state ->
+                        renderConnectionState(state, permissionsLauncher)
+                    }
+                }
+                launch {
+                    connectionViewModel.obdState.collect { state ->
+                        renderObdState(state)
+                    }
                 }
             }
         }
@@ -217,36 +224,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderConnectionState(
-        state: ConnectionUiState,
+        state: ConnectionState,
         permissionsLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
     ) {
-        when (state.phase) {
-            ConnectionPhase.Idle -> {
+        when (state.status) {
+            ConnectionState.Status.Idle -> {
                 binding.connectionStatus.text = "Статус: не подключено"
                 binding.connectionStatusDetail.text = "Нажмите Connect для начала диагностики."
             }
-            ConnectionPhase.PermissionsRequired -> {
+            ConnectionState.Status.PermissionsRequired -> {
                 binding.connectionStatus.text = "Статус: требуется доступ к Bluetooth"
                 binding.connectionStatusDetail.text = "Подтвердите разрешения для подключения."
                 if (state.permissionStatus != PermissionStatus.PermanentlyDenied) {
                     requestBluetoothPermissions(permissionsLauncher)
                 }
             }
-            ConnectionPhase.Connecting -> {
+            ConnectionState.Status.SelectingDevice -> {
+                binding.connectionStatus.text = "Статус: выберите устройство"
+                binding.connectionStatusDetail.text = state.errorMessage
+                    ?: "Выберите OBD адаптер из списка."
+            }
+            ConnectionState.Status.Connecting -> {
                 val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
                 binding.connectionStatus.text = "Статус: подключение"
                 binding.connectionStatusDetail.text = "Подключение к $deviceName."
             }
-            ConnectionPhase.Connected -> {
+            ConnectionState.Status.Initializing -> {
+                val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
+                binding.connectionStatus.text = "Статус: инициализация"
+                binding.connectionStatusDetail.text = "Настройка $deviceName."
+            }
+            ConnectionState.Status.Connected -> {
                 val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
                 binding.connectionStatus.text = "Статус: подключено"
                 binding.connectionStatusDetail.text = "Соединение с $deviceName установлено."
             }
-            ConnectionPhase.AdapterUnavailable -> {
-                binding.connectionStatus.text = "Статус: Bluetooth недоступен"
-                binding.connectionStatusDetail.text = "Проверьте, включен ли Bluetooth на устройстве."
-            }
-            ConnectionPhase.Error -> {
+            ConnectionState.Status.Error -> {
                 binding.connectionStatus.text = "Статус: ошибка подключения"
                 binding.connectionStatusDetail.text = state.errorMessage ?: "Не удалось подключиться."
             }
@@ -261,27 +274,12 @@ class MainActivity : AppCompatActivity() {
         pairedDeviceAdapter.submitList(state.pairedDevices, state.selectedDeviceAddress)
         binding.connectionPairedEmpty.isVisible = state.pairedDevices.isEmpty()
 
-        binding.connectionConnect.isEnabled = state.phase == ConnectionPhase.Idle ||
-            state.phase == ConnectionPhase.Error ||
-            state.phase == ConnectionPhase.AdapterUnavailable
-        binding.connectionDisconnect.isEnabled = state.phase == ConnectionPhase.Connecting ||
-            state.phase == ConnectionPhase.Connected
+        binding.connectionConnect.isEnabled = state.status == ConnectionState.Status.Idle ||
+            state.status == ConnectionState.Status.Error
+        binding.connectionDisconnect.isEnabled = state.status == ConnectionState.Status.Connecting ||
+            state.status == ConnectionState.Status.Initializing ||
+            state.status == ConnectionState.Status.Connected
 
-        state.liveSnapshot?.let { snapshot ->
-            updateLiveMetrics(snapshot)
-        }
-        binding.dtcStoredDetail.text = if (state.storedDtcs.isNotEmpty()) {
-            state.storedDtcs.joinToString(separator = "\n")
-        } else {
-            getString(R.string.dtc_no_codes)
-        }
-        binding.dtcPendingDetail.text = if (state.pendingDtcs.isNotEmpty()) {
-            state.pendingDtcs.joinToString(separator = "\n")
-        } else {
-            getString(R.string.dtc_no_codes)
-        }
-
-        renderHealthSummaryForState(state)
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
     }
 
@@ -291,7 +289,7 @@ class MainActivity : AppCompatActivity() {
         val permissions = requiredBluetoothPermissions()
         if (permissions.isEmpty()) {
             if (!permissionsRequestInFlight) {
-                connectionViewModel.onPermissionsResult(true)
+                connectionViewModel.onPermissionsResult(true, false)
             }
             return
         }
@@ -300,7 +298,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (hasPermissions) {
             if (!permissionsRequestInFlight) {
-                connectionViewModel.onPermissionsResult(true)
+                connectionViewModel.onPermissionsResult(true, false)
             }
             return
         }
@@ -377,18 +375,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderHealthSummaryForState(state: ConnectionUiState) {
-        val dtcCount = if (state.phase == ConnectionPhase.Connected) {
-            (state.storedDtcs + state.pendingDtcs).distinct().size
-        } else {
-            null
+    private fun renderObdState(state: ObdState) {
+        state.metrics?.let { snapshot ->
+            updateLiveMetrics(snapshot)
         }
+        binding.dtcStoredDetail.text = if (state.storedDtcs.isNotEmpty()) {
+            state.storedDtcs.joinToString(separator = "\n")
+        } else {
+            getString(R.string.dtc_no_codes)
+        }
+        binding.dtcPendingDetail.text = if (state.pendingDtcs.isNotEmpty()) {
+            state.pendingDtcs.joinToString(separator = "\n")
+        } else {
+            getString(R.string.dtc_no_codes)
+        }
+        val dtcCount = (state.storedDtcs + state.pendingDtcs).distinct().size
         renderHealthSummary(
-            coolantTempCelsius = state.liveSnapshot?.coolantTempCelsius,
-            batteryVoltage = state.liveSnapshot?.batteryVoltageVolts,
-            shortTermFuelTrimPercent = state.liveSnapshot?.shortTermFuelTrimPercent,
-            longTermFuelTrimPercent = state.liveSnapshot?.longTermFuelTrimPercent,
-            dtcCount = dtcCount
+            coolantTempCelsius = state.metrics?.coolantTempCelsius,
+            batteryVoltage = state.metrics?.batteryVoltageVolts,
+            shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
+            longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
+            dtcCount = dtcCount.takeIf { it > 0 }
         )
     }
 

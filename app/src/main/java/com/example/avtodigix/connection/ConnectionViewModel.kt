@@ -28,8 +28,10 @@ class ConnectionViewModel(
     private val connectionManager: BluetoothConnectionManager = BluetoothConnectionManager(),
     private val selectedDeviceStore: SelectedDeviceStore
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ConnectionUiState())
-    val state: StateFlow<ConnectionUiState> = _state
+    private val _connectionState = MutableStateFlow(ConnectionState())
+    val connectionState: StateFlow<ConnectionState> = _connectionState
+    private val _obdState = MutableStateFlow(ObdState())
+    val obdState: StateFlow<ObdState> = _obdState
 
     private var connectJob: Job? = null
     private var readJob: Job? = null
@@ -37,7 +39,7 @@ class ConnectionViewModel(
     private var obdService: ObdService? = null
 
     init {
-        updateState {
+        updateConnectionState {
             copy(selectedDeviceAddress = selectedDeviceStore.getSelectedDeviceAddress())
         }
         refreshPairedDevices()
@@ -45,24 +47,25 @@ class ConnectionViewModel(
             connectionManager.status.collect { status ->
                 when (status) {
                     ConnectionStatus.AdapterNotResponding -> {
-                        updateState {
+                        updateConnectionState {
                             copy(
-                                phase = ConnectionPhase.AdapterUnavailable,
+                                status = ConnectionState.Status.Error,
                                 errorMessage = "Bluetooth адаптер недоступен."
                             )
                         }
                     }
                     ConnectionStatus.NoConnection -> {
-                        if (state.value.phase == ConnectionPhase.Connected ||
-                            state.value.phase == ConnectionPhase.Connecting
+                        if (connectionState.value.status == ConnectionState.Status.Connected ||
+                            connectionState.value.status == ConnectionState.Status.Connecting ||
+                            connectionState.value.status == ConnectionState.Status.Initializing
                         ) {
-                            updateState { copy(phase = ConnectionPhase.Idle) }
+                            updateConnectionState { copy(status = ConnectionState.Status.Idle) }
                         }
                     }
                     ConnectionStatus.Connected -> {
-                        updateState {
+                        updateConnectionState {
                             copy(
-                                phase = ConnectionPhase.Connecting,
+                                status = ConnectionState.Status.Connecting,
                                 log = appendLog("Bluetooth соединение установлено.")
                             )
                         }
@@ -73,9 +76,9 @@ class ConnectionViewModel(
     }
 
     fun onConnectRequested() {
-        updateState {
+        updateConnectionState {
             copy(
-                phase = ConnectionPhase.PermissionsRequired,
+                status = ConnectionState.Status.PermissionsRequired,
                 permissionStatus = PermissionStatus.Requested,
                 errorMessage = null,
                 log = appendLog("Запрос разрешений Bluetooth.")
@@ -85,9 +88,9 @@ class ConnectionViewModel(
 
     fun onPermissionsResult(granted: Boolean, permanentlyDenied: Boolean) {
         if (!granted) {
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Error,
+                    status = ConnectionState.Status.Error,
                     permissionStatus = if (permanentlyDenied) {
                         PermissionStatus.PermanentlyDenied
                     } else {
@@ -102,21 +105,29 @@ class ConnectionViewModel(
             }
             return
         }
-        updateState { copy(permissionStatus = PermissionStatus.None) }
+        updateConnectionState { copy(permissionStatus = PermissionStatus.None) }
         refreshPairedDevices()
         if (connectJob?.isActive == true) {
             return
         }
         connectJob?.cancel()
-        connectJob = viewModelScope.launch {
-            connectToDevice()
+        val selectedAddress = connectionState.value.selectedDeviceAddress
+        if (selectedAddress.isNullOrBlank()) {
+            updateConnectionState {
+                copy(
+                    status = ConnectionState.Status.SelectingDevice,
+                    errorMessage = "Выберите Bluetooth-устройство из списка."
+                )
+            }
+            return
         }
+        connectJob = viewModelScope.launch { connectToDevice() }
     }
 
     fun onPermissionsRetryRequested() {
-        updateState {
+        updateConnectionState {
             copy(
-                phase = ConnectionPhase.PermissionsRequired,
+                status = ConnectionState.Status.PermissionsRequired,
                 permissionStatus = PermissionStatus.Requested,
                 errorMessage = null,
                 log = appendLog("Повторный запрос разрешений Bluetooth.")
@@ -133,22 +144,23 @@ class ConnectionViewModel(
             session = null
             obdService = null
             connectionManager.disconnect()
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Idle,
+                    status = ConnectionState.Status.Idle,
                     permissionStatus = PermissionStatus.None,
                     log = appendLog("Соединение завершено пользователем.")
                 )
             }
+            _obdState.value = ObdState()
         }
     }
 
     fun refreshPairedDevices() {
         viewModelScope.launch {
             val devices = connectionManager.getPairedDevices()
-            val selectedAddress = state.value.selectedDeviceAddress
+            val selectedAddress = connectionState.value.selectedDeviceAddress
             val selectedDevice = devices.firstOrNull { it.address == selectedAddress }
-            updateState {
+            updateConnectionState {
                 copy(
                     pairedDevices = devices,
                     selectedDeviceName = selectedDevice?.name
@@ -159,11 +171,12 @@ class ConnectionViewModel(
 
     fun onPairedDeviceSelected(device: PairedDevice) {
         selectedDeviceStore.setSelectedDeviceAddress(device.address)
-        updateState {
+        updateConnectionState {
             copy(
                 selectedDeviceAddress = device.address,
                 selectedDeviceName = device.name,
-                errorMessage = null
+                errorMessage = null,
+                status = ConnectionState.Status.Idle
             )
         }
     }
@@ -179,39 +192,39 @@ class ConnectionViewModel(
     }
 
     private suspend fun connectToDevice() {
-        val selectedAddress = state.value.selectedDeviceAddress
+        val selectedAddress = connectionState.value.selectedDeviceAddress
         if (selectedAddress.isNullOrBlank()) {
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Error,
+                    status = ConnectionState.Status.Error,
                     errorMessage = "Выберите Bluetooth-устройство из списка."
                 )
             }
             return
         }
-        updateState {
+        updateConnectionState {
             copy(
-                phase = ConnectionPhase.Connecting,
+                status = ConnectionState.Status.Connecting,
                 errorMessage = null,
                 log = appendLog("Поиск сопряженных устройств.")
             )
         }
         val devices = connectionManager.getPairedDevices()
-        updateState { copy(pairedDevices = devices) }
+        updateConnectionState { copy(pairedDevices = devices) }
         val selected = devices.firstOrNull { it.address == selectedAddress }
         if (selected == null) {
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Error,
+                    status = ConnectionState.Status.Error,
                     errorMessage = "Выбранное устройство не найдено в списке сопряженных."
                 )
             }
             return
         }
-        updateState {
+        updateConnectionState {
             copy(
                 selectedDeviceName = selected.name,
-                phase = ConnectionPhase.Connecting,
+                status = ConnectionState.Status.Connecting,
                 log = appendLog("Подключение к ${selected.name}.")
             )
         }
@@ -220,9 +233,9 @@ class ConnectionViewModel(
         val transport = try {
             waitForTransport()
         } catch (error: TimeoutCancellationException) {
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Error,
+                    status = ConnectionState.Status.Error,
                     errorMessage = "Истекло время ожидания подключения."
                 )
             }
@@ -231,22 +244,27 @@ class ConnectionViewModel(
 
         val newSession = ElmSession(transport.input, transport.output, parentScope = viewModelScope)
         session = newSession
-        updateState { copy(log = appendLog("Инициализация ELM327.")) }
+        updateConnectionState {
+            copy(
+                status = ConnectionState.Status.Initializing,
+                log = appendLog("Инициализация ELM327.")
+            )
+        }
 
         try {
             newSession.initialize()
         } catch (error: IOException) {
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Error,
+                    status = ConnectionState.Status.Error,
                     errorMessage = "Ошибка инициализации адаптера."
                 )
             }
             return
         } catch (error: IllegalStateException) {
-            updateState {
+            updateConnectionState {
                 copy(
-                    phase = ConnectionPhase.Error,
+                    status = ConnectionState.Status.Error,
                     errorMessage = "Ошибка при настройке ELM327."
                 )
             }
@@ -259,15 +277,17 @@ class ConnectionViewModel(
         val availableMetrics = DEFAULT_LIVE_METRICS.filter { metric ->
             supportedPids.containsKey(metric.pid)
         }
-        val supportedPidSet = supportedPids.keys.takeIf { it.isNotEmpty() }
-        updateState {
+        val supportedPidSet = supportedPids.keys.toSet()
+        val supportedPidSetOrNull = supportedPidSet.takeIf { it.isNotEmpty() }
+        _obdState.value = _obdState.value.copy(supportedPids = supportedPidSet)
+        updateConnectionState {
             copy(
-                phase = ConnectionPhase.Connected,
+                status = ConnectionState.Status.Connected,
                 supportedMetrics = availableMetrics,
                 log = appendLog("OBD сервис готов, начинаем чтение данных.")
             )
         }
-        startReading(service, supportedPidSet)
+        startReading(service, supportedPidSetOrNull)
     }
 
     private suspend fun waitForTransport(): BluetoothTransport {
@@ -283,23 +303,22 @@ class ConnectionViewModel(
                 val liveSnapshot = runCatching { service.readLiveData(supportedPids) }.getOrNull()
                 val storedDtcs = runCatching { service.readStoredDtcs() }.getOrDefault(emptyList())
                 val pendingDtcs = runCatching { service.readPendingDtcs() }.getOrDefault(emptyList())
-                updateState {
-                    copy(
-                        liveSnapshot = liveSnapshot ?: this.liveSnapshot,
-                        storedDtcs = storedDtcs,
-                        pendingDtcs = pendingDtcs
-                    )
-                }
+                _obdState.value = _obdState.value.copy(
+                    metrics = liveSnapshot ?: _obdState.value.metrics,
+                    storedDtcs = storedDtcs,
+                    pendingDtcs = pendingDtcs,
+                    lastUpdatedMillis = System.currentTimeMillis()
+                )
                 delay(LIVE_DATA_REFRESH_MILLIS)
             }
         }
     }
 
-    private fun updateState(transform: ConnectionUiState.() -> ConnectionUiState) {
-        _state.value = _state.value.transform()
+    private fun updateConnectionState(transform: ConnectionState.() -> ConnectionState) {
+        _connectionState.value = _connectionState.value.transform()
     }
 
-    private fun ConnectionUiState.appendLog(message: String): String {
+    private fun ConnectionState.appendLog(message: String): String {
         return if (log.isBlank()) {
             message
         } else {
@@ -314,28 +333,34 @@ class ConnectionViewModel(
     }
 }
 
-data class ConnectionUiState(
-    val phase: ConnectionPhase = ConnectionPhase.Idle,
+data class ConnectionState(
+    val status: Status = Status.Idle,
     val selectedDeviceName: String? = null,
     val selectedDeviceAddress: String? = null,
     val pairedDevices: List<PairedDevice> = emptyList(),
     val log: String = "",
-    val liveSnapshot: LivePidSnapshot? = null,
     val supportedMetrics: List<LiveMetricDefinition> = emptyList(),
-    val storedDtcs: List<String> = emptyList(),
-    val pendingDtcs: List<String> = emptyList(),
     val errorMessage: String? = null,
     val permissionStatus: PermissionStatus = PermissionStatus.None
-)
-
-enum class ConnectionPhase {
-    Idle,
-    PermissionsRequired,
-    Connecting,
-    Connected,
-    AdapterUnavailable,
-    Error
+) {
+    enum class Status {
+        Idle,
+        PermissionsRequired,
+        SelectingDevice,
+        Connecting,
+        Initializing,
+        Connected,
+        Error
+    }
 }
+
+data class ObdState(
+    val metrics: LivePidSnapshot? = null,
+    val storedDtcs: List<String> = emptyList(),
+    val pendingDtcs: List<String> = emptyList(),
+    val supportedPids: Set<Int> = emptySet(),
+    val lastUpdatedMillis: Long? = null
+)
 
 enum class PermissionStatus {
     None,
