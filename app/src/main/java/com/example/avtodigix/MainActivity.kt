@@ -486,6 +486,21 @@ class MainActivity : AppCompatActivity() {
         ioScope.cancel()
     }
 
+    override fun onStart() {
+        super.onStart()
+        connectionViewModel.resumePolling()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        connectionViewModel.stopPolling()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        connectionViewModel.stopPolling()
+    }
+
     private companion object {
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
         val DTC_REGEX = Regex("[PCBU][0-9A-F]{4}")

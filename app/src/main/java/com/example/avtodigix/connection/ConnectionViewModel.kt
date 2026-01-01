@@ -37,6 +37,7 @@ class ConnectionViewModel(
     private var readJob: Job? = null
     private var session: ElmSession? = null
     private var obdService: ObdService? = null
+    private var supportedPids: Set<Int>? = null
 
     init {
         updateConnectionState {
@@ -140,10 +141,14 @@ class ConnectionViewModel(
         readJob?.cancel()
         readJob = null
         viewModelScope.launch {
-            session?.close()
-            session = null
-            obdService = null
-            connectionManager.disconnect()
+            try {
+                session?.close()
+            } finally {
+                session = null
+                obdService = null
+                supportedPids = null
+                connectionManager.disconnect()
+            }
             updateConnectionState {
                 copy(
                     status = ConnectionState.Status.Idle,
@@ -153,6 +158,19 @@ class ConnectionViewModel(
             }
             _obdState.value = ObdState()
         }
+    }
+
+    fun stopPolling() {
+        readJob?.cancel()
+        readJob = null
+    }
+
+    fun resumePolling() {
+        val service = obdService ?: return
+        if (readJob?.isActive == true) {
+            return
+        }
+        startReading(service, supportedPids)
     }
 
     fun refreshPairedDevices() {
@@ -186,8 +204,14 @@ class ConnectionViewModel(
         connectJob?.cancel()
         readJob?.cancel()
         viewModelScope.launch {
-            session?.close()
-            connectionManager.disconnect()
+            try {
+                session?.close()
+            } finally {
+                session = null
+                obdService = null
+                supportedPids = null
+                connectionManager.disconnect()
+            }
         }
     }
 
@@ -279,6 +303,7 @@ class ConnectionViewModel(
         }
         val supportedPidSet = supportedPids.keys.toSet()
         val supportedPidSetOrNull = supportedPidSet.takeIf { it.isNotEmpty() }
+        this.supportedPids = supportedPidSetOrNull
         _obdState.value = _obdState.value.copy(supportedPids = supportedPidSet)
         updateConnectionState {
             copy(
