@@ -46,11 +46,24 @@ class PairedDeviceAdapter(
             val density = binding.root.resources.displayMetrics.density
             val selectedWidth = (2 * density).roundToInt()
             val normalWidth = (1 * density).roundToInt()
-            val strokeColor = if (isSelected) {
+            
+            // Try resolving colorPrimary, fallback to a safe default if not found
+            val primaryColor = try {
                 MaterialColors.getColor(binding.pairedDeviceCard, com.google.android.material.R.attr.colorPrimary)
-            } else {
-                MaterialColors.getColor(binding.pairedDeviceCard, com.google.android.material.R.attr.colorOutline)
+            } catch (e: Exception) {
+                // Fallback to black or another safe color if attribute resolution fails
+                android.graphics.Color.BLACK 
             }
+            
+            // Try resolving colorOutline, fallback to a safe default
+            val outlineColor = try {
+                MaterialColors.getColor(binding.pairedDeviceCard, com.google.android.material.R.attr.colorOutline)
+            } catch (e: Exception) {
+                // Fallback to gray
+                android.graphics.Color.GRAY
+            }
+            
+            val strokeColor = if (isSelected) primaryColor else outlineColor
             binding.pairedDeviceCard.strokeWidth = if (isSelected) selectedWidth else normalWidth
             binding.pairedDeviceCard.strokeColor = strokeColor
             binding.pairedDeviceCard.setOnClickListener {

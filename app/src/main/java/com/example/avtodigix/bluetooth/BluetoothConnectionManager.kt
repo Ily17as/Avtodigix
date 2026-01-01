@@ -1,8 +1,13 @@
 package com.example.avtodigix.bluetooth
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +24,7 @@ import java.io.OutputStream
 import java.util.UUID
 
 class BluetoothConnectionManager(
+    private val context: Context,
     private val adapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     parentScope: CoroutineScope? = null,
@@ -44,6 +50,11 @@ class BluetoothConnectionManager(
             return@withContext emptyList()
         }
 
+        if (!hasConnectPermission()) {
+            _status.value = ConnectionStatus.NoConnection
+            return@withContext emptyList()
+        }
+
         return@withContext runCatching {
             bluetoothAdapter.bondedDevices.map { device ->
                 PairedDevice(
@@ -66,6 +77,11 @@ class BluetoothConnectionManager(
                 return@launch
             }
 
+            if (!hasConnectPermission() || !hasScanPermission()) {
+                 _status.value = ConnectionStatus.NoConnection
+                return@launch
+            }
+
             val device = runCatching { bluetoothAdapter.getRemoteDevice(address) }
                 .getOrElse {
                     _status.value = ConnectionStatus.NoConnection
@@ -85,6 +101,22 @@ class BluetoothConnectionManager(
         }
     }
 
+    private fun hasConnectPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun hasScanPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // Not required for classic discovery/connection in this context usually, or covered by BLUETOOTH/ADMIN
+        }
+    }
+
     private suspend fun attemptConnectionWithRetry(device: BluetoothDevice, uuid: UUID) {
         var attempts = 0
         while (scope.coroutineContext[Job]?.isActive == true && attempts < maxRetries) {
@@ -100,6 +132,11 @@ class BluetoothConnectionManager(
     }
 
     private suspend fun tryConnect(device: BluetoothDevice, uuid: UUID): Boolean = withContext(ioDispatcher) {
+        if (!hasConnectPermission()) {
+             _status.value = ConnectionStatus.NoConnection
+            return@withContext false
+        }
+
         closeSocket()
         val createdSocket = runCatching { device.createRfcommSocketToServiceRecord(uuid) }
             .getOrElse {

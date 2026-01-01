@@ -218,17 +218,17 @@
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                     android:textColor="@color/warning_text" />
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:gravity="space_between"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/connectionConnect"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
                         android:text="@string/action_connect" />
 
                     <com.google.android.material.button.MaterialButton
@@ -236,14 +236,14 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
                         android:text="@string/action_disconnect" />
-                </LinearLayout>
+                </RelativeLayout>
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:gravity="space_between"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
@@ -251,14 +251,16 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
                         android:text="@string/action_back" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/connectionNext"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
                         android:text="@string/action_next" />
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
         </ScrollView>
 
@@ -526,11 +528,10 @@
                     android:layout_marginTop="12dp"
                     android:text="@string/action_delete_history" />
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:gravity="space_between"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
@@ -538,14 +539,16 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
                         android:text="@string/action_back" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/summaryNext"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
                         android:text="@string/action_next" />
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
         </ScrollView>
 
@@ -708,11 +711,10 @@
                     android:text="@string/metrics_status"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:gravity="space_between"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
@@ -720,14 +722,16 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
                         android:text="@string/action_back" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/metricsNext"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
                         android:text="@string/action_next" />
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
         </ScrollView>
 
@@ -833,11 +837,10 @@
                     android:layout_marginTop="16dp"
                     android:text="@string/action_what_to_do" />
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:gravity="space_between"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
@@ -845,14 +848,16 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
                         android:text="@string/action_back" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/dtcFinish"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
                         android:text="@string/action_finish" />
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
         </ScrollView>
     </ViewFlipper>

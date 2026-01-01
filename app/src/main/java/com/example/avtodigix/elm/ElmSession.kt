@@ -150,7 +150,8 @@ class ElmSession(
                 }
             } else {
                 if (System.currentTimeMillis() - lastReadAt > watchdogTimeoutMillis) {
-                    throw TimeoutCancellationException("ELM watchdog timeout")
+                    // Use standard IOException instead of internal exception
+                    throw IOException("ELM watchdog timeout")
                 }
                 delay(10)
             }

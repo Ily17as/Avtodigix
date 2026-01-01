@@ -26,7 +26,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ConnectionViewModel(
-    private val connectionManager: BluetoothConnectionManager = BluetoothConnectionManager(),
+    private val connectionManager: BluetoothConnectionManager,
     private val selectedDeviceStore: SelectedDeviceStore
 ) : ViewModel() {
     private val _connectionState = MutableStateFlow(ConnectionState())

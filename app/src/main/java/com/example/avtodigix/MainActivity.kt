@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         val selectedDeviceStore = SelectedDeviceStore(applicationContext)
         connectionViewModel = ViewModelProvider(
             this,
-            ConnectionViewModelFactory(selectedDeviceStore = selectedDeviceStore)
+            ConnectionViewModelFactory(applicationContext, selectedDeviceStore)
         )[ConnectionViewModel::class.java]
         pairedDeviceAdapter = PairedDeviceAdapter { device ->
             connectionViewModel.onPairedDeviceSelected(device)
@@ -205,9 +205,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         renderHealthSummary(
-            engineRpm = readSnapshotMetric(snapshot, R.string.metric_engine_rpm)?.toInt(),
-            vehicleSpeedKph = readSnapshotMetric(snapshot, R.string.metric_vehicle_speed)?.toInt(),
-            coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp)?.toInt(),
+            engineRpm = readSnapshotMetric(snapshot, R.string.metric_engine_rpm),
+            vehicleSpeedKph = readSnapshotMetric(snapshot, R.string.metric_vehicle_speed),
+            coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp),
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
             longTermFuelTrimPercent = null,
@@ -373,7 +373,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLiveMetrics(snapshot: com.example.avtodigix.obd.LivePidSnapshot) {
         snapshot.engineRpm?.let { value ->
-            updateMetricValue(binding.metricEngineRpmValue, value)
+            updateMetricValue(binding.metricEngineRpmValue, value.toDouble())
         }
         snapshot.vehicleSpeedKph?.let { value ->
             updateMetricValue(binding.metricVehicleSpeedValue, value.toDouble())
@@ -407,8 +407,8 @@ class MainActivity : AppCompatActivity() {
         val dtcCount = (state.storedDtcs + state.pendingDtcs).distinct().size
         renderHealthSummary(
             engineRpm = state.metrics?.engineRpm,
-            vehicleSpeedKph = state.metrics?.vehicleSpeedKph,
-            coolantTempCelsius = state.metrics?.coolantTempCelsius,
+            vehicleSpeedKph = state.metrics?.vehicleSpeedKph?.toDouble(),
+            coolantTempCelsius = state.metrics?.coolantTempCelsius?.toDouble(),
             batteryVoltage = state.metrics?.batteryVoltageVolts,
             shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
@@ -417,9 +417,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderHealthSummary(
-        engineRpm: Int?,
-        vehicleSpeedKph: Int?,
-        coolantTempCelsius: Int?,
+        engineRpm: Double?,
+        vehicleSpeedKph: Double?,
+        coolantTempCelsius: Double?,
         batteryVoltage: Double?,
         shortTermFuelTrimPercent: Double?,
         longTermFuelTrimPercent: Double?,
@@ -428,9 +428,9 @@ class MainActivity : AppCompatActivity() {
         val dtcAssessment = HealthRules.evaluateDtcCount(dtcCount)
         updateHealthCard(
             assessment = HealthRules.evaluateEngine(
-                engineRpm = engineRpm,
-                vehicleSpeedKph = vehicleSpeedKph,
-                coolantTempCelsius = coolantTempCelsius,
+                engineRpm = engineRpm?.toInt(),
+                vehicleSpeedKph = vehicleSpeedKph?.toInt(),
+                coolantTempCelsius = coolantTempCelsius?.toInt(),
                 dtcCount = dtcCount
             ),
             card = binding.engineCard,
@@ -439,7 +439,7 @@ class MainActivity : AppCompatActivity() {
             descriptionView = binding.engineDescription
         )
         updateHealthCard(
-            assessment = HealthRules.evaluateCooling(coolantTempCelsius),
+            assessment = HealthRules.evaluateCooling(coolantTempCelsius?.toInt()),
             card = binding.coolingCard,
             titleView = binding.coolingTitle,
             statusView = binding.coolingStatus,
