@@ -740,6 +740,25 @@
                                 android:text="@string/metric_fuel_trim_value"
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                         </TableRow>
+
+                        <TableRow>
+
+                            <TextView
+                                android:id="@+id/metricFuelTrimLong"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_fuel_trim_long"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                            <TextView
+                                android:id="@+id/metricFuelTrimLongValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/metric_fuel_trim_long_value"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                        </TableRow>
                     </TableLayout>
                 </com.google.android.material.card.MaterialCardView>
 
