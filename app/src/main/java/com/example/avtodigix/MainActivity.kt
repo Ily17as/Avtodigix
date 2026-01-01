@@ -32,6 +32,7 @@ import com.example.avtodigix.databinding.ActivityMainBinding
 import com.example.avtodigix.domain.HealthAssessment
 import com.example.avtodigix.domain.HealthRules
 import com.example.avtodigix.domain.TrafficLightStatus
+import com.example.avtodigix.domain.DtcDescriptions
 import com.example.avtodigix.storage.AppDatabase
 import com.example.avtodigix.storage.ScanSnapshot
 import com.example.avtodigix.storage.ScanSnapshotRepository
@@ -178,7 +179,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildDtcListFromState(state: ObdState): List<String> {
-        return (state.storedDtcs + state.pendingDtcs).distinct()
+        return (state.storedDtcs + state.pendingDtcs)
+            .map { it.trim().uppercase(Locale.US) }
+            .filter { it.isNotBlank() }
+            .distinct()
     }
 
     private fun applySnapshotToUi(snapshot: ScanSnapshot) {
@@ -187,7 +191,7 @@ class MainActivity : AppCompatActivity() {
         updateMetricValue(binding.metricFuelTrim, binding.metricFuelTrimValue, snapshot)
 
         if (snapshot.dtcList.isNotEmpty()) {
-            binding.dtcStoredDetail.text = snapshot.dtcList.joinToString(separator = "\n")
+            binding.dtcStoredDetail.text = formatDtcList(snapshot.dtcList)
         }
 
         renderHealthSummary(
@@ -381,12 +385,12 @@ class MainActivity : AppCompatActivity() {
             updateLiveMetrics(snapshot)
         }
         binding.dtcStoredDetail.text = if (state.storedDtcs.isNotEmpty()) {
-            state.storedDtcs.joinToString(separator = "\n")
+            formatDtcList(state.storedDtcs)
         } else {
             getString(R.string.dtc_no_codes)
         }
         binding.dtcPendingDetail.text = if (state.pendingDtcs.isNotEmpty()) {
-            state.pendingDtcs.joinToString(separator = "\n")
+            formatDtcList(state.pendingDtcs)
         } else {
             getString(R.string.dtc_no_codes)
         }
@@ -497,6 +501,17 @@ class MainActivity : AppCompatActivity() {
         val current = valueView.text.toString()
         val updated = NUMBER_REGEX.replaceFirst(current, formatted)
         valueView.text = if (updated == current) formatted else updated
+    }
+
+    private fun formatDtcList(codes: List<String>): String {
+        return codes
+            .map { code ->
+                val normalized = code.trim().uppercase(Locale.US)
+                val description = DtcDescriptions.descriptionFor(normalized)
+                    ?: "Описание недоступно"
+                "$normalized — $description"
+            }
+            .joinToString(separator = "\n")
     }
 
     override fun onDestroy() {
