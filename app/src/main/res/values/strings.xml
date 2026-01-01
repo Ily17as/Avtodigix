@@ -38,6 +38,9 @@
     <string name="summary_title">Сводка</string>
     <string name="summary_subtitle">Светофорный индикатор показывает приоритеты.</string>
     <string name="summary_footer">Нажмите Далее, чтобы открыть live-метрики.</string>
+    <string name="health_status_green">GREEN — в норме</string>
+    <string name="health_status_yellow">YELLOW — требуется внимание</string>
+    <string name="health_status_red">RED — критично</string>
 
     <string name="engine_title">Engine</string>
     <string name="engine_status">GREEN — нормальный режим</string>
