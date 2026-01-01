@@ -46,6 +46,7 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var repository: ScanSnapshotRepository
+    private var latestObdState: ObdState = ObdState()
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var connectionViewModel: ConnectionViewModel
     private lateinit var pairedDeviceAdapter: PairedDeviceAdapter
@@ -150,38 +151,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveCurrentSnapshot() {
+        val state = latestObdState
         val snapshot = ScanSnapshot(
             timestampMillis = System.currentTimeMillis(),
-            keyMetrics = buildKeyMetrics(),
-            dtcList = buildDtcList()
+            keyMetrics = buildKeyMetricsFromState(state),
+            dtcList = buildDtcListFromState(state)
         )
         ioScope.launch {
             repository.saveSnapshot(snapshot)
         }
     }
 
-    private fun buildKeyMetrics(): Map<String, Double> {
+    private fun buildKeyMetricsFromState(state: ObdState): Map<String, Double> {
+        val metrics = state.metrics ?: return emptyMap()
         return buildMap {
-            addMetric(binding.metricEngineTemp, binding.metricEngineTempValue)
-            addMetric(binding.metricBatteryVoltage, binding.metricBatteryVoltageValue)
-            addMetric(binding.metricFuelTrim, binding.metricFuelTrimValue)
-            addMetric(binding.metricOilPressure, binding.metricOilPressureValue)
+            metrics.coolantTempCelsius?.let { value ->
+                put(getString(R.string.metric_engine_temp), value.toDouble())
+            }
+            metrics.batteryVoltageVolts?.let { value ->
+                put(getString(R.string.metric_battery_voltage), value)
+            }
+            metrics.shortTermFuelTrimPercent?.let { value ->
+                put(getString(R.string.metric_fuel_trim), value)
+            }
         }
     }
 
-    private fun MutableMap<String, Double>.addMetric(
-        labelView: TextView,
-        valueView: TextView
-    ) {
-        val value = parseFirstDouble(valueView.text) ?: return
-        put(labelView.text.toString(), value)
-    }
-
-    private fun buildDtcList(): List<String> {
-        val dtcRegex = DTC_REGEX
-        val storedMatches = dtcRegex.findAll(binding.dtcStoredDetail.text).map { it.value }
-        val pendingMatches = dtcRegex.findAll(binding.dtcPendingDetail.text).map { it.value }
-        return (storedMatches + pendingMatches).distinct().toList()
+    private fun buildDtcListFromState(state: ObdState): List<String> {
+        return (state.storedDtcs + state.pendingDtcs).distinct()
     }
 
     private fun applySnapshotToUi(snapshot: ScanSnapshot) {
@@ -217,10 +214,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun readSnapshotMetric(snapshot: ScanSnapshot, labelRes: Int): Double? {
         return snapshot.keyMetrics[getString(labelRes)]
-    }
-
-    private fun parseFirstDouble(text: CharSequence): Double? {
-        return NUMBER_REGEX.find(text)?.value?.toDoubleOrNull()
     }
 
     private fun renderConnectionState(
@@ -376,6 +369,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderObdState(state: ObdState) {
+        latestObdState = state
         state.metrics?.let { snapshot ->
             updateLiveMetrics(snapshot)
         }
@@ -503,6 +497,5 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
-        val DTC_REGEX = Regex("[PCBU][0-9A-F]{4}")
     }
 }
