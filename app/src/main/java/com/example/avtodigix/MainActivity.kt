@@ -356,6 +356,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateLiveMetrics(snapshot: com.example.avtodigix.obd.LivePidSnapshot) {
+        snapshot.engineRpm?.let { value ->
+            updateMetricValue(binding.metricEngineRpmValue, value)
+        }
+        snapshot.vehicleSpeedKph?.let { value ->
+            updateMetricValue(binding.metricVehicleSpeedValue, value.toDouble())
+        }
         snapshot.coolantTempCelsius?.let { value ->
             updateMetricValue(binding.metricEngineTempValue, value.toDouble())
         }

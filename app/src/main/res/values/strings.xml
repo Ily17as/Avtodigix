@@ -66,6 +66,10 @@
     <string name="metrics_subtitle">Таблица актуальных значений с обновлением в реальном времени.</string>
     <string name="metrics_table_header_metric">Параметр</string>
     <string name="metrics_table_header_value">Значение</string>
+    <string name="metric_engine_rpm">Engine RPM</string>
+    <string name="metric_engine_rpm_value">760 rpm</string>
+    <string name="metric_vehicle_speed">Speed</string>
+    <string name="metric_vehicle_speed_value">0 km/h</string>
     <string name="metric_engine_temp">Engine temp</string>
     <string name="metric_engine_temp_value">92°C · Normal</string>
     <string name="metric_battery_voltage">Battery voltage</string>
