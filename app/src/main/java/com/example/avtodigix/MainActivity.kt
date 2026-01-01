@@ -185,7 +185,6 @@ class MainActivity : AppCompatActivity() {
         updateMetricValue(binding.metricEngineTemp, binding.metricEngineTempValue, snapshot)
         updateMetricValue(binding.metricBatteryVoltage, binding.metricBatteryVoltageValue, snapshot)
         updateMetricValue(binding.metricFuelTrim, binding.metricFuelTrimValue, snapshot)
-        updateMetricValue(binding.metricOilPressure, binding.metricOilPressureValue, snapshot)
 
         if (snapshot.dtcList.isNotEmpty()) {
             binding.dtcStoredDetail.text = snapshot.dtcList.joinToString(separator = "\n")

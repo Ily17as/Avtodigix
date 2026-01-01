@@ -72,8 +72,6 @@
     <string name="metric_battery_voltage_value">12.1V · Low</string>
     <string name="metric_fuel_trim">Fuel trim</string>
     <string name="metric_fuel_trim_value">+8% · OK</string>
-    <string name="metric_oil_pressure">Oil pressure</string>
-    <string name="metric_oil_pressure_value">28 psi · Observe</string>
     <string name="metrics_status">Статус обновления: подключено, последняя синхронизация 5 сек назад.</string>
 
     <string name="dtc_title">Diagnostic Trouble Codes</string>
