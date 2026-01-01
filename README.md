@@ -6,6 +6,7 @@ Avto-scan app for car users.
 - **Android Studio** (Giraffe/2022.3 или новее)
 - **JDK** 17 (подойдет встроенный JDK Android Studio)
 - **Gradle** (используется Gradle wrapper из репозитория)
+- **Поддержка MVP**: Android 10+ (API 29+) — соответствует `minSdk 29` в `app/build.gradle`.
 - **Android SDK**:
   - Android SDK Platform 34+
   - Android SDK Build-Tools 34+
