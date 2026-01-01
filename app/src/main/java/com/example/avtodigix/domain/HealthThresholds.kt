@@ -10,5 +10,5 @@ object HealthThresholds {
     const val DTC_YELLOW_COUNT = 1
     const val DTC_RED_COUNT = 3
 
-    const val FUEL_TRIM_WARNING_ABS_PERCENT = 0.0
+    const val FUEL_TRIM_WARNING_ABS_PERCENT = 10.0
 }
