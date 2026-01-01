@@ -658,25 +658,6 @@
                                 android:text="@string/metric_fuel_trim_value"
                                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                         </TableRow>
-
-                        <TableRow>
-
-                            <TextView
-                                android:id="@+id/metricOilPressure"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="@string/metric_oil_pressure"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-
-                            <TextView
-                                android:id="@+id/metricOilPressureValue"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="@string/metric_oil_pressure_value"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-                        </TableRow>
                     </TableLayout>
                 </com.google.android.material.card.MaterialCardView>
 
