@@ -94,7 +94,9 @@ class MainActivity : AppCompatActivity() {
         bindNavigation(binding.summaryBack, flipper, 1)
         bindNavigation(binding.summaryNext, flipper, 3)
         bindNavigation(binding.metricsBack, flipper, 2)
-        bindNavigation(binding.metricsNext, flipper, 4)
+        bindNavigation(binding.metricsNext, flipper, 4) {
+            connectionViewModel.requestDtcRefresh()
+        }
         bindNavigation(binding.dtcBack, flipper, 3)
         bindNavigation(binding.dtcFinish, flipper, 0) {
             saveCurrentSnapshot()
