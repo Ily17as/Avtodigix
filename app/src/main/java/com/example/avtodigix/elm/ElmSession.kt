@@ -43,7 +43,8 @@ class ElmSession(
                 if (!isActive) break
                 queueSizeState.value = queueSizeState.value - 1
                 val result = runCatching { sendWithRetry(next.command) }
-                next.deferred.complete(result)
+                // Ensure we don't crash if the deferred is already cancelled
+                runCatching { next.deferred.complete(result) }
             }
         }
     }

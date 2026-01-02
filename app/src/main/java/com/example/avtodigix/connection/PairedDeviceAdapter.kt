@@ -1,5 +1,6 @@
 package com.example.avtodigix.connection
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -47,20 +48,16 @@ class PairedDeviceAdapter(
             val selectedWidth = (2 * density).roundToInt()
             val normalWidth = (1 * density).roundToInt()
             
-            // Try resolving colorPrimary, fallback to a safe default if not found
             val primaryColor = try {
                 MaterialColors.getColor(binding.pairedDeviceCard, com.google.android.material.R.attr.colorPrimary)
             } catch (e: Exception) {
-                // Fallback to black or another safe color if attribute resolution fails
-                android.graphics.Color.BLACK 
+                Color.BLACK 
             }
             
-            // Try resolving colorOutline, fallback to a safe default
             val outlineColor = try {
                 MaterialColors.getColor(binding.pairedDeviceCard, com.google.android.material.R.attr.colorOutline)
             } catch (e: Exception) {
-                // Fallback to gray
-                android.graphics.Color.GRAY
+                Color.GRAY
             }
             
             val strokeColor = if (isSelected) primaryColor else outlineColor

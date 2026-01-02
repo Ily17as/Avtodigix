@@ -116,15 +116,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.bluetoothEnableButton.setOnClickListener {
-            startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            runCatching {
+                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            }
         }
 
         binding.bluetoothSettingsButton.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            runCatching {
+                startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            }
         }
 
         binding.connectionPairedSettingsButton.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            runCatching {
+                startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            }
         }
 
         binding.summaryClearHistory.setOnClickListener {
@@ -336,7 +342,12 @@ class MainActivity : AppCompatActivity() {
         }
         if (!permissionsRequestInFlight) {
             permissionsRequestInFlight = true
-            permissionsLauncher.launch(permissions)
+            try {
+                permissionsLauncher.launch(permissions)
+            } catch (e: Exception) {
+                permissionsRequestInFlight = false
+                connectionViewModel.onPermissionsResult(false, false)
+            }
         }
     }
 

@@ -5,9 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
+    app:cardBackgroundColor="@android:color/white"
     app:cardElevation="0dp"
     app:cardUseCompatPadding="true"
-    app:strokeColor="?attr/colorOutline"
+    app:rippleColor="@android:color/darker_gray"
+    app:strokeColor="@android:color/darker_gray"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -20,6 +22,7 @@
             android:id="@+id/pairedDeviceName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
         <TextView
@@ -27,6 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:textColor="@android:color/darker_gray"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.InputStream
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 
@@ -58,7 +58,7 @@ class BluetoothConnectionManager(
         return@withContext runCatching {
             bluetoothAdapter.bondedDevices.map { device ->
                 PairedDevice(
-                    name = device.name ?: "Unknown",
+                    name = try { device.name ?: "Unknown" } catch (e: SecurityException) { "Unknown" },
                     address = device.address
                 )
             }
@@ -120,12 +120,12 @@ class BluetoothConnectionManager(
     private suspend fun attemptConnectionWithRetry(device: BluetoothDevice, uuid: UUID) {
         var attempts = 0
         while (scope.coroutineContext[Job]?.isActive == true && attempts < maxRetries) {
-            _status.value = ConnectionStatus.NoConnection
             attempts += 1
             if (tryConnect(device, uuid)) {
                 attempts = 0
                 monitorConnection(device, uuid)
             } else {
+                _status.value = ConnectionStatus.NoConnection
                 delay(retryDelayMillis)
             }
         }
@@ -156,6 +156,10 @@ class BluetoothConnectionManager(
             )
             true
         } catch (error: IOException) {
+            _status.value = ConnectionStatus.NoConnection
+            closeSocket()
+            false
+        } catch (error: SecurityException) {
             _status.value = ConnectionStatus.NoConnection
             closeSocket()
             false
