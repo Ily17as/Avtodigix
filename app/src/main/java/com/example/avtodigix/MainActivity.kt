@@ -123,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.connectionConnect.setOnClickListener {
-            connectionViewModel.onConnectRequested()
+            handleConnectRequested()
         }
 
         binding.connectionDisconnect.setOnClickListener {
@@ -149,6 +149,21 @@ class MainActivity : AppCompatActivity() {
 
         binding.wifiSaveButton.setOnClickListener {
             saveWifiSettings()
+        }
+
+        binding.wifiConnectButton.setOnClickListener {
+            handleConnectRequested()
+        }
+
+        binding.wifiAutoResetButton.setOnClickListener {
+            clearWifiInputErrors()
+            binding.wifiIpInput.setText("")
+            binding.wifiPortInput.setText("")
+            connectionViewModel.onWifiAutoDetectReset()
+        }
+
+        binding.wifiAdvancedToggle.setOnClickListener {
+            binding.wifiAdvancedGroup.isVisible = !binding.wifiAdvancedGroup.isVisible
         }
 
         binding.bluetoothEnableButton.setOnClickListener {
@@ -381,6 +396,7 @@ class MainActivity : AppCompatActivity() {
             state.status == ConnectionState.Status.Connected
 
         renderWifiDevices(state)
+        renderWifiDetectionState(state)
         updateWifiSnapshotUi(latestWifiSnapshot)
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
     }
@@ -394,11 +410,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         val host = state.wifiHost?.takeIf { it.isNotBlank() } ?: DEFAULT_WIFI_HOST
-        if (binding.wifiIpInput.text?.toString() != host) {
+        if (!binding.wifiIpInput.hasFocus() && binding.wifiIpInput.text?.toString() != host) {
             binding.wifiIpInput.setText(host)
         }
         val portText = (state.wifiPort ?: DEFAULT_WIFI_PORT).toString()
-        if (binding.wifiPortInput.text?.toString() != portText) {
+        if (!binding.wifiPortInput.hasFocus() && binding.wifiPortInput.text?.toString() != portText) {
             binding.wifiPortInput.setText(portText)
         }
     }
@@ -408,7 +424,47 @@ class MainActivity : AppCompatActivity() {
         binding.wifiFormGroup.isVisible = !useBluetooth
     }
 
+    private fun renderWifiDetectionState(state: ConnectionState) {
+        val isWifi = state.scannerType == ScannerType.Wifi
+        binding.wifiDetectStatusRow.isVisible = isWifi
+        if (!isWifi) {
+            return
+        }
+        binding.wifiDetectProgress.isVisible = state.wifiDetectInProgress
+        val status = when {
+            state.wifiDetectInProgress -> getString(R.string.wifi_detect_in_progress)
+            !state.wifiResolvedEndpoint.isNullOrBlank() -> {
+                getString(R.string.wifi_detect_found, state.wifiResolvedEndpoint)
+            }
+            state.wifiDetectError != null -> getString(R.string.wifi_detect_not_found)
+            else -> getString(R.string.wifi_detect_placeholder)
+        }
+        binding.wifiDetectStatus.text = status
+    }
+
     private fun saveWifiSettings() {
+        val override = readWifiOverride() ?: return
+        connectionViewModel.onWifiSettingsSaved(override.first, override.second)
+    }
+
+    private fun handleConnectRequested() {
+        if (connectionViewModel.connectionState.value.scannerType != ScannerType.Wifi) {
+            connectionViewModel.onConnectRequested()
+            return
+        }
+        val hasManualInput = hasManualWifiInput()
+        val override = readWifiOverride()
+        if (hasManualInput) {
+            if (override != null) {
+                connectionViewModel.onWifiConnectRequested(override.first, override.second)
+            }
+            return
+        }
+        clearWifiInputErrors()
+        connectionViewModel.onConnectRequested()
+    }
+
+    private fun readWifiOverride(): Pair<String, Int>? {
         val ip = binding.wifiIpInput.text?.toString()?.trim().orEmpty()
         val portText = binding.wifiPortInput.text?.toString()?.trim().orEmpty()
         var valid = true
@@ -429,11 +485,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!valid) {
-            return
+            return null
         }
 
-        val portInt = port ?: return
-        connectionViewModel.onWifiSettingsSaved(ip, portInt)
+        return ip to (port ?: return null)
+    }
+
+    private fun hasManualWifiInput(): Boolean {
+        val ip = binding.wifiIpInput.text?.toString()?.trim().orEmpty()
+        val port = binding.wifiPortInput.text?.toString()?.trim().orEmpty()
+        return ip.isNotBlank() || port.isNotBlank()
+    }
+
+    private fun clearWifiInputErrors() {
+        binding.wifiIpInputLayout.error = null
+        binding.wifiPortInputLayout.error = null
     }
 
     private fun isValidIpAddress(ip: String): Boolean {

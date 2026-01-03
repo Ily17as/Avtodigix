@@ -262,6 +262,20 @@ class ConnectionViewModel(
         }
     }
 
+    fun onWifiAutoDetectReset() {
+        selectedDeviceStore.clearWifiSettings()
+        updateConnectionState {
+            copy(
+                wifiHost = null,
+                wifiPort = null,
+                wifiResolvedEndpoint = null,
+                wifiDetectError = null,
+                wifiDetectInProgress = false,
+                errorMessage = null
+            )
+        }
+    }
+
     fun onPermissionsResult(granted: Boolean, permanentlyDenied: Boolean) {
         if (connectionState.value.scannerType == ScannerType.Wifi) {
             return
