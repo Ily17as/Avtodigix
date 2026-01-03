@@ -163,6 +163,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        binding.wifiSettingsButton.setOnClickListener {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            }
+        }
+
         binding.connectionPairedSettingsButton.setOnClickListener {
             runCatching {
                 startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
