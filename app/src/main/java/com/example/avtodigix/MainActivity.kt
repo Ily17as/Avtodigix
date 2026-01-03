@@ -39,6 +39,9 @@ import com.example.avtodigix.domain.DtcDescriptions
 import com.example.avtodigix.storage.AppDatabase
 import com.example.avtodigix.storage.ScanSnapshot
 import com.example.avtodigix.storage.ScanSnapshotRepository
+import com.example.avtodigix.storage.WifiResponseFormat
+import com.example.avtodigix.storage.WifiScanSnapshot
+import com.example.avtodigix.storage.WifiScanSnapshotRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,7 +53,11 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var repository: ScanSnapshotRepository
+    private lateinit var wifiSnapshotRepository: WifiScanSnapshotRepository
     private var latestObdState: ObdState = ObdState()
+    private var latestConnectionState: ConnectionState = ConnectionState()
+    private var latestWifiSnapshot: WifiScanSnapshot? = null
+    private var lastWifiSnapshotMillis: Long? = null
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var connectionViewModel: ConnectionViewModel
     private lateinit var pairedDeviceAdapter: PairedDeviceAdapter
@@ -69,6 +76,7 @@ class MainActivity : AppCompatActivity() {
 
         val database = AppDatabase.create(applicationContext)
         repository = ScanSnapshotRepository(database.scanSnapshotDao())
+        wifiSnapshotRepository = WifiScanSnapshotRepository(database.wifiScanSnapshotDao())
 
         val flipper = binding.screenFlipper
         val selectedDeviceStore = SelectedDeviceStore(applicationContext)
@@ -171,6 +179,7 @@ class MainActivity : AppCompatActivity() {
         binding.summaryClearHistory.setOnClickListener {
             ioScope.launch {
                 repository.clearHistory()
+                wifiSnapshotRepository.clearHistory()
             }
         }
 
@@ -179,6 +188,15 @@ class MainActivity : AppCompatActivity() {
             if (latestSnapshot != null) {
                 withContext(Dispatchers.Main) {
                     applySnapshotToUi(latestSnapshot)
+                }
+            }
+        }
+        ioScope.launch {
+            val latestWifiSnapshot = wifiSnapshotRepository.getLatestSnapshot()
+            if (latestWifiSnapshot != null) {
+                withContext(Dispatchers.Main) {
+                    this@MainActivity.latestWifiSnapshot = latestWifiSnapshot
+                    updateWifiSnapshotUi(latestWifiSnapshot)
                 }
             }
         }
@@ -297,6 +315,7 @@ class MainActivity : AppCompatActivity() {
         state: ConnectionState,
         permissionsLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
     ) {
+        latestConnectionState = state
         when (state.status) {
             ConnectionState.Status.Idle -> {
                 binding.connectionStatus.text = "Статус: не подключено"
@@ -354,6 +373,7 @@ class MainActivity : AppCompatActivity() {
             state.status == ConnectionState.Status.Connected
 
         renderWifiDevices(state)
+        updateWifiSnapshotUi(latestWifiSnapshot)
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
     }
 
@@ -528,6 +548,7 @@ class MainActivity : AppCompatActivity() {
         state.metrics?.let { snapshot ->
             updateLiveMetrics(snapshot)
         }
+        updateWifiSnapshotFromObdState(state)
         val secondsSinceUpdate = state.lastUpdatedMillis?.let { lastUpdated ->
             ((System.currentTimeMillis() - lastUpdated) / 1000).coerceAtLeast(0)
         }
@@ -563,6 +584,55 @@ class MainActivity : AppCompatActivity() {
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
             dtcCount = dtcCount.takeIf { it > 0 }
         )
+    }
+
+    private fun updateWifiSnapshotFromObdState(state: ObdState) {
+        if (latestConnectionState.scannerType != ScannerType.Wifi) {
+            return
+        }
+        state.metrics ?: return
+        val host = latestConnectionState.wifiHost ?: return
+        val port = latestConnectionState.wifiPort ?: return
+        val timestampMillis = state.lastUpdatedMillis ?: System.currentTimeMillis()
+        val snapshot = WifiScanSnapshot(
+            timestampMillis = timestampMillis,
+            host = host,
+            port = port,
+            responseFormat = WifiResponseFormat.Text,
+            keyMetrics = buildKeyMetricsFromState(state),
+            dtcList = buildDtcListFromState(state)
+        )
+        latestWifiSnapshot = snapshot
+        updateWifiSnapshotUi(snapshot)
+        if (lastWifiSnapshotMillis == timestampMillis) {
+            return
+        }
+        lastWifiSnapshotMillis = timestampMillis
+        ioScope.launch {
+            wifiSnapshotRepository.saveSnapshot(snapshot)
+        }
+    }
+
+    private fun updateWifiSnapshotUi(snapshot: WifiScanSnapshot?) {
+        val isWifi = latestConnectionState.scannerType == ScannerType.Wifi
+        binding.wifiSnapshotCard.isVisible = isWifi
+        if (!isWifi) {
+            return
+        }
+        val formatLabel = snapshot?.let { getString(R.string.wifi_response_format_text) } ?: PLACEHOLDER_VALUE
+        binding.wifiSnapshotFormat.text = getString(R.string.wifi_snapshot_format, formatLabel)
+        val hostLabel = snapshot?.let { "${it.host}:${it.port}" } ?: PLACEHOLDER_VALUE
+        binding.wifiSnapshotHost.text = getString(R.string.wifi_snapshot_host, hostLabel)
+        val updatedLabel = snapshot?.let {
+            val seconds = ((System.currentTimeMillis() - it.timestampMillis) / 1000).coerceAtLeast(0)
+            getString(R.string.wifi_snapshot_updated, seconds)
+        } ?: getString(R.string.wifi_snapshot_updated_placeholder)
+        binding.wifiSnapshotUpdated.text = updatedLabel
+        binding.wifiSnapshotSummary.text = if (snapshot != null) {
+            getString(R.string.wifi_snapshot_summary, snapshot.keyMetrics.size, snapshot.dtcList.size)
+        } else {
+            getString(R.string.wifi_snapshot_summary_placeholder)
+        }
     }
 
     private fun renderHealthSummary(

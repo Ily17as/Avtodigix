@@ -48,4 +48,15 @@ class ScanSnapshotConverters {
         }
         return list
     }
+
+    @TypeConverter
+    fun formatToString(format: WifiResponseFormat): String {
+        return format.name
+    }
+
+    @TypeConverter
+    fun stringToFormat(value: String): WifiResponseFormat {
+        return runCatching { WifiResponseFormat.valueOf(value) }
+            .getOrDefault(WifiResponseFormat.Text)
+    }
 }
