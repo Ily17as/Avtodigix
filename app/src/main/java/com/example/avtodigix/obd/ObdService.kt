@@ -154,7 +154,7 @@ class ObdService(
         return if (message.contains("CLOSED")) {
             ObdErrorType.SOCKET_CLOSED
         } else {
-            null
+            ObdErrorType.IO
         }
     }
 
