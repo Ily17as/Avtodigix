@@ -410,8 +410,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderWifiDevices(state: ConnectionState) {
-        wifiDeviceAdapter.submitList(state.wifiDiscoveredDevices, state.wifiHost, state.wifiPort)
-        binding.wifiDiscoveredEmpty.isVisible = state.wifiDiscoveredDevices.isEmpty()
+        val results = state.wifiAutoDetectResults
+        wifiDeviceAdapter.submitList(results, state.wifiHost, state.wifiPort)
+        binding.wifiDiscoveredList.isVisible = results.isNotEmpty()
+        binding.wifiDiscoveredEmpty.isVisible = results.isEmpty()
 
         if (state.scannerType != ScannerType.Wifi) {
             return

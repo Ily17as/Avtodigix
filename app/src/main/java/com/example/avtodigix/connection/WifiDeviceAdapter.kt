@@ -7,18 +7,18 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avtodigix.R
 import com.example.avtodigix.databinding.ItemWifiDeviceBinding
-import com.example.avtodigix.wifi.WifiDiscoveredDevice
+import com.example.avtodigix.wifi.WifiAutoDetectResult
 import com.google.android.material.color.MaterialColors
 import kotlin.math.roundToInt
 
 class WifiDeviceAdapter(
-    private val onSelected: (WifiDiscoveredDevice) -> Unit
+    private val onSelected: (WifiAutoDetectResult) -> Unit
 ) : RecyclerView.Adapter<WifiDeviceAdapter.WifiDeviceViewHolder>() {
-    private val devices = mutableListOf<WifiDiscoveredDevice>()
+    private val devices = mutableListOf<WifiAutoDetectResult>()
     private var selectedHost: String? = null
     private var selectedPort: Int? = null
 
-    fun submitList(items: List<WifiDiscoveredDevice>, host: String?, port: Int?) {
+    fun submitList(items: List<WifiAutoDetectResult>, host: String?, port: Int?) {
         devices.clear()
         devices.addAll(items)
         selectedHost = host
@@ -45,11 +45,14 @@ class WifiDeviceAdapter(
 
     class WifiDeviceViewHolder(
         private val binding: ItemWifiDeviceBinding,
-        private val onSelected: (WifiDiscoveredDevice) -> Unit
+        private val onSelected: (WifiAutoDetectResult) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(device: WifiDiscoveredDevice, isSelected: Boolean) {
-            binding.wifiDeviceName.text = device.name.ifBlank { "Wi-Fi сканер" }
-            binding.wifiDeviceAddress.text = "${device.host}:${device.port}"
+        fun bind(device: WifiAutoDetectResult, isSelected: Boolean) {
+            binding.wifiDeviceName.text = "${device.host}:${device.port}"
+            binding.wifiDeviceAddress.text = binding.root.context.getString(
+                R.string.wifi_detect_rtt,
+                device.rttMs
+            )
             val density = binding.root.resources.displayMetrics.density
             val selectedWidth = (2 * density).roundToInt()
             val normalWidth = (1 * density).roundToInt()
