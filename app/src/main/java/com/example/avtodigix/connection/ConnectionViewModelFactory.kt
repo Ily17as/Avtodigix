@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.avtodigix.bluetooth.BluetoothConnectionManager
+import com.example.avtodigix.wifi.WiFiScannerManager
 
 class ConnectionViewModelFactory(
     private val context: Context,
@@ -14,6 +15,7 @@ class ConnectionViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return ConnectionViewModel(
                 BluetoothConnectionManager(context),
+                WiFiScannerManager(),
                 selectedDeviceStore
             ) as T
         }
