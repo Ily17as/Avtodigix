@@ -18,7 +18,6 @@ import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import kotlin.math.min
 
 class ElmSession(
     private val input: InputStream,
@@ -27,7 +26,6 @@ class ElmSession(
     parentScope: CoroutineScope? = null,
     private val rateLimitDelayMillis: Long = 120,
     private val responseTimeoutMillis: Long = 2_000,
-    private val watchdogTimeoutMillis: Long = 1_000,
     private val maxRetries: Int = 2,
     private val promptChar: Char = '>'
 ) {
@@ -134,27 +132,16 @@ class ElmSession(
 
     private suspend fun readUntilPrompt(): String = withTimeout(responseTimeoutMillis) {
         val builder = StringBuilder()
-        var lastReadAt = System.currentTimeMillis()
         val buffer = ByteArray(256)
         while (true) {
-            val available = input.available()
-            if (available > 0) {
-                val read = input.read(buffer, 0, min(buffer.size, available))
-                if (read == -1) {
-                    throw IOException("ELM input stream closed")
-                }
-                lastReadAt = System.currentTimeMillis()
-                val chunk = String(buffer, 0, read)
-                builder.append(chunk)
-                if (chunk.indexOf(promptChar) >= 0) {
-                    break
-                }
-            } else {
-                if (System.currentTimeMillis() - lastReadAt > watchdogTimeoutMillis) {
-                    // Use standard IOException instead of internal exception
-                    throw IOException("ELM watchdog timeout")
-                }
-                delay(10)
+            val read = input.read(buffer)
+            if (read == -1) {
+                throw IOException("ELM input stream closed")
+            }
+            val chunk = String(buffer, 0, read)
+            builder.append(chunk)
+            if (chunk.indexOf(promptChar) >= 0) {
+                break
             }
         }
         builder.toString()
