@@ -14,6 +14,7 @@ import com.example.avtodigix.transport.BluetoothObdTransport
 import com.example.avtodigix.transport.ObdTransport
 import com.example.avtodigix.transport.WifiObdTransport
 import com.example.avtodigix.wifi.WiFiScannerManager
+import com.example.avtodigix.wifi.WifiObdAutoDetector
 import com.example.avtodigix.wifi.WifiDiscoveredDevice
 import com.example.avtodigix.wifi.WifiConnectionStatus
 import kotlinx.coroutines.Job
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ConnectionViewModel(
     private val connectionManager: BluetoothConnectionManager,
     private val wifiScannerManager: WiFiScannerManager,
+    private val wifiObdAutoDetector: WifiObdAutoDetector,
     private val selectedDeviceStore: SelectedDeviceStore
 ) : ViewModel() {
     private val _connectionState = MutableStateFlow(ConnectionState())
@@ -54,12 +56,18 @@ class ConnectionViewModel(
         val storedScannerType = selectedDeviceStore.getSelectedScannerType() ?: ScannerType.Bluetooth
         val storedWifiHost = selectedDeviceStore.getWifiHost()
         val storedWifiPort = selectedDeviceStore.getWifiPort()
+        val storedWifiEndpoint = if (!storedWifiHost.isNullOrBlank() && storedWifiPort != null) {
+            "$storedWifiHost:$storedWifiPort"
+        } else {
+            null
+        }
         updateConnectionState {
             copy(
                 selectedDeviceAddress = selectedDeviceStore.getSelectedDeviceAddress(),
                 scannerType = storedScannerType,
                 wifiHost = storedWifiHost,
-                wifiPort = storedWifiPort
+                wifiPort = storedWifiPort,
+                wifiResolvedEndpoint = storedWifiEndpoint
             )
         }
         if (storedScannerType == ScannerType.Wifi) {
@@ -154,12 +162,7 @@ class ConnectionViewModel(
                 onWifiConnectRequested(host, port)
                 return
             }
-            updateConnectionState {
-                copy(
-                    status = ConnectionState.Status.Error,
-                    errorMessage = "Для Wi-Fi подключения укажите IP и порт."
-                )
-            }
+            startWifiAutoDetect()
             return
         }
         updateConnectionState {
@@ -182,6 +185,9 @@ class ConnectionViewModel(
                 scannerType = ScannerType.Wifi,
                 wifiHost = host,
                 wifiPort = port,
+                wifiDetectInProgress = false,
+                wifiDetectError = null,
+                wifiResolvedEndpoint = "$host:$port",
                 status = ConnectionState.Status.Connecting,
                 errorMessage = null,
                 log = appendLog("Подключение по Wi-Fi к $host:$port.")
@@ -199,6 +205,8 @@ class ConnectionViewModel(
                 scannerType = ScannerType.Wifi,
                 wifiHost = device.host,
                 wifiPort = device.port,
+                wifiResolvedEndpoint = "${device.host}:${device.port}",
+                wifiDetectError = null,
                 errorMessage = null
             )
         }
@@ -221,11 +229,19 @@ class ConnectionViewModel(
         } else {
             null
         }
+        val wifiResolvedEndpoint = if (!wifiHost.isNullOrBlank() && wifiPort != null) {
+            "$wifiHost:$wifiPort"
+        } else {
+            null
+        }
         updateConnectionState {
             copy(
                 scannerType = scannerType,
                 wifiHost = wifiHost,
                 wifiPort = wifiPort,
+                wifiResolvedEndpoint = wifiResolvedEndpoint,
+                wifiDetectError = null,
+                wifiDetectInProgress = false,
                 errorMessage = null
             )
         }
@@ -238,6 +254,9 @@ class ConnectionViewModel(
             copy(
                 wifiHost = host,
                 wifiPort = port,
+                wifiResolvedEndpoint = "$host:$port",
+                wifiDetectError = null,
+                wifiDetectInProgress = false,
                 errorMessage = null
             )
         }
@@ -474,6 +493,53 @@ class ConnectionViewModel(
         }
     }
 
+    private fun startWifiAutoDetect() {
+        connectJob?.cancel()
+        updateConnectionState {
+            copy(
+                status = ConnectionState.Status.Connecting,
+                wifiDetectInProgress = true,
+                wifiDetectError = null,
+                wifiResolvedEndpoint = null,
+                errorMessage = null,
+                log = appendLog("Запускаем автодетект Wi-Fi адаптера.")
+            )
+        }
+        connectJob = viewModelScope.launch {
+            val candidates = wifiObdAutoDetector.generateCandidates()
+            val detected = wifiObdAutoDetector.detect(candidates)
+            if (detected != null) {
+                val endpoint = "${detected.host}:${detected.port}"
+                selectedDeviceStore.setWifiHost(detected.host)
+                selectedDeviceStore.setWifiPort(detected.port)
+                updateConnectionState {
+                    copy(
+                        wifiHost = detected.host,
+                        wifiPort = detected.port,
+                        wifiResolvedEndpoint = endpoint,
+                        wifiDetectInProgress = false,
+                        wifiDetectError = null,
+                        status = ConnectionState.Status.Connecting,
+                        errorMessage = null,
+                        log = appendLog("Автодетект нашел адаптер по адресу $endpoint.")
+                    )
+                }
+                connectToWifi(detected.host, detected.port)
+            } else {
+                updateConnectionState {
+                    copy(
+                        status = ConnectionState.Status.Error,
+                        wifiDetectInProgress = false,
+                        wifiDetectError = "Не удалось автоматически найти Wi-Fi адаптер.",
+                        wifiResolvedEndpoint = null,
+                        errorMessage = "Не удалось определить Wi-Fi адаптер. Откройте «Дополнительно» и укажите IP и порт.",
+                        log = appendLog("Автодетект Wi-Fi адаптера не дал результатов.")
+                    )
+                }
+            }
+        }
+    }
+
     private suspend fun connectAndInitialize(transport: ObdTransport, onError: (Throwable) -> Unit) {
         activeTransport = transport
         try {
@@ -605,6 +671,9 @@ data class ConnectionState(
     val scannerType: ScannerType = ScannerType.Bluetooth,
     val wifiHost: String? = null,
     val wifiPort: Int? = null,
+    val wifiDetectInProgress: Boolean = false,
+    val wifiDetectError: String? = null,
+    val wifiResolvedEndpoint: String? = null,
     val wifiDiscoveredDevices: List<WifiDiscoveredDevice> = emptyList(),
     val log: String = "",
     val supportedMetrics: List<LiveMetricDefinition> = emptyList(),
