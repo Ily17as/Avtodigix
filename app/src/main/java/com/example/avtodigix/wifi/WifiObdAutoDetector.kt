@@ -2,13 +2,21 @@ package com.example.avtodigix.wifi
 
 import android.content.Context
 import android.net.wifi.WifiManager
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.math.min
 
@@ -22,23 +30,48 @@ class WifiObdAutoDetector(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend fun detect(candidates: List<Endpoint>): Endpoint? = withContext(ioDispatcher) {
-        for (endpoint in candidates) {
-            if (probeElm(endpoint)) {
-                return@withContext endpoint
-            }
+        if (candidates.isEmpty()) {
+            return@withContext null
         }
-        return@withContext null
+
+        coroutineScope {
+            val semaphore = Semaphore(MAX_CONCURRENCY)
+            val remaining = AtomicInteger(candidates.size)
+            val result = CompletableDeferred<Endpoint?>()
+            val jobs: List<Deferred<Unit>> = candidates.map { endpoint ->
+                async {
+                    try {
+                        semaphore.withPermit {
+                            if (!result.isCompleted && probeElm(endpoint)) {
+                                result.complete(endpoint)
+                            }
+                        }
+                    } finally {
+                        if (remaining.decrementAndGet() == 0) {
+                            result.complete(null)
+                        }
+                    }
+                }
+            }
+
+            result.invokeOnCompletion { jobs.forEach { it.cancel() } }
+            val winner = result.await()
+            jobs.forEach { it.cancel() }
+            jobs.joinAll()
+            winner
+        }
     }
 
     fun generateCandidates(): List<Endpoint> {
         val endpoints = LinkedHashSet<Endpoint>()
-        val ports = listOf(DEFAULT_PORT, TELNET_PORT, SECONDARY_PORT)
+        val ports = listOf(DEFAULT_PORT, TELNET_PORT, SECONDARY_PORT, ALT_PORT, HTTP_PORT, HTTP_ALT_PORT)
         val fastHosts = listOf(
             "192.168.0.10",
-            "192.168.4.1",
+            "192.168.0.1",
             "192.168.1.10",
-            "10.0.0.1",
-            "192.168.0.1"
+            "192.168.1.1",
+            "10.0.0.10",
+            "10.0.0.1"
         )
         fastHosts.forEach { host -> addEndpoints(endpoints, host, ports) }
 
@@ -46,6 +79,10 @@ class WifiObdAutoDetector(
         val gatewayIp = dhcpInfo?.gateway?.let(::intToInetAddress)?.hostAddress
         val deviceIp = dhcpInfo?.ipAddress?.let(::intToInetAddress)?.hostAddress
         val subnetPrefix = gatewayIp?.let(::prefixFromIp) ?: deviceIp?.let(::prefixFromIp)
+
+        if (!gatewayIp.isNullOrBlank()) {
+            addEndpoints(endpoints, gatewayIp, ports)
+        }
 
         if (!subnetPrefix.isNullOrBlank()) {
             listOf(1, 10, 11, 100, 101, 200).forEach { suffix ->
@@ -111,7 +148,8 @@ class WifiObdAutoDetector(
             if (probeWithCommand(output, input, "ATI\r", probeWindowMs)) {
                 true
             } else {
-                probeWithCommand(output, input, "ATZ\r", probeWindowMs)
+                probeWithCommand(output, input, "ATZ\r", probeWindowMs) &&
+                    probeWithCommand(output, input, "ATI\r", probeWindowMs)
             }
         } catch (_: Exception) {
             false
@@ -170,7 +208,11 @@ class WifiObdAutoDetector(
         private const val DEFAULT_CONNECT_TIMEOUT_MS = 1000
         private const val DEFAULT_PROBE_TIMEOUT_MS = 600
         private const val MIN_PROBE_TIMEOUT_MS = 300
-        private const val MAX_PROBE_TIMEOUT_MS = 800
+        private const val MAX_PROBE_TIMEOUT_MS = 700
         private const val RESPONSE_BUFFER_SIZE = 512
+        private const val ALT_PORT = 3000
+        private const val HTTP_PORT = 8000
+        private const val HTTP_ALT_PORT = 8080
+        private const val MAX_CONCURRENCY = 8
     }
 }
