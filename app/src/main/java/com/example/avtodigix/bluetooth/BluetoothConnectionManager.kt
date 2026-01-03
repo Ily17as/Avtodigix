@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import com.example.avtodigix.transport.ScannerTransport
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
@@ -37,8 +38,8 @@ class BluetoothConnectionManager(
     val status: StateFlow<ConnectionStatus> = _status
     private val _socketState = MutableStateFlow<BluetoothSocket?>(null)
     val socketState: StateFlow<BluetoothSocket?> = _socketState
-    private val _transportState = MutableStateFlow<BluetoothTransport?>(null)
-    val transportState: StateFlow<BluetoothTransport?> = _transportState
+    private val _transportState = MutableStateFlow<ScannerTransport?>(null)
+    val transportState: StateFlow<ScannerTransport?> = _transportState
 
     private var socket: BluetoothSocket? = null
     private var connectionJob: Job? = null
@@ -205,4 +206,11 @@ data class BluetoothTransport(
     val socket: BluetoothSocket,
     val input: InputStream,
     val output: OutputStream
-)
+) : ScannerTransport {
+    override val isConnected: Boolean
+        get() = socket.isConnected
+
+    override suspend fun close() {
+        runCatching { socket.close() }
+    }
+}

@@ -2,7 +2,6 @@ package com.example.avtodigix.connection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.avtodigix.bluetooth.BluetoothTransport
 import com.example.avtodigix.bluetooth.BluetoothConnectionManager
 import com.example.avtodigix.bluetooth.ConnectionStatus
 import com.example.avtodigix.bluetooth.PairedDevice
@@ -11,6 +10,9 @@ import com.example.avtodigix.obd.DEFAULT_LIVE_METRICS
 import com.example.avtodigix.obd.LiveMetricDefinition
 import com.example.avtodigix.obd.LivePidSnapshot
 import com.example.avtodigix.obd.ObdService
+import com.example.avtodigix.transport.ScannerTransport
+import com.example.avtodigix.wifi.WiFiScannerManager
+import com.example.avtodigix.wifi.WifiConnectionStatus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -27,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ConnectionViewModel(
     private val connectionManager: BluetoothConnectionManager,
+    private val wifiScannerManager: WiFiScannerManager,
     private val selectedDeviceStore: SelectedDeviceStore
 ) : ViewModel() {
     private val _connectionState = MutableStateFlow(ConnectionState())
@@ -49,6 +52,9 @@ class ConnectionViewModel(
         refreshPairedDevices()
         viewModelScope.launch {
             connectionManager.status.collect { status ->
+                if (connectionState.value.scannerType != ScannerType.Bluetooth) {
+                    return@collect
+                }
                 when (status) {
                     ConnectionStatus.AdapterNotResponding -> {
                         updateConnectionState {
@@ -77,9 +83,56 @@ class ConnectionViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            wifiScannerManager.status.collect { status ->
+                if (connectionState.value.scannerType != ScannerType.Wifi) {
+                    return@collect
+                }
+                when (status) {
+                    WifiConnectionStatus.Connecting -> {
+                        updateConnectionState {
+                            copy(
+                                status = ConnectionState.Status.Connecting,
+                                log = appendLog("Устанавливаем Wi-Fi соединение.")
+                            )
+                        }
+                    }
+                    WifiConnectionStatus.Connected -> {
+                        updateConnectionState {
+                            copy(
+                                status = ConnectionState.Status.Connecting,
+                                log = appendLog("Wi-Fi соединение установлено.")
+                            )
+                        }
+                    }
+                    WifiConnectionStatus.Failed -> {
+                        if (connectionState.value.status == ConnectionState.Status.Connecting ||
+                            connectionState.value.status == ConnectionState.Status.Initializing ||
+                            connectionState.value.status == ConnectionState.Status.Connected
+                        ) {
+                            updateConnectionState {
+                                copy(
+                                    status = ConnectionState.Status.Error,
+                                    errorMessage = "Не удалось установить Wi-Fi соединение."
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fun onConnectRequested() {
+        if (connectionState.value.scannerType == ScannerType.Wifi) {
+            updateConnectionState {
+                copy(
+                    status = ConnectionState.Status.Error,
+                    errorMessage = "Для Wi-Fi подключения укажите IP и порт."
+                )
+            }
+            return
+        }
         updateConnectionState {
             copy(
                 status = ConnectionState.Status.PermissionsRequired,
@@ -90,7 +143,31 @@ class ConnectionViewModel(
         }
     }
 
+    fun onWifiConnectRequested(host: String, port: Int) {
+        connectJob?.cancel()
+        updateConnectionState {
+            copy(
+                scannerType = ScannerType.Wifi,
+                wifiHost = host,
+                wifiPort = port,
+                status = ConnectionState.Status.Connecting,
+                errorMessage = null,
+                log = appendLog("Подключение по Wi-Fi к $host:$port.")
+            )
+        }
+        connectJob = viewModelScope.launch { connectToWifi(host, port) }
+    }
+
+    fun onScannerTypeSelected(scannerType: ScannerType) {
+        updateConnectionState {
+            copy(scannerType = scannerType)
+        }
+    }
+
     fun onPermissionsResult(granted: Boolean, permanentlyDenied: Boolean) {
+        if (connectionState.value.scannerType == ScannerType.Wifi) {
+            return
+        }
         if (!granted) {
             updateConnectionState {
                 copy(
@@ -150,7 +227,11 @@ class ConnectionViewModel(
                 session = null
                 obdService = null
                 supportedPids = null
-                connectionManager.disconnect()
+                if (connectionState.value.scannerType == ScannerType.Bluetooth) {
+                    connectionManager.disconnect()
+                } else {
+                    wifiScannerManager.disconnect()
+                }
             }
             updateConnectionState {
                 copy(
@@ -220,6 +301,7 @@ class ConnectionViewModel(
                 obdService = null
                 supportedPids = null
                 connectionManager.disconnect()
+                wifiScannerManager.disconnect()
             }
         }
     }
@@ -275,6 +357,39 @@ class ConnectionViewModel(
             return
         }
 
+        startElmSession(transport)
+    }
+
+    private suspend fun connectToWifi(host: String, port: Int) {
+        val transport = try {
+            wifiScannerManager.connect(host, port)
+        } catch (error: IOException) {
+            updateConnectionState {
+                copy(
+                    status = ConnectionState.Status.Error,
+                    errorMessage = "Ошибка подключения по Wi-Fi."
+                )
+            }
+            return
+        } catch (error: IllegalArgumentException) {
+            updateConnectionState {
+                copy(
+                    status = ConnectionState.Status.Error,
+                    errorMessage = "Некорректные параметры Wi-Fi подключения."
+                )
+            }
+            return
+        }
+        startElmSession(transport)
+    }
+
+    private suspend fun waitForTransport(): ScannerTransport {
+        return withTimeout(CONNECTION_TIMEOUT_MILLIS) {
+            connectionManager.transportState.filterNotNull().first { it.isConnected }
+        }
+    }
+
+    private suspend fun startElmSession(transport: ScannerTransport) {
         val newSession = ElmSession(transport.input, transport.output, parentScope = viewModelScope)
         session = newSession
         updateConnectionState {
@@ -322,12 +437,6 @@ class ConnectionViewModel(
             )
         }
         startReading(service, supportedPidSetOrNull)
-    }
-
-    private suspend fun waitForTransport(): BluetoothTransport {
-        return withTimeout(CONNECTION_TIMEOUT_MILLIS) {
-            connectionManager.transportState.filterNotNull().first { it.socket.isConnected }
-        }
     }
 
     private fun startReading(service: ObdService, supportedPids: Set<Int>?) {
@@ -393,6 +502,9 @@ data class ConnectionState(
     val selectedDeviceName: String? = null,
     val selectedDeviceAddress: String? = null,
     val pairedDevices: List<PairedDevice> = emptyList(),
+    val scannerType: ScannerType = ScannerType.Bluetooth,
+    val wifiHost: String? = null,
+    val wifiPort: Int? = null,
     val log: String = "",
     val supportedMetrics: List<LiveMetricDefinition> = emptyList(),
     val errorMessage: String? = null,
@@ -407,6 +519,11 @@ data class ConnectionState(
         Connected,
         Error
     }
+}
+
+enum class ScannerType {
+    Bluetooth,
+    Wifi
 }
 
 data class ObdState(
