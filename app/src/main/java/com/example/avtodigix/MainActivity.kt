@@ -42,6 +42,7 @@ import com.example.avtodigix.storage.ScanSnapshotRepository
 import com.example.avtodigix.storage.WifiResponseFormat
 import com.example.avtodigix.storage.WifiScanSnapshot
 import com.example.avtodigix.storage.WifiScanSnapshotRepository
+import com.example.avtodigix.obd.ObdErrorType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,6 +66,7 @@ class MainActivity : AppCompatActivity() {
     private var permissionsRequestInFlight = false
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
+    private var diagnosticsModeEnabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,6 +134,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.metricsReconnect.setOnClickListener {
             connectionViewModel.onConnectRequested()
+        }
+
+        binding.diagnosticsModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            diagnosticsModeEnabled = isChecked
+            binding.diagnosticsCard.isVisible = isChecked
+            renderDiagnostics(latestObdState)
         }
 
         val initialScannerType = connectionViewModel.connectionState.value.scannerType
@@ -624,6 +632,7 @@ class MainActivity : AppCompatActivity() {
         state.metrics?.let { snapshot ->
             updateLiveMetrics(snapshot)
         }
+        renderDiagnostics(state)
         updateWifiSnapshotFromObdState(state)
         val secondsSinceUpdate = state.lastUpdatedMillis?.let { lastUpdated ->
             ((System.currentTimeMillis() - lastUpdated) / 1000).coerceAtLeast(0)
@@ -660,6 +669,25 @@ class MainActivity : AppCompatActivity() {
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
             dtcCount = dtcCount.takeIf { it > 0 }
         )
+    }
+
+    private fun renderDiagnostics(state: ObdState) {
+        if (!diagnosticsModeEnabled) {
+            return
+        }
+        val command = state.lastCommand?.ifBlank { null } ?: PLACEHOLDER_VALUE
+        val rawResponse = state.lastRawResponse?.ifBlank { null } ?: PLACEHOLDER_VALUE
+        val errorLabel = when (state.lastErrorType) {
+            ObdErrorType.TIMEOUT -> getString(R.string.diagnostics_error_timeout)
+            ObdErrorType.NO_DATA -> getString(R.string.diagnostics_error_no_data)
+            ObdErrorType.UNABLE_TO_CONNECT -> getString(R.string.diagnostics_error_unable_connect)
+            ObdErrorType.SOCKET_CLOSED -> getString(R.string.diagnostics_error_socket_closed)
+            ObdErrorType.NEGATIVE_RESPONSE -> getString(R.string.diagnostics_error_negative)
+            null -> getString(R.string.diagnostics_error_none)
+        }
+        binding.diagnosticsLastCommandValue.text = command
+        binding.diagnosticsRawResponseValue.text = rawResponse
+        binding.diagnosticsErrorValue.text = errorLabel
     }
 
     private fun updateWifiSnapshotFromObdState(state: ObdState) {

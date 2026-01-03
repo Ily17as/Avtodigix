@@ -93,6 +93,7 @@ class ElmSession(
                 lastError = error
                 resetAdapter()
             } catch (error: IOException) {
+                Log.w("OBD", "ioError command=${command.trim()} message=${error.message}")
                 lastError = error
                 if (!command.equals("ATZ", ignoreCase = true)) {
                     resetAdapter()
