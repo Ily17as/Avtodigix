@@ -3,4 +3,5 @@
     <color name="traffic_yellow">#F9A825</color>
     <color name="traffic_red">#C62828</color>
     <color name="warning_text">#B00020</color>
+    <color name="device_outline">#B0B0B0</color>
 </resources>
