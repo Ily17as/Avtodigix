@@ -16,8 +16,8 @@ import com.example.avtodigix.transport.BluetoothObdTransport
 import com.example.avtodigix.transport.ObdTransport
 import com.example.avtodigix.transport.WifiObdTransport
 import com.example.avtodigix.wifi.WiFiScannerManager
+import com.example.avtodigix.wifi.WifiAutoDetectResult
 import com.example.avtodigix.wifi.WifiObdAutoDetector
-import com.example.avtodigix.wifi.WifiDiscoveredDevice
 import com.example.avtodigix.wifi.WifiConnectionStatus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -151,11 +151,6 @@ class ConnectionViewModel(
                 }
             }
         }
-        viewModelScope.launch {
-            wifiScannerManager.discoveredDevices.collect { devices ->
-                updateConnectionState { copy(wifiDiscoveredDevices = devices) }
-            }
-        }
     }
 
     fun onConnectRequested() {
@@ -200,7 +195,7 @@ class ConnectionViewModel(
         connectJob = viewModelScope.launch { connectToWifi(host, port) }
     }
 
-    fun onWifiDeviceSelected(device: WifiDiscoveredDevice) {
+    fun onWifiDeviceSelected(device: WifiAutoDetectResult) {
         selectedDeviceStore.setSelectedScannerType(ScannerType.Wifi)
         selectedDeviceStore.setWifiHost(device.host)
         selectedDeviceStore.setWifiPort(device.port)
@@ -518,6 +513,7 @@ class ConnectionViewModel(
                 status = ConnectionState.Status.Connecting,
                 wifiDetectInProgress = true,
                 wifiDetectError = null,
+                wifiAutoDetectResults = emptyList(),
                 wifiResolvedEndpoint = null,
                 errorMessage = null,
                 log = appendLog("Запускаем автодетект Wi-Fi адаптера.")
@@ -525,7 +521,8 @@ class ConnectionViewModel(
         }
         connectJob = viewModelScope.launch {
             val candidates = wifiObdAutoDetector.generateCandidates()
-            val detected = wifiObdAutoDetector.detect(candidates)
+            val results = wifiObdAutoDetector.scan(candidates)
+            val detected = results.minByOrNull { it.rttMs }
             if (detected != null) {
                 val endpoint = "${detected.host}:${detected.port}"
                 selectedDeviceStore.setWifiHost(detected.host)
@@ -537,6 +534,7 @@ class ConnectionViewModel(
                         wifiResolvedEndpoint = endpoint,
                         wifiDetectInProgress = false,
                         wifiDetectError = null,
+                        wifiAutoDetectResults = results,
                         status = ConnectionState.Status.Connecting,
                         errorMessage = null,
                         log = appendLog("Автодетект нашел адаптер по адресу $endpoint.")
@@ -550,6 +548,7 @@ class ConnectionViewModel(
                         wifiDetectInProgress = false,
                         wifiDetectError = "Не удалось автоматически найти Wi-Fi адаптер.",
                         wifiResolvedEndpoint = null,
+                        wifiAutoDetectResults = emptyList(),
                         errorMessage = "Не удалось определить Wi-Fi адаптер. Откройте «Дополнительно» и укажите IP и порт.",
                         log = appendLog("Автодетект Wi-Fi адаптера не дал результатов.")
                     )
@@ -764,7 +763,7 @@ data class ConnectionState(
     val wifiDetectInProgress: Boolean = false,
     val wifiDetectError: String? = null,
     val wifiResolvedEndpoint: String? = null,
-    val wifiDiscoveredDevices: List<WifiDiscoveredDevice> = emptyList(),
+    val wifiAutoDetectResults: List<WifiAutoDetectResult> = emptyList(),
     val log: String = "",
     val supportedMetrics: List<LiveMetricDefinition> = emptyList(),
     val errorMessage: String? = null,

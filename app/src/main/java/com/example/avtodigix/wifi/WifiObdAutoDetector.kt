@@ -2,7 +2,6 @@ package com.example.avtodigix.wifi
 
 import android.content.Context
 import android.net.wifi.WifiManager
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +15,6 @@ import java.io.InputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.math.min
 
@@ -25,40 +23,41 @@ data class Endpoint(
     val port: Int
 )
 
+data class WifiAutoDetectResult(
+    val host: String,
+    val port: Int,
+    val rttMs: Long
+)
+
 class WifiObdAutoDetector(
     private val context: Context,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend fun detect(candidates: List<Endpoint>): Endpoint? = withContext(ioDispatcher) {
+        scan(candidates).minByOrNull { it.rttMs }?.let { Endpoint(it.host, it.port) }
+    }
+
+    suspend fun scan(candidates: List<Endpoint>): List<WifiAutoDetectResult> = withContext(ioDispatcher) {
         if (candidates.isEmpty()) {
-            return@withContext null
+            return@withContext emptyList()
         }
 
         coroutineScope {
             val semaphore = Semaphore(MAX_CONCURRENCY)
-            val remaining = AtomicInteger(candidates.size)
-            val result = CompletableDeferred<Endpoint?>()
+            val results = java.util.Collections.synchronizedList(mutableListOf<WifiAutoDetectResult>())
             val jobs: List<Deferred<Unit>> = candidates.map { endpoint ->
                 async {
-                    try {
-                        semaphore.withPermit {
-                            if (!result.isCompleted && probeElm(endpoint)) {
-                                result.complete(endpoint)
-                            }
-                        }
-                    } finally {
-                        if (remaining.decrementAndGet() == 0) {
-                            result.complete(null)
+                    semaphore.withPermit {
+                        val rttMs = probeElm(endpoint)
+                        if (rttMs != null) {
+                            results.add(WifiAutoDetectResult(endpoint.host, endpoint.port, rttMs))
                         }
                     }
                 }
             }
 
-            result.invokeOnCompletion { jobs.forEach { it.cancel() } }
-            val winner = result.await()
-            jobs.forEach { it.cancel() }
             jobs.joinAll()
-            winner
+            results.sortedBy { it.rttMs }
         }
     }
 
@@ -137,22 +136,28 @@ class WifiObdAutoDetector(
         endpoint: Endpoint,
         connectTimeoutMs: Int = DEFAULT_CONNECT_TIMEOUT_MS,
         probeTimeoutMs: Int = DEFAULT_PROBE_TIMEOUT_MS
-    ): Boolean {
+    ): Long? {
         val socket = Socket()
+        val startTime = System.nanoTime()
         return try {
             socket.connect(InetSocketAddress(endpoint.host, endpoint.port), connectTimeoutMs)
             val probeWindowMs = min(max(probeTimeoutMs, MIN_PROBE_TIMEOUT_MS), MAX_PROBE_TIMEOUT_MS)
             socket.soTimeout = probeWindowMs
             val output = socket.getOutputStream()
             val input = socket.getInputStream()
-            if (probeWithCommand(output, input, "ATI\r", probeWindowMs)) {
+            val success = if (probeWithCommand(output, input, "ATI\r", probeWindowMs)) {
                 true
             } else {
                 probeWithCommand(output, input, "ATZ\r", probeWindowMs) &&
                     probeWithCommand(output, input, "ATI\r", probeWindowMs)
             }
+            if (success) {
+                ((System.nanoTime() - startTime) / 1_000_000).coerceAtLeast(1)
+            } else {
+                null
+            }
         } catch (_: Exception) {
-            false
+            null
         } finally {
             runCatching { socket.close() }
         }
