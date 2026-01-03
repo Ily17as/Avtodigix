@@ -28,7 +28,9 @@ import com.example.avtodigix.connection.ConnectionViewModel
 import com.example.avtodigix.connection.ObdState
 import com.example.avtodigix.connection.PairedDeviceAdapter
 import com.example.avtodigix.connection.PermissionStatus
+import com.example.avtodigix.connection.ScannerType
 import com.example.avtodigix.connection.SelectedDeviceStore
+import com.example.avtodigix.connection.WifiDeviceAdapter
 import com.example.avtodigix.databinding.ActivityMainBinding
 import com.example.avtodigix.domain.HealthAssessment
 import com.example.avtodigix.domain.HealthRules
@@ -52,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var connectionViewModel: ConnectionViewModel
     private lateinit var pairedDeviceAdapter: PairedDeviceAdapter
+    private lateinit var wifiDeviceAdapter: WifiDeviceAdapter
     private var permissionsRequestInFlight = false
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
@@ -79,6 +82,14 @@ class MainActivity : AppCompatActivity() {
         binding.connectionPairedList.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = pairedDeviceAdapter
+            setHasFixedSize(false)
+        }
+        wifiDeviceAdapter = WifiDeviceAdapter { device ->
+            connectionViewModel.onWifiDeviceSelected(device)
+        }
+        binding.wifiDiscoveredList.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = wifiDeviceAdapter
             setHasFixedSize(false)
         }
         val permissionsLauncher = registerForActivityResult(
@@ -119,9 +130,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.connectionModeGroup.setOnCheckedChangeListener { _, checkedId ->
-            updateConnectionModeUi(checkedId == R.id.connectionModeBluetooth)
+            val useBluetooth = checkedId == R.id.connectionModeBluetooth
+            updateConnectionModeUi(useBluetooth)
+            val scannerType = if (useBluetooth) ScannerType.Bluetooth else ScannerType.Wifi
+            connectionViewModel.onScannerTypeSelected(scannerType)
         }
         binding.connectionModeGroup.check(R.id.connectionModeBluetooth)
+        connectionViewModel.onScannerTypeSelected(ScannerType.Bluetooth)
 
         val savedIp = connectionPreferences.getString(PREF_WIFI_IP, "").orEmpty()
         val savedPort = connectionPreferences.getInt(PREF_WIFI_PORT, -1)
@@ -338,7 +353,29 @@ class MainActivity : AppCompatActivity() {
             state.status == ConnectionState.Status.Initializing ||
             state.status == ConnectionState.Status.Connected
 
+        renderWifiDevices(state)
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
+    }
+
+    private fun renderWifiDevices(state: ConnectionState) {
+        wifiDeviceAdapter.submitList(state.wifiDiscoveredDevices, state.wifiHost, state.wifiPort)
+        binding.wifiDiscoveredEmpty.isVisible = state.wifiDiscoveredDevices.isEmpty()
+
+        if (state.scannerType != ScannerType.Wifi) {
+            return
+        }
+
+        state.wifiHost?.let { host ->
+            if (binding.wifiIpInput.text?.toString() != host) {
+                binding.wifiIpInput.setText(host)
+            }
+        }
+        state.wifiPort?.let { port ->
+            val portText = port.toString()
+            if (binding.wifiPortInput.text?.toString() != portText) {
+                binding.wifiPortInput.setText(portText)
+            }
+        }
     }
 
     private fun updateConnectionModeUi(useBluetooth: Boolean) {

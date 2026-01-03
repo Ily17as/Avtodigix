@@ -1,5 +1,6 @@
 package com.example.avtodigix.wifi
 
+import android.content.Context
 import com.example.avtodigix.transport.ScannerTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import java.net.Socket
 import kotlin.math.min
 
 class WiFiScannerManager(
+    context: Context,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     parentScope: CoroutineScope? = null
 ) {
@@ -24,6 +26,8 @@ class WiFiScannerManager(
     val status: StateFlow<WifiConnectionStatus> = _status
     private val _transportState = MutableStateFlow<ScannerTransport?>(null)
     val transportState: StateFlow<ScannerTransport?> = _transportState
+    private val discoveryService = WifiDiscoveryService(context, parentScope = scope)
+    val discoveredDevices: StateFlow<List<WifiDiscoveredDevice>> = discoveryService.devices
 
     private var socket: Socket? = null
 
@@ -59,6 +63,14 @@ class WiFiScannerManager(
         scope.launch {
             disconnectInternal()
         }
+    }
+
+    fun startDiscovery() {
+        discoveryService.startDiscovery()
+    }
+
+    fun stopDiscovery() {
+        discoveryService.stopDiscovery()
     }
 
     private suspend fun disconnectInternal() = withContext(ioDispatcher) {
