@@ -65,9 +65,6 @@ class MainActivity : AppCompatActivity() {
     private var permissionsRequestInFlight = false
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
-    private val connectionPreferences by lazy {
-        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,23 +134,19 @@ class MainActivity : AppCompatActivity() {
             connectionViewModel.onConnectRequested()
         }
 
+        val initialScannerType = connectionViewModel.connectionState.value.scannerType
+        val initialUseBluetooth = initialScannerType == ScannerType.Bluetooth
+        updateConnectionModeUi(initialUseBluetooth)
+        binding.connectionModeGroup.check(
+            if (initialUseBluetooth) R.id.connectionModeBluetooth else R.id.connectionModeWifi
+        )
         binding.connectionModeGroup.setOnCheckedChangeListener { _, checkedId ->
             val useBluetooth = checkedId == R.id.connectionModeBluetooth
             updateConnectionModeUi(useBluetooth)
             val scannerType = if (useBluetooth) ScannerType.Bluetooth else ScannerType.Wifi
             connectionViewModel.onScannerTypeSelected(scannerType)
         }
-        binding.connectionModeGroup.check(R.id.connectionModeBluetooth)
-        connectionViewModel.onScannerTypeSelected(ScannerType.Bluetooth)
 
-        val savedIp = connectionPreferences.getString(PREF_WIFI_IP, "").orEmpty()
-        val savedPort = connectionPreferences.getInt(PREF_WIFI_PORT, -1)
-        if (savedIp.isNotBlank()) {
-            binding.wifiIpInput.setText(savedIp)
-        }
-        if (savedPort > 0) {
-            binding.wifiPortInput.setText(savedPort.toString())
-        }
         binding.wifiSaveButton.setOnClickListener {
             saveWifiSettings()
         }
@@ -427,10 +420,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        connectionPreferences.edit()
-            .putString(PREF_WIFI_IP, ip)
-            .putInt(PREF_WIFI_PORT, port)
-            .apply()
+        connectionViewModel.onWifiSettingsSaved(ip, port)
     }
 
     private fun isValidIpAddress(ip: String): Boolean {
@@ -776,9 +766,6 @@ class MainActivity : AppCompatActivity() {
         val IP_ADDRESS_REGEX = Regex(
             "^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$"
         )
-        const val PREFS_NAME = "connection_prefs"
-        const val PREF_WIFI_IP = "wifi_ip"
-        const val PREF_WIFI_PORT = "wifi_port"
         const val MAX_PORT = 65535
         const val PLACEHOLDER_VALUE = "—"
     }

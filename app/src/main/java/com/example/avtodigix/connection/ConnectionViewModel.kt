@@ -48,8 +48,21 @@ class ConnectionViewModel(
     private var lastDtcReadMillis = 0L
 
     init {
+        val storedScannerType = selectedDeviceStore.getSelectedScannerType() ?: ScannerType.Bluetooth
+        val storedWifiHost = selectedDeviceStore.getWifiHost()
+        val storedWifiPort = selectedDeviceStore.getWifiPort()
         updateConnectionState {
-            copy(selectedDeviceAddress = selectedDeviceStore.getSelectedDeviceAddress())
+            copy(
+                selectedDeviceAddress = selectedDeviceStore.getSelectedDeviceAddress(),
+                scannerType = storedScannerType,
+                wifiHost = storedWifiHost,
+                wifiPort = storedWifiPort
+            )
+        }
+        if (storedScannerType == ScannerType.Wifi) {
+            wifiScannerManager.startDiscovery()
+        } else {
+            wifiScannerManager.stopDiscovery()
         }
         refreshPairedDevices()
         viewModelScope.launch {
@@ -132,6 +145,12 @@ class ConnectionViewModel(
 
     fun onConnectRequested() {
         if (connectionState.value.scannerType == ScannerType.Wifi) {
+            val host = connectionState.value.wifiHost
+            val port = connectionState.value.wifiPort
+            if (!host.isNullOrBlank() && port != null) {
+                onWifiConnectRequested(host, port)
+                return
+            }
             updateConnectionState {
                 copy(
                     status = ConnectionState.Status.Error,
@@ -152,6 +171,9 @@ class ConnectionViewModel(
 
     fun onWifiConnectRequested(host: String, port: Int) {
         connectJob?.cancel()
+        selectedDeviceStore.setSelectedScannerType(ScannerType.Wifi)
+        selectedDeviceStore.setWifiHost(host)
+        selectedDeviceStore.setWifiPort(port)
         updateConnectionState {
             copy(
                 scannerType = ScannerType.Wifi,
@@ -166,6 +188,9 @@ class ConnectionViewModel(
     }
 
     fun onWifiDeviceSelected(device: WifiDiscoveredDevice) {
+        selectedDeviceStore.setSelectedScannerType(ScannerType.Wifi)
+        selectedDeviceStore.setWifiHost(device.host)
+        selectedDeviceStore.setWifiPort(device.port)
         updateConnectionState {
             copy(
                 scannerType = ScannerType.Wifi,
@@ -177,13 +202,41 @@ class ConnectionViewModel(
     }
 
     fun onScannerTypeSelected(scannerType: ScannerType) {
+        selectedDeviceStore.setSelectedScannerType(scannerType)
         if (scannerType == ScannerType.Wifi) {
             wifiScannerManager.startDiscovery()
         } else {
             wifiScannerManager.stopDiscovery()
         }
+        val wifiHost = if (scannerType == ScannerType.Wifi) {
+            selectedDeviceStore.getWifiHost()
+        } else {
+            null
+        }
+        val wifiPort = if (scannerType == ScannerType.Wifi) {
+            selectedDeviceStore.getWifiPort()
+        } else {
+            null
+        }
         updateConnectionState {
-            copy(scannerType = scannerType)
+            copy(
+                scannerType = scannerType,
+                wifiHost = wifiHost,
+                wifiPort = wifiPort,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun onWifiSettingsSaved(host: String, port: Int) {
+        selectedDeviceStore.setWifiHost(host)
+        selectedDeviceStore.setWifiPort(port)
+        updateConnectionState {
+            copy(
+                wifiHost = host,
+                wifiPort = port,
+                errorMessage = null
+            )
         }
     }
 
