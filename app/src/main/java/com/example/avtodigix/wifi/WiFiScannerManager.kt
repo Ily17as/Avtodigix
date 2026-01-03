@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import com.example.avtodigix.transport.ScannerTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -12,12 +13,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.math.min
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class WiFiScannerManager(
     context: Context,
@@ -35,7 +39,8 @@ class WiFiScannerManager(
     val discoveredDevices: StateFlow<List<WifiDiscoveredDevice>> = discoveryService.devices
 
     private var socket: Socket? = null
-    private var boundNetwork: Network? = null
+    private var requestedNetwork: Network? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     suspend fun connect(
         host: String,
@@ -47,8 +52,8 @@ class WiFiScannerManager(
         val safeReadTimeout = min(readTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
         disconnectInternal()
         _status.value = WifiConnectionStatus.Connecting
-        bindToCurrentWifi()
-        val createdSocket = Socket()
+        val network = requestWifiNetwork()
+        val createdSocket = network.socketFactory.createSocket()
         return@withContext try {
             createdSocket.connect(InetSocketAddress(host, port), safeConnectTimeout)
             createdSocket.soTimeout = safeReadTimeout
@@ -59,7 +64,7 @@ class WiFiScannerManager(
             transport
         } catch (error: Exception) {
             runCatching { createdSocket.close() }
-            unbindProcessFromNetwork()
+            releaseWifiRequest()
             _transportState.value = null
             _status.value = WifiConnectionStatus.Failed
             throw error
@@ -85,28 +90,51 @@ class WiFiScannerManager(
             runCatching { current.close() }
         }
         socket = null
-        unbindProcessFromNetwork()
+        releaseWifiRequest()
         _transportState.value = null
         _status.value = WifiConnectionStatus.Failed
     }
 
-    fun bindToCurrentWifi() {
-        val activeNetwork = connectivityManager.activeNetwork ?: return
-        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return
-        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-            return
+    private suspend fun requestWifiNetwork(): Network = suspendCancellableCoroutine { continuation ->
+        releaseWifiRequest()
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .build()
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                if (continuation.isCompleted) {
+                    return
+                }
+                requestedNetwork = network
+                continuation.resume(network)
+            }
+
+            override fun onUnavailable() {
+                if (continuation.isCompleted) {
+                    return
+                }
+                continuation.resumeWithException(IllegalStateException("Wi-Fi network unavailable"))
+            }
+
+            override fun onLost(network: Network) {
+                if (requestedNetwork == network) {
+                    requestedNetwork = null
+                }
+            }
         }
-        if (connectivityManager.bindProcessToNetwork(activeNetwork)) {
-            boundNetwork = activeNetwork
+        networkCallback = callback
+        connectivityManager.requestNetwork(request, callback)
+        continuation.invokeOnCancellation {
+            releaseWifiRequest()
         }
     }
 
-    private fun unbindProcessFromNetwork() {
-        if (boundNetwork == null) {
-            return
+    private fun releaseWifiRequest() {
+        networkCallback?.let { callback ->
+            runCatching { connectivityManager.unregisterNetworkCallback(callback) }
         }
-        connectivityManager.bindProcessToNetwork(null)
-        boundNetwork = null
+        networkCallback = null
+        requestedNetwork = null
     }
 
     companion object {
