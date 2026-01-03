@@ -3,7 +3,9 @@ package com.example.avtodigix.connection
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.avtodigix.R
 import com.example.avtodigix.bluetooth.PairedDevice
 import com.example.avtodigix.databinding.ItemPairedDeviceBinding
 import com.google.android.material.color.MaterialColors
@@ -54,11 +56,10 @@ class PairedDeviceAdapter(
                 Color.BLACK 
             }
             
-            val outlineColor = try {
-                MaterialColors.getColor(binding.pairedDeviceCard, com.google.android.material.R.attr.colorOutline)
-            } catch (e: Exception) {
-                Color.GRAY
-            }
+            val outlineColor = ContextCompat.getColor(
+                binding.root.context,
+                R.color.device_outline
+            )
             
             val strokeColor = if (isSelected) primaryColor else outlineColor
             binding.pairedDeviceCard.strokeWidth = if (isSelected) selectedWidth else normalWidth
