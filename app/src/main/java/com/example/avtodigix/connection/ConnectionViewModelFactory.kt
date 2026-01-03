@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.avtodigix.bluetooth.BluetoothConnectionManager
 import com.example.avtodigix.wifi.WiFiScannerManager
+import com.example.avtodigix.wifi.WifiObdAutoDetector
 
 class ConnectionViewModelFactory(
     private val context: Context,
@@ -16,6 +17,7 @@ class ConnectionViewModelFactory(
             return ConnectionViewModel(
                 BluetoothConnectionManager(context),
                 WiFiScannerManager(context),
+                WifiObdAutoDetector(context),
                 selectedDeviceStore
             ) as T
         }
