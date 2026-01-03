@@ -14,8 +14,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
 import kotlin.math.min
 
 class WiFiScannerManager(
@@ -36,24 +34,19 @@ class WiFiScannerManager(
     suspend fun connect(
         host: String,
         port: Int,
-        timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
+        connectTimeoutMs: Long = DEFAULT_TIMEOUT_MILLIS,
+        readTimeoutMs: Long = DEFAULT_TIMEOUT_MILLIS
     ): WifiTransport = withContext(ioDispatcher) {
-        val safeTimeout = min(timeoutMillis, MAX_TIMEOUT_MILLIS).toInt()
+        val safeConnectTimeout = min(connectTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
+        val safeReadTimeout = min(readTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
         disconnectInternal()
         _status.value = WifiConnectionStatus.Connecting
-        val createdSocket = createTlsSocket()
+        val createdSocket = Socket()
         return@withContext try {
-            createdSocket.connect(InetSocketAddress(host, port), safeTimeout)
-            createdSocket.sslParameters = createdSocket.sslParameters.apply {
-                endpointIdentificationAlgorithm = "HTTPS"
-            }
-            createdSocket.startHandshake()
+            createdSocket.connect(InetSocketAddress(host, port), safeConnectTimeout)
+            createdSocket.soTimeout = safeReadTimeout
             socket = createdSocket
-            val transport = WifiTransport(
-                socket = createdSocket,
-                input = createdSocket.getInputStream(),
-                output = createdSocket.getOutputStream()
-            )
+            val transport = WifiTransport(socket = createdSocket)
             _transportState.value = transport
             _status.value = WifiConnectionStatus.Connected
             transport
@@ -88,12 +81,6 @@ class WiFiScannerManager(
         _status.value = WifiConnectionStatus.Failed
     }
 
-    private fun createTlsSocket(): SSLSocket {
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, null, null)
-        return sslContext.socketFactory.createSocket() as SSLSocket
-    }
-
     companion object {
         private const val DEFAULT_TIMEOUT_MILLIS = 10_000L
         private const val MAX_TIMEOUT_MILLIS = 10_000L
@@ -107,10 +94,12 @@ sealed class WifiConnectionStatus {
 }
 
 data class WifiTransport(
-    val socket: Socket,
-    val input: InputStream,
-    val output: OutputStream
+    val socket: Socket
 ) : ScannerTransport {
+    override val input: InputStream
+        get() = socket.getInputStream()
+    override val output: OutputStream
+        get() = socket.getOutputStream()
     override val isConnected: Boolean
         get() = socket.isConnected
 
