@@ -1,6 +1,9 @@
 package com.example.avtodigix.wifi
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import com.example.avtodigix.transport.ScannerTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +24,8 @@ class WiFiScannerManager(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     parentScope: CoroutineScope? = null
 ) {
+    private val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val scope = parentScope ?: CoroutineScope(SupervisorJob() + ioDispatcher)
     private val _status = MutableStateFlow<WifiConnectionStatus>(WifiConnectionStatus.Failed)
     val status: StateFlow<WifiConnectionStatus> = _status
@@ -30,6 +35,7 @@ class WiFiScannerManager(
     val discoveredDevices: StateFlow<List<WifiDiscoveredDevice>> = discoveryService.devices
 
     private var socket: Socket? = null
+    private var boundNetwork: Network? = null
 
     suspend fun connect(
         host: String,
@@ -41,6 +47,7 @@ class WiFiScannerManager(
         val safeReadTimeout = min(readTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
         disconnectInternal()
         _status.value = WifiConnectionStatus.Connecting
+        bindProcessToWifiNetwork()
         val createdSocket = Socket()
         return@withContext try {
             createdSocket.connect(InetSocketAddress(host, port), safeConnectTimeout)
@@ -52,6 +59,7 @@ class WiFiScannerManager(
             transport
         } catch (error: Exception) {
             runCatching { createdSocket.close() }
+            unbindProcessFromNetwork()
             _transportState.value = null
             _status.value = WifiConnectionStatus.Failed
             throw error
@@ -77,8 +85,27 @@ class WiFiScannerManager(
             runCatching { current.close() }
         }
         socket = null
+        unbindProcessFromNetwork()
         _transportState.value = null
         _status.value = WifiConnectionStatus.Failed
+    }
+
+    private fun bindProcessToWifiNetwork() {
+        val wifiNetwork = connectivityManager.allNetworks.firstOrNull { network ->
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        } ?: return
+        if (connectivityManager.bindProcessToNetwork(wifiNetwork)) {
+            boundNetwork = wifiNetwork
+        }
+    }
+
+    private fun unbindProcessFromNetwork() {
+        if (boundNetwork == null) {
+            return
+        }
+        connectivityManager.bindProcessToNetwork(null)
+        boundNetwork = null
     }
 
     companion object {
