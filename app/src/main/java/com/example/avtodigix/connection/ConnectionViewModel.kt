@@ -10,7 +10,9 @@ import com.example.avtodigix.obd.DEFAULT_LIVE_METRICS
 import com.example.avtodigix.obd.LiveMetricDefinition
 import com.example.avtodigix.obd.LivePidSnapshot
 import com.example.avtodigix.obd.ObdService
-import com.example.avtodigix.transport.ScannerTransport
+import com.example.avtodigix.transport.BluetoothObdTransport
+import com.example.avtodigix.transport.ObdTransport
+import com.example.avtodigix.transport.WifiObdTransport
 import com.example.avtodigix.wifi.WiFiScannerManager
 import com.example.avtodigix.wifi.WifiDiscoveredDevice
 import com.example.avtodigix.wifi.WifiConnectionStatus
@@ -19,11 +21,8 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,6 +42,7 @@ class ConnectionViewModel(
     private var session: ElmSession? = null
     private var obdService: ObdService? = null
     private var supportedPids: Set<Int>? = null
+    private var activeTransport: ObdTransport? = null
     private val dtcRefreshRequested = AtomicBoolean(false)
     private var lastDtcReadMillis = 0L
 
@@ -302,11 +302,8 @@ class ConnectionViewModel(
                 session = null
                 obdService = null
                 supportedPids = null
-                if (connectionState.value.scannerType == ScannerType.Bluetooth) {
-                    connectionManager.disconnect()
-                } else {
-                    wifiScannerManager.disconnect()
-                }
+                activeTransport?.disconnect()
+                activeTransport = null
             }
             updateConnectionState {
                 copy(
@@ -375,6 +372,8 @@ class ConnectionViewModel(
                 session = null
                 obdService = null
                 supportedPids = null
+                activeTransport?.disconnect()
+                activeTransport = null
                 connectionManager.disconnect()
                 wifiScannerManager.disconnect()
                 wifiScannerManager.stopDiscovery()
@@ -420,52 +419,80 @@ class ConnectionViewModel(
             )
         }
 
-        connectionManager.connect(selected.address, SPP_UUID)
-        val transport = try {
-            waitForTransport()
-        } catch (error: TimeoutCancellationException) {
-            updateConnectionState {
-                copy(
-                    status = ConnectionState.Status.Error,
-                    errorMessage = "Истекло время ожидания подключения."
-                )
+        val transport = BluetoothObdTransport(
+            manager = connectionManager,
+            address = selected.address,
+            uuid = SPP_UUID,
+            timeoutMillis = CONNECTION_TIMEOUT_MILLIS
+        )
+        connectAndInitialize(transport) { error ->
+            if (error is TimeoutCancellationException) {
+                updateConnectionState {
+                    copy(
+                        status = ConnectionState.Status.Error,
+                        errorMessage = "Истекло время ожидания подключения."
+                    )
+                }
+            } else {
+                updateConnectionState {
+                    copy(
+                        status = ConnectionState.Status.Error,
+                        errorMessage = "Ошибка подключения Bluetooth."
+                    )
+                }
             }
-            return
         }
-
-        startElmSession(transport)
     }
 
     private suspend fun connectToWifi(host: String, port: Int) {
-        val transport = try {
-            wifiScannerManager.connect(host, port)
-        } catch (error: IOException) {
-            updateConnectionState {
-                copy(
-                    status = ConnectionState.Status.Error,
-                    errorMessage = "Ошибка подключения по Wi-Fi."
-                )
+        val transport = WifiObdTransport(
+            manager = wifiScannerManager,
+            host = host,
+            port = port
+        )
+        connectAndInitialize(transport) { error ->
+            when (error) {
+                is IOException -> {
+                    updateConnectionState {
+                        copy(
+                            status = ConnectionState.Status.Error,
+                            errorMessage = "Ошибка подключения по Wi-Fi."
+                        )
+                    }
+                }
+                is IllegalArgumentException -> {
+                    updateConnectionState {
+                        copy(
+                            status = ConnectionState.Status.Error,
+                            errorMessage = "Некорректные параметры Wi-Fi подключения."
+                        )
+                    }
+                }
+                else -> {
+                    updateConnectionState {
+                        copy(
+                            status = ConnectionState.Status.Error,
+                            errorMessage = "Ошибка подключения по Wi-Fi."
+                        )
+                    }
+                }
             }
-            return
-        } catch (error: IllegalArgumentException) {
-            updateConnectionState {
-                copy(
-                    status = ConnectionState.Status.Error,
-                    errorMessage = "Некорректные параметры Wi-Fi подключения."
-                )
-            }
+        }
+    }
+
+    private suspend fun connectAndInitialize(transport: ObdTransport, onError: (Throwable) -> Unit) {
+        activeTransport = transport
+        try {
+            transport.connect()
+        } catch (error: Throwable) {
+            activeTransport = null
+            onError(error)
             return
         }
         startElmSession(transport)
     }
 
-    private suspend fun waitForTransport(): ScannerTransport {
-        return withTimeout(CONNECTION_TIMEOUT_MILLIS) {
-            connectionManager.transportState.filterNotNull().first { it.isConnected }
-        }
-    }
-
-    private suspend fun startElmSession(transport: ScannerTransport) {
+    private suspend fun startElmSession(transport: ObdTransport) {
         val newSession = ElmSession(transport.input, transport.output, parentScope = viewModelScope)
         session = newSession
         updateConnectionState {
