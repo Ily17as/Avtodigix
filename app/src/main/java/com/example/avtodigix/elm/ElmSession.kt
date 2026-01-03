@@ -1,5 +1,6 @@
 package com.example.avtodigix.elm
 
+import android.util.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -88,6 +89,7 @@ class ElmSession(
             try {
                 return sendCommand(command)
             } catch (error: TimeoutCancellationException) {
+                Log.w("OBD", "timedOut=true command=${command.trim()}")
                 lastError = error
                 resetAdapter()
             } catch (error: IOException) {
@@ -110,11 +112,13 @@ class ElmSession(
     ): ElmResponse = withContext(ioDispatcher) {
         enforceRateLimit()
         val normalizedCommand = command.trim()
+        Log.d("OBD", "TX $normalizedCommand")
         val payload = "$normalizedCommand\r"
         output.write(payload.toByteArray())
         output.flush()
         val raw = readUntilPrompt()
         val parsed = parseResponse(normalizedCommand, raw)
+        Log.d("OBD", "RX raw=$raw lines=$parsed")
         if (parsed.isEmpty() && !allowEmpty) {
             throw IOException("ELM returned empty response for $normalizedCommand")
         }
