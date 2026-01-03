@@ -232,6 +232,9 @@ class ConnectionViewModel(
     }
 
     fun onWifiSettingsSaved(host: String, port: Int) {
+        if (host.isBlank() || port !in 1..MAX_WIFI_PORT) {
+            return
+        }
         selectedDeviceStore.setWifiHost(host)
         selectedDeviceStore.setWifiPort(port)
         updateConnectionState {
@@ -594,6 +597,7 @@ class ConnectionViewModel(
         private const val CONNECTION_TIMEOUT_MILLIS = 15_000L
         private const val LIVE_DATA_REFRESH_MILLIS = 1_000L
         private const val DTC_REFRESH_MILLIS = 20_000L
+        private const val MAX_WIFI_PORT = 65_535
     }
 }
 

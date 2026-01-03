@@ -148,13 +148,20 @@ class BluetoothConnectionManager(
         socket = createdSocket
         return@withContext try {
             createdSocket.connect()
+            val transport = runCatching {
+                BluetoothTransport(
+                    socket = createdSocket,
+                    input = createdSocket.inputStream,
+                    output = createdSocket.outputStream
+                )
+            }.getOrElse {
+                _status.value = ConnectionStatus.NoConnection
+                closeSocket()
+                return@withContext false
+            }
             _status.value = ConnectionStatus.Connected
             _socketState.value = createdSocket
-            _transportState.value = BluetoothTransport(
-                socket = createdSocket,
-                input = createdSocket.inputStream,
-                output = createdSocket.outputStream
-            )
+            _transportState.value = transport
             true
         } catch (error: IOException) {
             _status.value = ConnectionStatus.NoConnection
@@ -181,12 +188,16 @@ class BluetoothConnectionManager(
 
     private suspend fun closeSocket() {
         withContext(ioDispatcher) {
+            val transport = _transportState.value
+            _transportState.value = null
+            transport?.let { current ->
+                runCatching { current.close() }
+            }
             socket?.let { current ->
                 runCatching { current.close() }
             }
             socket = null
             _socketState.value = null
-            _transportState.value = null
         }
     }
 }
