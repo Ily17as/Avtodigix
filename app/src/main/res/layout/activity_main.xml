@@ -325,6 +325,14 @@
                         android:layout_marginTop="12dp"
                         android:text="@string/action_save" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/wifiSettingsButton"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Открыть настройки Wi‑Fi" />
+
                     <TextView
                         android:id="@+id/wifiDiscoveredTitle"
                         android:layout_width="match_parent"
