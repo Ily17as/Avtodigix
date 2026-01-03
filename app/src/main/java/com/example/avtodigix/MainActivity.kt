@@ -432,7 +432,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        connectionViewModel.onWifiSettingsSaved(ip, port)
+        val portInt = port ?: return
+        connectionViewModel.onWifiSettingsSaved(ip, portInt)
     }
 
     private fun isValidIpAddress(ip: String): Boolean {
