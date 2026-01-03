@@ -290,48 +290,132 @@
                         android:text="@string/connection_wifi_title"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/wifiIpInputLayout"
+                    <LinearLayout
+                        android:id="@+id/wifiDetectStatusRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="@string/connection_wifi_ip_hint">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/wifiIpInput"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:id="@+id/wifiDetectStatus"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:layout_weight="1"
+                            android:text="@string/wifi_detect_placeholder"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/wifiPortInputLayout"
+                        <ProgressBar
+                            android:id="@+id/wifiDetectProgress"
+                            style="?android:attr/progressBarStyleSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:indeterminate="true"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/wifiAdvancedCard"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="@string/connection_wifi_port_hint">
+                        app:cardElevation="1dp"
+                        app:cardUseCompatPadding="true">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/wifiPortInput"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="number" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:orientation="vertical"
+                            android:padding="12dp">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/wifiSaveButton"
-                        android:layout_width="wrap_content"
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/wifiAdvancedToggle"
+                                style="@style/Widget.MaterialComponents.Button.TextButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/connection_wifi_advanced" />
+
+                            <LinearLayout
+                                android:id="@+id/wifiAdvancedGroup"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/wifiIpInputLayout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="12dp"
+                                    android:hint="@string/connection_wifi_ip_hint">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/wifiIpInput"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="text" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    android:id="@+id/wifiPortInputLayout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="12dp"
+                                    android:hint="@string/connection_wifi_port_hint">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/wifiPortInput"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="number" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="12dp"
+                                    android:orientation="horizontal">
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/wifiSaveButton"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/action_save" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/wifiAutoResetButton"
+                                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="12dp"
+                                        android:text="@string/action_reset_auto" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="@string/action_save" />
+                        android:orientation="horizontal">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/wifiSettingsButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Открыть настройки Wi‑Fi" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/wifiSettingsButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Открыть настройки Wi‑Fi" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/wifiConnectButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="@string/action_connect" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/wifiDiscoveredTitle"

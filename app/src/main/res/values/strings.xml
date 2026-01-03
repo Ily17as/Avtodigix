@@ -36,6 +36,12 @@
     <string name="connection_wifi_port_hint">Порт</string>
     <string name="connection_wifi_discovered_title">Найденные Wi-Fi сканеры</string>
     <string name="connection_wifi_discovered_empty">Устройства не найдены.</string>
+    <string name="connection_wifi_advanced">Дополнительно</string>
+    <string name="action_reset_auto">Сбросить на авто</string>
+    <string name="wifi_detect_found">Найден адаптер: %1$s</string>
+    <string name="wifi_detect_not_found">Не найден</string>
+    <string name="wifi_detect_in_progress">Поиск Wi‑Fi адаптера…</string>
+    <string name="wifi_detect_placeholder">Найден адаптер: —</string>
     <string name="wifi_snapshot_title">Данные Wi-Fi сканера</string>
     <string name="wifi_response_format_text">Текст (ELM327)</string>
     <string name="wifi_snapshot_format">Формат ответа: %1$s</string>
