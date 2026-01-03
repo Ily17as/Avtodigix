@@ -609,29 +609,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateLiveMetrics(snapshot: com.example.avtodigix.obd.LivePidSnapshot) {
-        updateMetricValueOrPlaceholder(binding.metricEngineRpmValue, snapshot.engineRpm)
+    private fun updateLiveMetrics(snapshot: com.example.avtodigix.obd.LivePidSnapshot?, errorLabel: String?) {
+        updateMetricValueOrPlaceholder(binding.metricEngineRpmValue, snapshot?.engineRpm, errorLabel)
         updateMetricValueOrPlaceholder(
             binding.metricVehicleSpeedValue,
-            snapshot.vehicleSpeedKph?.toDouble()
+            snapshot?.vehicleSpeedKph?.toDouble(),
+            errorLabel
         )
         updateMetricValueOrPlaceholder(
             binding.metricEngineTempValue,
-            snapshot.coolantTempCelsius?.toDouble()
+            snapshot?.coolantTempCelsius?.toDouble(),
+            errorLabel
         )
-        updateMetricValueOrPlaceholder(binding.metricFuelTrimValue, snapshot.shortTermFuelTrimPercent)
-        updateMetricValueOrPlaceholder(binding.metricFuelTrimLongValue, snapshot.longTermFuelTrimPercent)
+        updateMetricValueOrPlaceholder(binding.metricFuelTrimValue, snapshot?.shortTermFuelTrimPercent, errorLabel)
+        updateMetricValueOrPlaceholder(binding.metricFuelTrimLongValue, snapshot?.longTermFuelTrimPercent, errorLabel)
         updateMetricValueOrPlaceholder(
             binding.metricBatteryVoltageValue,
-            snapshot.batteryVoltageVolts
+            snapshot?.batteryVoltageVolts,
+            errorLabel
         )
     }
 
     private fun renderObdState(state: ObdState) {
         latestObdState = state
-        state.metrics?.let { snapshot ->
-            updateLiveMetrics(snapshot)
-        }
+        val liveErrorLabel = liveDataErrorLabel(state.liveDataErrorType)
+        updateLiveMetrics(state.metrics, liveErrorLabel)
         renderDiagnostics(state)
         updateWifiSnapshotFromObdState(state)
         val secondsSinceUpdate = state.lastUpdatedMillis?.let { lastUpdated ->
@@ -648,7 +650,8 @@ class MainActivity : AppCompatActivity() {
             else -> R.string.metrics_status
         }
         binding.metricsStatus.text = getString(statusResId)
-        binding.metricsReconnect.isVisible = secondsSinceUpdate != null && secondsSinceUpdate > 15
+        binding.metricsReconnect.isVisible = state.showReconnectButton ||
+            (secondsSinceUpdate != null && secondsSinceUpdate > 15)
         binding.dtcStoredDetail.text = if (state.storedDtcs.isNotEmpty()) {
             formatDtcList(state.storedDtcs)
         } else {
@@ -683,6 +686,7 @@ class MainActivity : AppCompatActivity() {
             ObdErrorType.UNABLE_TO_CONNECT -> getString(R.string.diagnostics_error_unable_connect)
             ObdErrorType.SOCKET_CLOSED -> getString(R.string.diagnostics_error_socket_closed)
             ObdErrorType.NEGATIVE_RESPONSE -> getString(R.string.diagnostics_error_negative)
+            ObdErrorType.IO -> getString(R.string.diagnostics_error_io)
             null -> getString(R.string.diagnostics_error_none)
         }
         binding.diagnosticsLastCommandValue.text = command
@@ -836,11 +840,23 @@ class MainActivity : AppCompatActivity() {
         valueView.text = if (updated == current) formatted else updated
     }
 
-    private fun updateMetricValueOrPlaceholder(valueView: TextView, value: Double?) {
+    private fun updateMetricValueOrPlaceholder(valueView: TextView, value: Double?, errorLabel: String?) {
         if (value == null) {
-            valueView.text = PLACEHOLDER_VALUE
+            valueView.text = errorLabel ?: PLACEHOLDER_VALUE
         } else {
             updateMetricValue(valueView, value)
+        }
+    }
+
+    private fun liveDataErrorLabel(errorType: ObdErrorType?): String? {
+        return when (errorType) {
+            ObdErrorType.TIMEOUT -> getString(R.string.diagnostics_error_timeout)
+            ObdErrorType.NO_DATA -> getString(R.string.diagnostics_error_no_data)
+            ObdErrorType.UNABLE_TO_CONNECT -> getString(R.string.diagnostics_error_unable_connect)
+            ObdErrorType.SOCKET_CLOSED -> getString(R.string.diagnostics_error_socket_closed)
+            ObdErrorType.NEGATIVE_RESPONSE -> getString(R.string.diagnostics_error_negative)
+            ObdErrorType.IO -> getString(R.string.diagnostics_error_io)
+            null -> null
         }
     }
 

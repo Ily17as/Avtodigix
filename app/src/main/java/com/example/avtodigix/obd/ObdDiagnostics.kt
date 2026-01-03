@@ -11,5 +11,6 @@ enum class ObdErrorType {
     NO_DATA,
     UNABLE_TO_CONNECT,
     SOCKET_CLOSED,
-    NEGATIVE_RESPONSE
+    NEGATIVE_RESPONSE,
+    IO
 }

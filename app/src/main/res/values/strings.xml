@@ -119,6 +119,7 @@
     <string name="diagnostics_error_unable_connect">UNABLE TO CONNECT</string>
     <string name="diagnostics_error_socket_closed">SOCKET CLOSED</string>
     <string name="diagnostics_error_negative">NEGATIVE RESPONSE</string>
+    <string name="diagnostics_error_io">IO</string>
     <string name="action_reconnect">Переподключиться</string>
 
     <string name="dtc_title">Коды неисправностей</string>

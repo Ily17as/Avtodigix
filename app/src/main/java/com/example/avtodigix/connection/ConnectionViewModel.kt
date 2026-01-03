@@ -53,6 +53,8 @@ class ConnectionViewModel(
     private var activeTransport: ObdTransport? = null
     private val dtcRefreshRequested = AtomicBoolean(false)
     private var lastDtcReadMillis = 0L
+    private var consecutivePidReadErrors = 0
+    private var lastRecoveryAttemptMillis = 0L
 
     init {
         val storedScannerType = selectedDeviceStore.getSelectedScannerType() ?: ScannerType.Bluetooth
@@ -622,18 +624,52 @@ class ConnectionViewModel(
     }
 
     private fun onDiagnosticsUpdated(diagnostics: ObdDiagnostics) {
+        val nowMillis = System.currentTimeMillis()
+        val isLivePidCommand = diagnostics.command.trim().startsWith("01")
+        val lastPidErrorType = if (isLivePidCommand && diagnostics.errorType != null) {
+            diagnostics.errorType
+        } else {
+            _obdState.value.lastPidErrorType
+        }
+        val lastPidErrorAtMillis = if (isLivePidCommand && diagnostics.errorType != null) {
+            nowMillis
+        } else {
+            _obdState.value.lastPidErrorAtMillis
+        }
         _obdState.value = _obdState.value.copy(
             lastCommand = diagnostics.command,
             lastRawResponse = diagnostics.rawResponse,
-            lastErrorType = diagnostics.errorType
+            lastErrorType = diagnostics.errorType,
+            lastPidErrorType = lastPidErrorType,
+            lastPidErrorAtMillis = lastPidErrorAtMillis
         )
     }
 
     private fun startReading(service: ObdService, supportedPids: Set<Int>?) {
         readJob?.cancel()
         readJob = viewModelScope.launch {
+            consecutivePidReadErrors = 0
+            lastRecoveryAttemptMillis = 0L
             while (isActive) {
-                val liveSnapshot = runCatching { service.readLiveData(supportedPids) }.getOrNull()
+                val cycleStartMillis = System.currentTimeMillis()
+                val liveResult = runCatching { service.readLiveData(supportedPids) }
+                val liveSnapshot = liveResult.getOrNull()
+                var liveErrorType = liveResult.exceptionOrNull()?.let { mapReadErrorToType(it) }
+                if (liveErrorType == null) {
+                    val lastPidErrorAt = _obdState.value.lastPidErrorAtMillis
+                    if (lastPidErrorAt != null && lastPidErrorAt >= cycleStartMillis) {
+                        liveErrorType = _obdState.value.lastPidErrorType
+                    }
+                }
+                val hasLiveError = liveErrorType != null
+                consecutivePidReadErrors = if (hasLiveError) {
+                    consecutivePidReadErrors + 1
+                } else {
+                    0
+                }
+                if (hasLiveError && consecutivePidReadErrors >= PID_READ_ERROR_THRESHOLD) {
+                    attemptElmRecovery()
+                }
                 val nowMillis = System.currentTimeMillis()
                 val shouldReadDtcs = shouldReadDtcs(nowMillis)
                 val storedDtcs = if (shouldReadDtcs) {
@@ -650,10 +686,16 @@ class ConnectionViewModel(
                     lastDtcReadMillis = nowMillis
                 }
                 _obdState.value = _obdState.value.copy(
-                    metrics = liveSnapshot ?: _obdState.value.metrics,
+                    metrics = liveSnapshot,
                     storedDtcs = storedDtcs,
                     pendingDtcs = pendingDtcs,
-                    lastUpdatedMillis = System.currentTimeMillis()
+                    lastUpdatedMillis = if (hasLiveError) {
+                        _obdState.value.lastUpdatedMillis
+                    } else {
+                        System.currentTimeMillis()
+                    },
+                    liveDataErrorType = liveErrorType,
+                    showReconnectButton = consecutivePidReadErrors >= PID_READ_ERROR_THRESHOLD
                 )
                 delay(LIVE_DATA_REFRESH_MILLIS)
             }
@@ -679,11 +721,35 @@ class ConnectionViewModel(
         }
     }
 
+    private suspend fun attemptElmRecovery() {
+        val nowMillis = System.currentTimeMillis()
+        if (nowMillis - lastRecoveryAttemptMillis < RECOVERY_COOLDOWN_MILLIS) {
+            return
+        }
+        lastRecoveryAttemptMillis = nowMillis
+        val activeSession = session ?: return
+        updateConnectionState {
+            copy(log = appendLog("Повторная инициализация ELM327 (ATZ/ATSP0)."))
+        }
+        runCatching { activeSession.execute("ATZ") }
+        runCatching { activeSession.execute("ATSP0") }
+    }
+
+    private fun mapReadErrorToType(error: Throwable): ObdErrorType? {
+        return when (error) {
+            is TimeoutCancellationException -> ObdErrorType.TIMEOUT
+            is IOException -> ObdErrorType.IO
+            else -> null
+        }
+    }
+
     companion object {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
         private const val CONNECTION_TIMEOUT_MILLIS = 15_000L
         private const val LIVE_DATA_REFRESH_MILLIS = 1_000L
         private const val DTC_REFRESH_MILLIS = 20_000L
+        private const val PID_READ_ERROR_THRESHOLD = 3
+        private const val RECOVERY_COOLDOWN_MILLIS = 10_000L
     }
 }
 
@@ -728,7 +794,11 @@ data class ObdState(
     val lastUpdatedMillis: Long? = null,
     val lastCommand: String? = null,
     val lastRawResponse: String? = null,
-    val lastErrorType: ObdErrorType? = null
+    val lastErrorType: ObdErrorType? = null,
+    val lastPidErrorType: ObdErrorType? = null,
+    val lastPidErrorAtMillis: Long? = null,
+    val liveDataErrorType: ObdErrorType? = null,
+    val showReconnectButton: Boolean = false
 )
 
 enum class PermissionStatus {
