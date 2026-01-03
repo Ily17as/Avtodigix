@@ -27,6 +27,7 @@ import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.net.ssl.SSLException
 
 class ConnectionViewModel(
     private val connectionManager: BluetoothConnectionManager,
@@ -386,6 +387,14 @@ class ConnectionViewModel(
     private suspend fun connectToWifi(host: String, port: Int) {
         val transport = try {
             wifiScannerManager.connect(host, port)
+        } catch (error: SSLException) {
+            updateConnectionState {
+                copy(
+                    status = ConnectionState.Status.Error,
+                    errorMessage = "Сертификат сервера недействителен или небезопасен."
+                )
+            }
+            return
         } catch (error: IOException) {
             updateConnectionState {
                 copy(

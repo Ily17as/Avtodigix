@@ -14,6 +14,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
 import kotlin.math.min
 
 class WiFiScannerManager(
@@ -39,9 +41,13 @@ class WiFiScannerManager(
         val safeTimeout = min(timeoutMillis, MAX_TIMEOUT_MILLIS).toInt()
         disconnectInternal()
         _status.value = WifiConnectionStatus.Connecting
-        val createdSocket = Socket()
+        val createdSocket = createTlsSocket()
         return@withContext try {
             createdSocket.connect(InetSocketAddress(host, port), safeTimeout)
+            createdSocket.sslParameters = createdSocket.sslParameters.apply {
+                endpointIdentificationAlgorithm = "HTTPS"
+            }
+            createdSocket.startHandshake()
             socket = createdSocket
             val transport = WifiTransport(
                 socket = createdSocket,
@@ -80,6 +86,12 @@ class WiFiScannerManager(
         socket = null
         _transportState.value = null
         _status.value = WifiConnectionStatus.Failed
+    }
+
+    private fun createTlsSocket(): SSLSocket {
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, null, null)
+        return sslContext.socketFactory.createSocket() as SSLSocket
     }
 
     companion object {
