@@ -23,7 +23,7 @@ class SelectedDeviceStore(context: Context) {
     }
 
     fun getWifiHost(): String? {
-        return preferences.getString(KEY_WIFI_IP, null) ?: DEFAULT_WIFI_HOST
+        return preferences.getString(KEY_WIFI_IP, null)
     }
 
     fun setWifiHost(host: String?) {
@@ -32,7 +32,7 @@ class SelectedDeviceStore(context: Context) {
 
     fun getWifiPort(): Int? {
         val port = preferences.getInt(KEY_WIFI_PORT, -1)
-        return if (port > 0) port else DEFAULT_WIFI_PORT
+        return if (port > 0) port else null
     }
 
     fun setWifiPort(port: Int?) {
@@ -56,7 +56,5 @@ class SelectedDeviceStore(context: Context) {
         const val KEY_SELECTED_SCANNER_TYPE = "selected_scanner_type"
         const val KEY_WIFI_IP = "wifi_ip"
         const val KEY_WIFI_PORT = "wifi_port"
-        const val DEFAULT_WIFI_HOST = "192.168.0.10"
-        const val DEFAULT_WIFI_PORT = 35000
     }
 }
