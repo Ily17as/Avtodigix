@@ -315,6 +315,18 @@ class MainActivity : AppCompatActivity() {
         permissionsLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
     ) {
         latestConnectionState = state
+        val targetLabel = when (state.scannerType) {
+            ScannerType.Wifi -> {
+                val host = state.wifiHost
+                val port = state.wifiPort
+                if (!host.isNullOrBlank() && port != null) {
+                    "$host:$port"
+                } else {
+                    "Wi-Fi адаптеру"
+                }
+            }
+            ScannerType.Bluetooth -> state.selectedDeviceName ?: "OBD адаптеру"
+        }
         when (state.status) {
             ConnectionState.Status.Idle -> {
                 binding.connectionStatus.text = "Статус: не подключено"
@@ -333,19 +345,16 @@ class MainActivity : AppCompatActivity() {
                     ?: "Выберите OBD адаптер из списка."
             }
             ConnectionState.Status.Connecting -> {
-                val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
                 binding.connectionStatus.text = "Статус: подключение"
-                binding.connectionStatusDetail.text = "Подключение к $deviceName."
+                binding.connectionStatusDetail.text = "Подключение к $targetLabel."
             }
             ConnectionState.Status.Initializing -> {
-                val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
                 binding.connectionStatus.text = "Статус: инициализация"
-                binding.connectionStatusDetail.text = "Настройка $deviceName."
+                binding.connectionStatusDetail.text = "Настройка $targetLabel."
             }
             ConnectionState.Status.Connected -> {
-                val deviceName = state.selectedDeviceName ?: "OBD адаптеру"
                 binding.connectionStatus.text = "Статус: подключено"
-                binding.connectionStatusDetail.text = "Соединение с $deviceName установлено."
+                binding.connectionStatusDetail.text = "Соединение с $targetLabel установлено."
             }
             ConnectionState.Status.Error -> {
                 binding.connectionStatus.text = "Статус: ошибка подключения"

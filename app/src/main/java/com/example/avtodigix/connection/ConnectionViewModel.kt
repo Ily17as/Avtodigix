@@ -24,6 +24,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -451,31 +455,21 @@ class ConnectionViewModel(
             port = port
         )
         connectAndInitialize(transport) { error ->
-            when (error) {
-                is IOException -> {
-                    updateConnectionState {
-                        copy(
-                            status = ConnectionState.Status.Error,
-                            errorMessage = "Ошибка подключения по Wi-Fi."
-                        )
-                    }
-                }
-                is IllegalArgumentException -> {
-                    updateConnectionState {
-                        copy(
-                            status = ConnectionState.Status.Error,
-                            errorMessage = "Некорректные параметры Wi-Fi подключения."
-                        )
-                    }
-                }
-                else -> {
-                    updateConnectionState {
-                        copy(
-                            status = ConnectionState.Status.Error,
-                            errorMessage = "Ошибка подключения по Wi-Fi."
-                        )
-                    }
-                }
+            val message = when (error) {
+                is SocketTimeoutException -> "Превышено время ожидания ответа. Проверьте IP и порт."
+                is UnknownHostException -> "Не удалось определить адрес устройства. Проверьте IP."
+                is NoRouteToHostException -> "IP недоступен. Проверьте подключение к сети."
+                is ConnectException -> "Порт недоступен или закрыт. Проверьте порт адаптера."
+                is IllegalArgumentException -> "Некорректные параметры Wi-Fi подключения."
+                is IOException -> "Ошибка подключения по Wi-Fi."
+                else -> "Ошибка подключения по Wi-Fi."
+            }
+            updateConnectionState {
+                copy(
+                    status = ConnectionState.Status.Error,
+                    errorMessage = message,
+                    log = appendLog("Wi-Fi: $message")
+                )
             }
         }
     }
@@ -524,6 +518,9 @@ class ConnectionViewModel(
 
         val service = ObdService(newSession)
         obdService = service
+        updateConnectionState {
+            copy(log = appendLog("Читаем поддерживаемые PID."))
+        }
         val supportedPids = runCatching { service.readSupportedPids() }.getOrDefault(emptyMap())
         val availableMetrics = DEFAULT_LIVE_METRICS.filter { metric ->
             supportedPids.containsKey(metric.pid)
