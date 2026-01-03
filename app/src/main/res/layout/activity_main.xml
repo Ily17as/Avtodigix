@@ -1030,6 +1030,84 @@
                     android:text="@string/metrics_updated_placeholder"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/diagnosticsModeSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/diagnostics_mode"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/diagnosticsCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/diagnosticsTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/diagnostics_title"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                        <TextView
+                            android:id="@+id/diagnosticsLastCommandLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/diagnostics_last_command_label"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                        <TextView
+                            android:id="@+id/diagnosticsLastCommandValue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                        <TextView
+                            android:id="@+id/diagnosticsRawResponseLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/diagnostics_raw_response_label"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                        <TextView
+                            android:id="@+id/diagnosticsRawResponseValue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="monospace"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                        <TextView
+                            android:id="@+id/diagnosticsErrorLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/diagnostics_error_label"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                        <TextView
+                            android:id="@+id/diagnosticsErrorValue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/metricsReconnect"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"

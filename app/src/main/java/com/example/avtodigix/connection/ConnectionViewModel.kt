@@ -7,6 +7,8 @@ import com.example.avtodigix.bluetooth.ConnectionStatus
 import com.example.avtodigix.bluetooth.PairedDevice
 import com.example.avtodigix.elm.ElmSession
 import com.example.avtodigix.obd.DEFAULT_LIVE_METRICS
+import com.example.avtodigix.obd.ObdDiagnostics
+import com.example.avtodigix.obd.ObdErrorType
 import com.example.avtodigix.obd.LiveMetricDefinition
 import com.example.avtodigix.obd.LivePidSnapshot
 import com.example.avtodigix.obd.ObdService
@@ -596,7 +598,7 @@ class ConnectionViewModel(
             return
         }
 
-        val service = ObdService(newSession)
+        val service = ObdService(newSession, ::onDiagnosticsUpdated)
         obdService = service
         updateConnectionState {
             copy(log = appendLog("Читаем поддерживаемые PID."))
@@ -617,6 +619,14 @@ class ConnectionViewModel(
             )
         }
         startReading(service, supportedPidSetOrNull)
+    }
+
+    private fun onDiagnosticsUpdated(diagnostics: ObdDiagnostics) {
+        _obdState.value = _obdState.value.copy(
+            lastCommand = diagnostics.command,
+            lastRawResponse = diagnostics.rawResponse,
+            lastErrorType = diagnostics.errorType
+        )
     }
 
     private fun startReading(service: ObdService, supportedPids: Set<Int>?) {
@@ -715,7 +725,10 @@ data class ObdState(
     val storedDtcs: List<String> = emptyList(),
     val pendingDtcs: List<String> = emptyList(),
     val supportedPids: Set<Int> = emptySet(),
-    val lastUpdatedMillis: Long? = null
+    val lastUpdatedMillis: Long? = null,
+    val lastCommand: String? = null,
+    val lastRawResponse: String? = null,
+    val lastErrorType: ObdErrorType? = null
 )
 
 enum class PermissionStatus {

@@ -108,6 +108,17 @@
     <string name="metrics_status_lost">Соединение потеряно.</string>
     <string name="metrics_updated">Обновлено %1$d сек назад.</string>
     <string name="metrics_updated_placeholder">Обновлено недавно.</string>
+    <string name="diagnostics_mode">Режим диагностики</string>
+    <string name="diagnostics_title">Диагностика</string>
+    <string name="diagnostics_last_command_label">Последний запрос</string>
+    <string name="diagnostics_raw_response_label">Сырый ответ</string>
+    <string name="diagnostics_error_label">Классификация ошибки</string>
+    <string name="diagnostics_error_none">Ошибок нет</string>
+    <string name="diagnostics_error_timeout">TIMEOUT</string>
+    <string name="diagnostics_error_no_data">NO DATA</string>
+    <string name="diagnostics_error_unable_connect">UNABLE TO CONNECT</string>
+    <string name="diagnostics_error_socket_closed">SOCKET CLOSED</string>
+    <string name="diagnostics_error_negative">NEGATIVE RESPONSE</string>
     <string name="action_reconnect">Переподключиться</string>
 
     <string name="dtc_title">Коды неисправностей</string>

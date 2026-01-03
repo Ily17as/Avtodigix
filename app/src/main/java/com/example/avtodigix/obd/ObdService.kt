@@ -1,9 +1,14 @@
 package com.example.avtodigix.obd
 
+import android.util.Log
+import com.example.avtodigix.elm.ElmResponse
 import com.example.avtodigix.elm.ElmSession
+import kotlinx.coroutines.TimeoutCancellationException
+import java.io.IOException
 
 class ObdService(
-    private val session: ElmSession
+    private val session: ElmSession,
+    private val diagnosticsListener: (ObdDiagnostics) -> Unit = {}
 ) {
     suspend fun readSupportedPids(): Map<Int, Boolean> {
         val supported = mutableSetOf<Int>()
@@ -11,7 +16,7 @@ class ObdService(
         var hasNextGroup = true
 
         while (hasNextGroup) {
-            val response = session.execute(String.format("01 %02X", basePid))
+            val response = executeWithDiagnostics(String.format("01 %02X", basePid))
             val bytes = response.lines
                 .mapNotNull { parseHexBytes(it) }
                 .firstOrNull { it.size >= 6 && it[0] == 0x41 && it[1] == basePid }
@@ -66,7 +71,7 @@ class ObdService(
     }
 
     suspend fun readVin(): String? {
-        val response = session.execute("09 02")
+        val response = executeWithDiagnostics("09 02")
         val frames = response.lines
             .mapNotNull { parseHexBytes(it) }
             .filter { it.size >= 3 && it[0] == 0x49 && it[1] == 0x02 }
@@ -86,7 +91,7 @@ class ObdService(
     }
 
     private suspend fun readPid(pid: Int): List<Int>? {
-        val response = session.execute(String.format("01 %02X", pid))
+        val response = executeWithDiagnostics(String.format("01 %02X", pid))
         return response.lines
             .mapNotNull { parseHexBytes(it) }
             .firstOrNull { it.size >= 3 && it[0] == 0x41 && it[1] == pid }
@@ -100,7 +105,7 @@ class ObdService(
     }
 
     private suspend fun readDtcs(command: String, modeByte: Int): List<String> {
-        val response = session.execute(command)
+        val response = executeWithDiagnostics(command)
         val dtcs = mutableListOf<String>()
         response.lines
             .mapNotNull { parseHexBytes(it) }
@@ -117,6 +122,54 @@ class ObdService(
                 }
             }
         return dtcs
+    }
+
+    private suspend fun executeWithDiagnostics(command: String) = try {
+        val response = session.execute(command)
+        val errorType = classifyResponse(response)
+        emitDiagnostics(command, response.raw, errorType)
+        response
+    } catch (error: TimeoutCancellationException) {
+        emitDiagnostics(command, null, ObdErrorType.TIMEOUT)
+        throw error
+    } catch (error: IOException) {
+        val errorType = classifyIoError(error)
+        emitDiagnostics(command, null, errorType)
+        throw error
+    }
+
+    private fun classifyResponse(response: ElmResponse): ObdErrorType? {
+        val raw = response.raw
+        return when {
+            raw.contains("NO DATA", ignoreCase = true) -> ObdErrorType.NO_DATA
+            raw.contains("UNABLE TO CONNECT", ignoreCase = true) -> ObdErrorType.UNABLE_TO_CONNECT
+            response.lines.any { line -> line.trim().uppercase().startsWith("7F") } ->
+                ObdErrorType.NEGATIVE_RESPONSE
+            else -> null
+        }
+    }
+
+    private fun classifyIoError(error: IOException): ObdErrorType? {
+        val message = error.message?.uppercase().orEmpty()
+        return if (message.contains("CLOSED")) {
+            ObdErrorType.SOCKET_CLOSED
+        } else {
+            null
+        }
+    }
+
+    private fun emitDiagnostics(command: String, rawResponse: String?, errorType: ObdErrorType?) {
+        val diagnostics = ObdDiagnostics(
+            command = command.trim(),
+            rawResponse = rawResponse,
+            errorType = errorType
+        )
+        if (errorType == null) {
+            Log.d("OBD", "diag command=${diagnostics.command} raw=${rawResponse.orEmpty()}")
+        } else {
+            Log.w("OBD", "diag command=${diagnostics.command} error=$errorType raw=${rawResponse.orEmpty()}")
+        }
+        diagnosticsListener(diagnostics)
     }
 
     private fun decodeDtc(firstByte: Int, secondByte: Int): String? {
