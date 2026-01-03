@@ -55,6 +55,9 @@ class MainActivity : AppCompatActivity() {
     private var permissionsRequestInFlight = false
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
+    private val connectionPreferences by lazy {
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,6 +116,23 @@ class MainActivity : AppCompatActivity() {
 
         binding.metricsReconnect.setOnClickListener {
             connectionViewModel.onConnectRequested()
+        }
+
+        binding.connectionModeGroup.setOnCheckedChangeListener { _, checkedId ->
+            updateConnectionModeUi(checkedId == R.id.connectionModeBluetooth)
+        }
+        binding.connectionModeGroup.check(R.id.connectionModeBluetooth)
+
+        val savedIp = connectionPreferences.getString(PREF_WIFI_IP, "").orEmpty()
+        val savedPort = connectionPreferences.getInt(PREF_WIFI_PORT, -1)
+        if (savedIp.isNotBlank()) {
+            binding.wifiIpInput.setText(savedIp)
+        }
+        if (savedPort > 0) {
+            binding.wifiPortInput.setText(savedPort.toString())
+        }
+        binding.wifiSaveButton.setOnClickListener {
+            saveWifiSettings()
         }
 
         binding.bluetoothEnableButton.setOnClickListener {
@@ -319,6 +339,48 @@ class MainActivity : AppCompatActivity() {
             state.status == ConnectionState.Status.Connected
 
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
+    }
+
+    private fun updateConnectionModeUi(useBluetooth: Boolean) {
+        binding.bluetoothSection.isVisible = useBluetooth
+        binding.wifiFormGroup.isVisible = !useBluetooth
+    }
+
+    private fun saveWifiSettings() {
+        val ip = binding.wifiIpInput.text?.toString()?.trim().orEmpty()
+        val portText = binding.wifiPortInput.text?.toString()?.trim().orEmpty()
+        var valid = true
+
+        if (!isValidIpAddress(ip)) {
+            binding.wifiIpInputLayout.error = getString(R.string.connection_error_ip)
+            valid = false
+        } else {
+            binding.wifiIpInputLayout.error = null
+        }
+
+        val port = portText.toIntOrNull()
+        if (port == null || port !in 1..MAX_PORT) {
+            binding.wifiPortInputLayout.error = getString(R.string.connection_error_port)
+            valid = false
+        } else {
+            binding.wifiPortInputLayout.error = null
+        }
+
+        if (!valid) {
+            return
+        }
+
+        connectionPreferences.edit()
+            .putString(PREF_WIFI_IP, ip)
+            .putInt(PREF_WIFI_PORT, port)
+            .apply()
+    }
+
+    private fun isValidIpAddress(ip: String): Boolean {
+        if (ip.isBlank()) {
+            return false
+        }
+        return IP_ADDRESS_REGEX.matches(ip)
     }
 
     private fun requestBluetoothPermissions(
@@ -604,6 +666,13 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
+        val IP_ADDRESS_REGEX = Regex(
+            "^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$"
+        )
+        const val PREFS_NAME = "connection_prefs"
+        const val PREF_WIFI_IP = "wifi_ip"
+        const val PREF_WIFI_PORT = "wifi_port"
+        const val MAX_PORT = 65535
         const val PLACEHOLDER_VALUE = "—"
     }
 }
