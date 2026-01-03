@@ -15,7 +15,7 @@ class ConnectionViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return ConnectionViewModel(
                 BluetoothConnectionManager(context),
-                WiFiScannerManager(),
+                WiFiScannerManager(context),
                 selectedDeviceStore
             ) as T
         }

@@ -34,6 +34,8 @@
     <string name="connection_wifi_title">Подключение по Wi-Fi</string>
     <string name="connection_wifi_ip_hint">IP-адрес</string>
     <string name="connection_wifi_port_hint">Порт</string>
+    <string name="connection_wifi_discovered_title">Найденные Wi-Fi сканеры</string>
+    <string name="connection_wifi_discovered_empty">Устройства не найдены.</string>
     <string name="connection_error_ip">Введите корректный IP-адрес.</string>
     <string name="connection_error_port">Введите порт от 1 до 65535.</string>
     <string name="connection_paired_title">Сопряженные устройства</string>

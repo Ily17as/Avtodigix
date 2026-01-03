@@ -12,6 +12,7 @@ import com.example.avtodigix.obd.LivePidSnapshot
 import com.example.avtodigix.obd.ObdService
 import com.example.avtodigix.transport.ScannerTransport
 import com.example.avtodigix.wifi.WiFiScannerManager
+import com.example.avtodigix.wifi.WifiDiscoveredDevice
 import com.example.avtodigix.wifi.WifiConnectionStatus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -121,6 +122,11 @@ class ConnectionViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            wifiScannerManager.discoveredDevices.collect { devices ->
+                updateConnectionState { copy(wifiDiscoveredDevices = devices) }
+            }
+        }
     }
 
     fun onConnectRequested() {
@@ -158,7 +164,23 @@ class ConnectionViewModel(
         connectJob = viewModelScope.launch { connectToWifi(host, port) }
     }
 
+    fun onWifiDeviceSelected(device: WifiDiscoveredDevice) {
+        updateConnectionState {
+            copy(
+                scannerType = ScannerType.Wifi,
+                wifiHost = device.host,
+                wifiPort = device.port,
+                errorMessage = null
+            )
+        }
+    }
+
     fun onScannerTypeSelected(scannerType: ScannerType) {
+        if (scannerType == ScannerType.Wifi) {
+            wifiScannerManager.startDiscovery()
+        } else {
+            wifiScannerManager.stopDiscovery()
+        }
         updateConnectionState {
             copy(scannerType = scannerType)
         }
@@ -302,6 +324,7 @@ class ConnectionViewModel(
                 supportedPids = null
                 connectionManager.disconnect()
                 wifiScannerManager.disconnect()
+                wifiScannerManager.stopDiscovery()
             }
         }
     }
@@ -505,6 +528,7 @@ data class ConnectionState(
     val scannerType: ScannerType = ScannerType.Bluetooth,
     val wifiHost: String? = null,
     val wifiPort: Int? = null,
+    val wifiDiscoveredDevices: List<WifiDiscoveredDevice> = emptyList(),
     val log: String = "",
     val supportedMetrics: List<LiveMetricDefinition> = emptyList(),
     val errorMessage: String? = null,
