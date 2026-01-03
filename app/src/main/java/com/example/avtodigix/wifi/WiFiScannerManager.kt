@@ -47,7 +47,7 @@ class WiFiScannerManager(
         val safeReadTimeout = min(readTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
         disconnectInternal()
         _status.value = WifiConnectionStatus.Connecting
-        bindProcessToWifiNetwork()
+        bindToCurrentWifi()
         val createdSocket = Socket()
         return@withContext try {
             createdSocket.connect(InetSocketAddress(host, port), safeConnectTimeout)
@@ -90,13 +90,14 @@ class WiFiScannerManager(
         _status.value = WifiConnectionStatus.Failed
     }
 
-    private fun bindProcessToWifiNetwork() {
-        val wifiNetwork = connectivityManager.allNetworks.firstOrNull { network ->
-            val capabilities = connectivityManager.getNetworkCapabilities(network)
-            capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-        } ?: return
-        if (connectivityManager.bindProcessToNetwork(wifiNetwork)) {
-            boundNetwork = wifiNetwork
+    fun bindToCurrentWifi() {
+        val activeNetwork = connectivityManager.activeNetwork ?: return
+        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return
+        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            return
+        }
+        if (connectivityManager.bindProcessToNetwork(activeNetwork)) {
+            boundNetwork = activeNetwork
         }
     }
 
