@@ -13,6 +13,7 @@
     <string name="action_delete_history">Удалить историю</string>
     <string name="action_retry">Повторить</string>
     <string name="action_open_settings">Открыть настройки</string>
+    <string name="action_save">Сохранить</string>
 
     <string name="welcome_title">Добро пожаловать в Avtodigix</string>
     <string name="welcome_subtitle">Стартовая инструкция для быстрой диагностики состояния автомобиля.</string>
@@ -27,6 +28,14 @@
     <string name="connection_status">Статус: не подключено</string>
     <string name="connection_status_detail">Подключите адаптер, включите Bluetooth и выполните сопряжение.</string>
     <string name="connection_status_log">Лог: ожидание адаптера → поиск → сопряжение → проверка связи.</string>
+    <string name="connection_mode_title">Способ подключения</string>
+    <string name="connection_mode_bluetooth">Bluetooth</string>
+    <string name="connection_mode_wifi">Wi-Fi</string>
+    <string name="connection_wifi_title">Подключение по Wi-Fi</string>
+    <string name="connection_wifi_ip_hint">IP-адрес</string>
+    <string name="connection_wifi_port_hint">Порт</string>
+    <string name="connection_error_ip">Введите корректный IP-адрес.</string>
+    <string name="connection_error_port">Введите порт от 1 до 65535.</string>
     <string name="connection_paired_title">Сопряженные устройства</string>
     <string name="connection_paired_empty">Список пуст. Сначала выполните сопряжение в настройках Bluetooth.</string>
     <string name="connection_checklist">Чек-лист: питание адаптера, Bluetooth включен, VIN найден, связь стабильна.</string>
