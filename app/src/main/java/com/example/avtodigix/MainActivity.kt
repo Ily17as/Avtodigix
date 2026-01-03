@@ -409,12 +409,19 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val host = state.wifiHost?.takeIf { it.isNotBlank() } ?: DEFAULT_WIFI_HOST
-        if (!binding.wifiIpInput.hasFocus() && binding.wifiIpInput.text?.toString() != host) {
+        val host = state.wifiHost?.takeIf { it.isNotBlank() }
+        if (host != null &&
+            !binding.wifiIpInput.hasFocus() &&
+            binding.wifiIpInput.text?.toString() != host
+        ) {
             binding.wifiIpInput.setText(host)
         }
-        val portText = (state.wifiPort ?: DEFAULT_WIFI_PORT).toString()
-        if (!binding.wifiPortInput.hasFocus() && binding.wifiPortInput.text?.toString() != portText) {
+        val port = state.wifiPort
+        val portText = port?.toString()
+        if (portText != null &&
+            !binding.wifiPortInput.hasFocus() &&
+            binding.wifiPortInput.text?.toString() != portText
+        ) {
             binding.wifiPortInput.setText(portText)
         }
     }
@@ -846,8 +853,6 @@ class MainActivity : AppCompatActivity() {
             "^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$"
         )
         const val MAX_PORT = 65535
-        const val DEFAULT_WIFI_HOST = "192.168.0.10"
-        const val DEFAULT_WIFI_PORT = 35000
         const val PLACEHOLDER_VALUE = "—"
     }
 }
