@@ -204,8 +204,8 @@ data class PairedDevice(
 
 data class BluetoothTransport(
     val socket: BluetoothSocket,
-    val input: InputStream,
-    val output: OutputStream
+    override val input: InputStream,
+    override val output: OutputStream
 ) : ScannerTransport {
     override val isConnected: Boolean
         get() = socket.isConnected
