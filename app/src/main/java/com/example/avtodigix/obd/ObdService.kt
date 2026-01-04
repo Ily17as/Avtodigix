@@ -58,6 +58,25 @@ class ObdService(
         return supportedPids
             .sorted()
             .map { pid -> readPidRaw(pid) }
+            .map { record ->
+                val decoder = PID_DECODERS[record.pid]
+                if (decoder != null && record.bytes != null) {
+                    val decoded = decoder(record.bytes)
+                    record.copy(
+                        decodedValue = decoded.value,
+                        unit = decoded.unit
+                    )
+                } else if (decoder == null) {
+                    val rawHex = record.bytes?.let { formatHexBytes(it) }
+                    record.copy(
+                        raw = rawHex ?: record.raw,
+                        decodedValue = "n/a",
+                        unit = null
+                    )
+                } else {
+                    record
+                }
+            }
     }
 
     suspend fun readSupportedPids(): Map<Int, Boolean> {
@@ -278,6 +297,9 @@ class ObdService(
         }
         return matches.map { it.toInt(16) }
     }
+
+    private fun formatHexBytes(bytes: List<Int>): String =
+        bytes.joinToString(" ") { value -> String.format("%02X", value) }
 
     private companion object {
         val HEX_PAIR_REGEX = Regex("[0-9A-Fa-f]{2}")
