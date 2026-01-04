@@ -57,6 +57,9 @@ class ConnectionViewModel(
     private var lastDtcReadMillis = 0L
     private var consecutivePidReadErrors = 0
     private var lastRecoveryAttemptMillis = 0L
+    private var lastDiagnosticsErrorTypeLogged: ObdErrorType? = null
+    private var lastDiagnosticsCommandLogged: String? = null
+    private var lastDiagnosticsLogAtMillis = 0L
 
     init {
         val storedScannerType = selectedDeviceStore.getSelectedScannerType() ?: ScannerType.Bluetooth
@@ -651,9 +654,15 @@ class ConnectionViewModel(
 
     private suspend fun connectAndInitialize(transport: ObdTransport): Throwable? {
         activeTransport = transport
+        updateConnectionState {
+            copy(log = appendLog("Транспорт ${transport.kind} подключаем..."))
+        }
         return try {
             transport.connect()
             startElmSession(transport)
+            updateConnectionState {
+                copy(log = appendLog("Транспорт ${transport.kind} подключен, инициализация завершена."))
+            }
             null
         } catch (error: Throwable) {
             runCatching { transport.disconnect() }
@@ -705,6 +714,11 @@ class ConnectionViewModel(
         val supportedPidSetOrNull = supportedPidSet.takeIf { it.isNotEmpty() }
         this.supportedPids = supportedPidSetOrNull
         _obdState.value = _obdState.value.copy(supportedPids = supportedPidSet)
+        if (supportedPidSet.isEmpty()) {
+            updateConnectionState {
+                copy(log = appendLog("Поддерживаемые PID не обнаружены. Проверьте адаптер и питание ЭБУ."))
+            }
+        }
         updateConnectionState {
             copy(
                 status = ConnectionState.Status.Connected,
@@ -738,6 +752,27 @@ class ConnectionViewModel(
             lastPidErrorAtMillis = lastPidErrorAtMillis,
             recentDiagnostics = recentDiagnostics
         )
+        if (diagnostics.errorType != null) {
+            val shouldLog = diagnostics.errorType != lastDiagnosticsErrorTypeLogged ||
+                diagnostics.command != lastDiagnosticsCommandLogged ||
+                nowMillis - lastDiagnosticsLogAtMillis >= DIAGNOSTICS_LOG_THROTTLE_MILLIS
+            if (shouldLog) {
+                val responsePreview = diagnostics.rawResponse
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "ответ пуст"
+                updateConnectionState {
+                    copy(
+                        log = appendLog(
+                            "OBD: команда ${diagnostics.command} → ${diagnostics.errorType} ($responsePreview)"
+                        )
+                    )
+                }
+                lastDiagnosticsErrorTypeLogged = diagnostics.errorType
+                lastDiagnosticsCommandLogged = diagnostics.command
+                lastDiagnosticsLogAtMillis = nowMillis
+            }
+        }
     }
 
     private fun startReading(service: ObdService, supportedPids: Set<Int>?) {
@@ -926,6 +961,7 @@ class ConnectionViewModel(
         private const val RECENT_DIAGNOSTICS_LIMIT = 200
         private const val WIFI_CONNECT_RETRY_DELAY_MILLIS = 1_500L
         private const val WIFI_CONNECT_MAX_ATTEMPTS = 3
+        private const val DIAGNOSTICS_LOG_THROTTLE_MILLIS = 5_000L
     }
 }
 
