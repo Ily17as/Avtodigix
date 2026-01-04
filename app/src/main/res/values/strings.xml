@@ -145,6 +145,8 @@
     <string name="all_data_raw_log_empty">Лог пока пуст.</string>
     <string name="all_data_raw_log_command">CMD: %1$s</string>
     <string name="all_data_raw_log_response">RESP: %1$s</string>
+    <string name="all_data_raw_log_error">ERR: %1$s</string>
+    <string name="all_data_raw_log_error_none">нет</string>
     <string name="all_data_mil_active">MIL статус: активен</string>
     <string name="all_data_mil_inactive">MIL статус: не активен</string>
 </resources>
