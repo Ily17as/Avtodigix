@@ -11,6 +11,7 @@ import com.example.avtodigix.obd.ObdDiagnostics
 import com.example.avtodigix.obd.ObdErrorType
 import com.example.avtodigix.obd.LiveMetricDefinition
 import com.example.avtodigix.obd.LivePidSnapshot
+import com.example.avtodigix.obd.ObdPidRecord
 import com.example.avtodigix.obd.ObdService
 import com.example.avtodigix.transport.BluetoothObdTransport
 import com.example.avtodigix.transport.ObdTransport
@@ -47,6 +48,7 @@ class ConnectionViewModel(
 
     private var connectJob: Job? = null
     private var readJob: Job? = null
+    private var fullScanJob: Job? = null
     private var session: ElmSession? = null
     private var obdService: ObdService? = null
     private var supportedPids: Set<Int>? = null
@@ -331,6 +333,8 @@ class ConnectionViewModel(
         connectJob?.cancel()
         readJob?.cancel()
         readJob = null
+        fullScanJob?.cancel()
+        fullScanJob = null
         viewModelScope.launch {
             try {
                 session?.close()
@@ -401,6 +405,7 @@ class ConnectionViewModel(
         super.onCleared()
         connectJob?.cancel()
         readJob?.cancel()
+        fullScanJob?.cancel()
         viewModelScope.launch {
             try {
                 session?.close()
@@ -414,6 +419,71 @@ class ConnectionViewModel(
                 wifiScannerManager.disconnect()
                 wifiScannerManager.stopDiscovery()
             }
+        }
+    }
+
+    fun requestFullScan() {
+        if (fullScanJob?.isActive == true) {
+            return
+        }
+        val service = obdService ?: return
+        val pidSet = supportedPids ?: _obdState.value.supportedPids
+        if (pidSet.isEmpty()) {
+            _obdState.value = _obdState.value.copy(
+                fullScanInProgress = false,
+                fullScanProgress = null,
+                fullScanResults = emptyList()
+            )
+            return
+        }
+        val wasPolling = readJob?.isActive == true
+        if (wasPolling) {
+            readJob?.cancel()
+            readJob = null
+        }
+        _obdState.value = _obdState.value.copy(
+            fullScanInProgress = true,
+            fullScanProgress = 0,
+            fullScanResults = emptyList()
+        )
+        fullScanJob = viewModelScope.launch {
+            val sortedPids = pidSet.sorted()
+            val results = mutableListOf<ObdPidRecord>()
+            val total = sortedPids.size
+            try {
+                sortedPids.forEachIndexed { index, pid ->
+                    if (!isActive) {
+                        return@forEachIndexed
+                    }
+                    val record = service.readPidRaw(pid)
+                    results.add(record)
+                    val progress = ((index + 1) * 100 / total).coerceIn(0, 100)
+                    _obdState.value = _obdState.value.copy(
+                        fullScanProgress = progress,
+                        fullScanResults = results.toList()
+                    )
+                }
+            } finally {
+                val finalProgress = if (total > 0) {
+                    (results.size * 100 / total).coerceIn(0, 100)
+                } else {
+                    null
+                }
+                _obdState.value = _obdState.value.copy(
+                    fullScanInProgress = false,
+                    fullScanProgress = finalProgress,
+                    fullScanResults = results.toList()
+                )
+                if (wasPolling) {
+                    startReading(service, supportedPids)
+                }
+            }
+        }
+    }
+
+    fun cancelFullScan() {
+        if (fullScanJob?.isActive == true) {
+            fullScanJob?.cancel()
         }
     }
 
@@ -802,7 +872,10 @@ data class ObdState(
     val lastPidErrorAtMillis: Long? = null,
     val liveDataErrorType: ObdErrorType? = null,
     val showReconnectButton: Boolean = false,
-    val recentDiagnostics: List<ObdDiagnostics> = emptyList()
+    val recentDiagnostics: List<ObdDiagnostics> = emptyList(),
+    val fullScanInProgress: Boolean = false,
+    val fullScanProgress: Int? = null,
+    val fullScanResults: List<ObdPidRecord> = emptyList()
 )
 
 enum class PermissionStatus {

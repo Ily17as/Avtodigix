@@ -139,6 +139,7 @@
     <string name="all_data_dtc_title">DTC stored/pending</string>
     <string name="all_data_full_scan_title">Full scan</string>
     <string name="all_data_full_scan_action">Запустить сканирование</string>
+    <string name="all_data_full_scan_cancel">Отменить сканирование</string>
     <string name="all_data_full_scan_empty">Результатов пока нет.</string>
     <string name="all_data_full_scan_unavailable">Полное сканирование пока недоступно.</string>
     <string name="all_data_raw_log_title">Raw log</string>
