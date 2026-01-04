@@ -110,17 +110,17 @@ class MainActivity : AppCompatActivity() {
             connectionViewModel.onPermissionsResult(granted, permanentlyDenied)
         }
 
-        bindNavigation(binding.welcomeNext, flipper, 1)
-        bindNavigation(binding.connectionBack, flipper, 0)
-        bindNavigation(binding.connectionNext, flipper, 2)
-        bindNavigation(binding.summaryBack, flipper, 1)
-        bindNavigation(binding.summaryNext, flipper, 3)
-        bindNavigation(binding.metricsBack, flipper, 2)
-        bindNavigation(binding.metricsNext, flipper, 4) {
+        bindNavigation(binding.welcomeNext, flipper, SCREEN_CONNECTION)
+        bindNavigation(binding.connectionBack, flipper, SCREEN_WELCOME)
+        bindNavigation(binding.connectionNext, flipper, SCREEN_SUMMARY)
+        bindNavigation(binding.summaryBack, flipper, SCREEN_CONNECTION)
+        bindNavigation(binding.summaryDetails, flipper, SCREEN_METRICS)
+        bindNavigation(binding.metricsBack, flipper, SCREEN_SUMMARY)
+        bindNavigation(binding.metricsNext, flipper, SCREEN_DTC) {
             connectionViewModel.requestDtcRefresh()
         }
-        bindNavigation(binding.dtcBack, flipper, 3)
-        bindNavigation(binding.dtcFinish, flipper, 0) {
+        bindNavigation(binding.dtcBack, flipper, SCREEN_METRICS)
+        bindNavigation(binding.dtcFinish, flipper, SCREEN_SUMMARY) {
             saveCurrentSnapshot()
         }
 
@@ -337,6 +337,7 @@ class MainActivity : AppCompatActivity() {
         state: ConnectionState,
         permissionsLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
     ) {
+        val previousStatus = latestConnectionState.status
         latestConnectionState = state
         val targetLabel = when (state.scannerType) {
             ScannerType.Wifi -> {
@@ -378,6 +379,9 @@ class MainActivity : AppCompatActivity() {
             ConnectionState.Status.Connected -> {
                 binding.connectionStatus.text = "Статус: подключено"
                 binding.connectionStatusDetail.text = "Соединение с $targetLabel установлено."
+                if (previousStatus != ConnectionState.Status.Connected) {
+                    binding.screenFlipper.displayedChild = SCREEN_SUMMARY
+                }
             }
             ConnectionState.Status.Error -> {
                 binding.connectionStatus.text = "Статус: ошибка подключения"
@@ -894,6 +898,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private companion object {
+        const val SCREEN_WELCOME = 0
+        const val SCREEN_CONNECTION = 1
+        const val SCREEN_SUMMARY = 2
+        const val SCREEN_METRICS = 3
+        const val SCREEN_DTC = 4
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
         val IP_ADDRESS_REGEX = Regex(
             "^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$"
