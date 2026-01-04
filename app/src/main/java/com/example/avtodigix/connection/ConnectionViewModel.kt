@@ -754,6 +754,11 @@ class ConnectionViewModel(
                 } else {
                     _obdState.value.pendingDtcs
                 }
+                val milReadiness = if (shouldReadDtcs) {
+                    runCatching { service.readMilAndReadiness() }.getOrNull()
+                } else {
+                    null
+                }
                 if (shouldReadDtcs) {
                     lastDtcReadMillis = nowMillis
                 }
@@ -761,6 +766,9 @@ class ConnectionViewModel(
                     metrics = liveSnapshot,
                     storedDtcs = storedDtcs,
                     pendingDtcs = pendingDtcs,
+                    milOn = milReadiness?.milOn ?: _obdState.value.milOn,
+                    dtcCountReported = milReadiness?.dtcCountReported ?: _obdState.value.dtcCountReported,
+                    readinessRaw = milReadiness?.readinessRaw ?: _obdState.value.readinessRaw,
                     lastUpdatedMillis = if (hasLiveError) {
                         _obdState.value.lastUpdatedMillis
                     } else {
@@ -863,6 +871,9 @@ data class ObdState(
     val metrics: LivePidSnapshot? = null,
     val storedDtcs: List<String> = emptyList(),
     val pendingDtcs: List<String> = emptyList(),
+    val milOn: Boolean? = null,
+    val dtcCountReported: Int? = null,
+    val readinessRaw: List<Int>? = null,
     val supportedPids: Set<Int> = emptySet(),
     val lastUpdatedMillis: Long? = null,
     val lastCommand: String? = null,

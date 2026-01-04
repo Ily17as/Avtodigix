@@ -120,6 +120,24 @@ class ObdService(
         return readDtcs("07", 0x47)
     }
 
+    suspend fun readMilAndReadiness(): MilReadiness? {
+        val response = executeWithDiagnostics("01 01")
+        val bytes = response.lines
+            .mapNotNull { parseHexBytes(it) }
+            .firstOrNull { it.size >= 6 && it[0] == 0x41 && it[1] == 0x01 }
+            ?: return null
+        val payload = bytes.subList(2, 6)
+        val statusByte = payload[0]
+        val milOn = (statusByte and 0x80) != 0
+        val dtcCount = statusByte and 0x7F
+        val readinessRaw = payload.subList(1, 4)
+        return MilReadiness(
+            milOn = milOn,
+            dtcCountReported = dtcCount,
+            readinessRaw = readinessRaw
+        )
+    }
+
     suspend fun readVin(): String? {
         val response = executeWithDiagnostics("09 02")
         val frames = response.lines
@@ -280,6 +298,12 @@ data class LivePidSnapshot(
 data class LiveMetricDefinition(
     val pid: Int,
     val name: String
+)
+
+data class MilReadiness(
+    val milOn: Boolean,
+    val dtcCountReported: Int,
+    val readinessRaw: List<Int>
 )
 
 val DEFAULT_LIVE_METRICS = listOf(
