@@ -99,12 +99,14 @@
     <string name="metric_vehicle_speed_value">0 км/ч</string>
     <string name="metric_engine_temp">Температура двигателя</string>
     <string name="metric_engine_temp_value">92°C · норма</string>
+    <string name="metric_engine_load">Нагрузка двигателя</string>
     <string name="metric_battery_voltage">Напряжение аккумулятора</string>
     <string name="metric_battery_voltage_value">12,1 В · низкое</string>
     <string name="metric_fuel_trim">Краткосрочная топливная коррекция</string>
     <string name="metric_fuel_trim_value">+8% · норма</string>
     <string name="metric_fuel_trim_long">Долгосрочная топливная коррекция</string>
     <string name="metric_fuel_trim_long_value">+3% · норма</string>
+    <string name="metric_intake_temp">Температура впуска</string>
     <string name="metrics_status">Данные актуальны.</string>
     <string name="metrics_status_stale">Данные устарели.</string>
     <string name="metrics_status_lost">Соединение потеряно.</string>
@@ -141,7 +143,12 @@
     <string name="all_data_full_scan_action">Запустить сканирование</string>
     <string name="all_data_full_scan_cancel">Отменить сканирование</string>
     <string name="all_data_full_scan_empty">Результатов пока нет.</string>
+    <string name="all_data_full_scan_not_run">Полный скан не запускался.</string>
+    <string name="all_data_full_scan_results_title">Результаты полного сканирования</string>
+    <string name="all_data_full_scan_show_all">Показать все</string>
+    <string name="all_data_full_scan_show_less">Скрыть</string>
     <string name="all_data_full_scan_unavailable">Полное сканирование пока недоступно.</string>
+    <string name="all_data_supported_pids_title">Supported PIDs: %1$d</string>
     <string name="all_data_raw_log_title">Raw log</string>
     <string name="all_data_raw_log_empty">Лог пока пуст.</string>
     <string name="all_data_raw_log_command">CMD: %1$s</string>

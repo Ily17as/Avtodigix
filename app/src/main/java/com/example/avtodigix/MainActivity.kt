@@ -46,6 +46,7 @@ import com.example.avtodigix.obd.ObdErrorType
 import com.example.avtodigix.obd.ObdPidRecord
 import com.example.avtodigix.ui.AllDataAdapter
 import com.example.avtodigix.ui.AllDataSection
+import com.example.avtodigix.ui.FullScanEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -918,8 +919,16 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.dtc_no_codes)
         }
-        val fullScanResultsText = if (latestObdState.fullScanResults.isNotEmpty()) {
-            formatFullScanResults(latestObdState.fullScanResults)
+        val supportedPids = latestObdState.supportedPids
+        val supportedPidsTitle = getString(R.string.all_data_supported_pids_title, supportedPids.size)
+        val supportedPidsList = if (supportedPids.isNotEmpty()) {
+            formatSupportedPids(supportedPids)
+        } else {
+            PLACEHOLDER_VALUE
+        }
+        val fullScanEntries = buildFullScanEntries(latestObdState.fullScanResults)
+        val fullScanEmptyMessage = if (latestObdState.fullScanResults.isEmpty()) {
+            getString(R.string.all_data_full_scan_not_run)
         } else {
             getString(R.string.all_data_full_scan_empty)
         }
@@ -944,23 +953,84 @@ class MainActivity : AppCompatActivity() {
             listOf(
                 AllDataSection.LiveMetrics(metricsList, milStatus),
                 AllDataSection.Dtc(stored, pending),
-                AllDataSection.FullScan(latestObdState.fullScanInProgress, fullScanResultsText),
+                AllDataSection.SupportedPids(supportedPidsTitle, supportedPidsList),
+                AllDataSection.FullScan(latestObdState.fullScanInProgress),
+                AllDataSection.FullScanList(fullScanEntries, fullScanEmptyMessage),
                 AllDataSection.RawLog(rawLogText)
             )
         )
     }
 
-    private fun formatFullScanResults(records: List<ObdPidRecord>): String {
-        return records.joinToString(separator = "\n") { record ->
+    private fun formatSupportedPids(pids: Set<Int>): String {
+        if (pids.isEmpty()) {
+            return PLACEHOLDER_VALUE
+        }
+        val sorted = pids.sorted()
+        val ranges = mutableListOf<String>()
+        var rangeStart = sorted.first()
+        var previous = rangeStart
+        for (index in 1 until sorted.size) {
+            val pid = sorted[index]
+            if (pid == previous + 1) {
+                previous = pid
+                continue
+            }
+            ranges.add(formatPidRange(rangeStart, previous))
+            rangeStart = pid
+            previous = pid
+        }
+        ranges.add(formatPidRange(rangeStart, previous))
+        return ranges.joinToString(separator = ", ")
+    }
+
+    private fun formatPidRange(start: Int, end: Int): String {
+        val startHex = String.format("%02X", start)
+        val endHex = String.format("%02X", end)
+        return if (start == end) startHex else "$startHex-$endHex"
+    }
+
+    private fun buildFullScanEntries(records: List<ObdPidRecord>): List<FullScanEntry> {
+        return records.map { record ->
             val pidHex = String.format("%02X", record.pid)
-            val modeHex = String.format("%02X", record.mode)
-            val bytes = record.bytes?.joinToString(" ") { value -> String.format("%02X", value) } ?: "-"
-            val valueLabel = record.decodedValue?.let { decoded ->
-                val unitLabel = record.unit?.let { " $it" }.orEmpty()
-                " value=$decoded$unitLabel"
-            }.orEmpty()
-            val errorLabel = record.errorType?.let { " error=${it.name}" }.orEmpty()
-            "$modeHex $pidHex bytes=$bytes$valueLabel$errorLabel"
+            val pidName = pidNameFor(record.pid)
+            val pidLabel = if (pidName != null) "$pidHex $pidName" else pidHex
+            val valueLabel = record.decodedValue?.takeIf { it.isNotBlank() }?.let { decoded ->
+                val unitLabel = record.unit?.takeIf { it.isNotBlank() }
+                if (unitLabel != null) "$decoded $unitLabel" else decoded
+            } ?: formatFullScanRawValue(record)
+            val statusLabel = when (record.errorType) {
+                null -> "OK"
+                ObdErrorType.NO_DATA -> "NO DATA"
+                ObdErrorType.TIMEOUT -> "TIMEOUT"
+                else -> record.errorType.name
+            }
+            FullScanEntry(
+                pidLabel = pidLabel,
+                valueLabel = valueLabel,
+                statusLabel = statusLabel
+            )
+        }
+    }
+
+    private fun formatFullScanRawValue(record: ObdPidRecord): String {
+        val bytesLabel = record.bytes?.takeIf { it.isNotEmpty() }?.joinToString(" ") { value ->
+            String.format("%02X", value)
+        }
+        val rawLabel = record.raw?.takeIf { it.isNotBlank() }
+        return bytesLabel ?: rawLabel ?: PLACEHOLDER_VALUE
+    }
+
+    private fun pidNameFor(pid: Int): String? {
+        return when (pid) {
+            0x0C -> getString(R.string.metric_engine_rpm)
+            0x0D -> getString(R.string.metric_vehicle_speed)
+            0x05 -> getString(R.string.metric_engine_temp)
+            0x04 -> getString(R.string.metric_engine_load)
+            0x06 -> getString(R.string.metric_fuel_trim)
+            0x07 -> getString(R.string.metric_fuel_trim_long)
+            0x0F -> getString(R.string.metric_intake_temp)
+            0x42 -> getString(R.string.metric_battery_voltage)
+            else -> null
         }
     }
 
