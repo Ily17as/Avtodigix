@@ -447,22 +447,20 @@ class ConnectionViewModel(
             fullScanResults = emptyList()
         )
         fullScanJob = viewModelScope.launch {
-            val sortedPids = pidSet.sorted()
             val results = mutableListOf<ObdPidRecord>()
-            val total = sortedPids.size
+            val total = pidSet.size
             try {
-                sortedPids.forEachIndexed { index, pid ->
-                    if (!isActive) {
-                        return@forEachIndexed
+                results.addAll(
+                    service.fullScanMode01(pidSet) { current, count ->
+                        if (!isActive) {
+                            return@fullScanMode01
+                        }
+                        val progress = ((current * 100) / count).coerceIn(0, 100)
+                        _obdState.value = _obdState.value.copy(
+                            fullScanProgress = progress
+                        )
                     }
-                    val record = service.readPidRaw(pid)
-                    results.add(record)
-                    val progress = ((index + 1) * 100 / total).coerceIn(0, 100)
-                    _obdState.value = _obdState.value.copy(
-                        fullScanProgress = progress,
-                        fullScanResults = results.toList()
-                    )
-                }
+                )
             } finally {
                 val finalProgress = if (total > 0) {
                     (results.size * 100 / total).coerceIn(0, 100)
