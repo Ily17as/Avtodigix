@@ -64,6 +64,7 @@
     <string name="summary_title">Сводка</string>
     <string name="summary_subtitle">Светофорный индикатор показывает приоритеты.</string>
     <string name="summary_footer">Нажмите Далее, чтобы открыть метрики в реальном времени.</string>
+    <string name="summary_details_hint">Подключитесь, чтобы открыть все данные.</string>
     <string name="health_status_green">ЗЕЛЕНЫЙ — в норме</string>
     <string name="health_status_yellow">ЖЕЛТЫЙ — требуется внимание</string>
     <string name="health_status_red">КРАСНЫЙ — критично</string>
@@ -131,4 +132,19 @@
     <string name="dtc_pending_detail">P0420 — эффективность катализатора ниже нормы. Нужна диагностика.</string>
     <string name="dtc_no_codes">нет кодов</string>
     <string name="dtc_footer">Расшифровка: удаление кодов не устраняет причину, сначала устраните неисправность.</string>
+
+    <string name="all_data_title">Все данные</string>
+    <string name="all_data_subtitle">Подробный список показателей, кодов и логов.</string>
+    <string name="all_data_live_metrics_title">Live key metrics</string>
+    <string name="all_data_dtc_title">DTC stored/pending</string>
+    <string name="all_data_full_scan_title">Full scan</string>
+    <string name="all_data_full_scan_action">Запустить сканирование</string>
+    <string name="all_data_full_scan_empty">Результатов пока нет.</string>
+    <string name="all_data_full_scan_unavailable">Полное сканирование пока недоступно.</string>
+    <string name="all_data_raw_log_title">Raw log</string>
+    <string name="all_data_raw_log_empty">Лог пока пуст.</string>
+    <string name="all_data_raw_log_command">CMD: %1$s</string>
+    <string name="all_data_raw_log_response">RESP: %1$s</string>
+    <string name="all_data_mil_active">MIL статус: активен</string>
+    <string name="all_data_mil_inactive">MIL статус: не активен</string>
 </resources>
