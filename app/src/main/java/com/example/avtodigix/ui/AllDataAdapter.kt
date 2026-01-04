@@ -20,9 +20,18 @@ sealed class AllDataSection {
         val pending: String
     ) : AllDataSection()
 
+    data class SupportedPids(
+        val title: String,
+        val list: String
+    ) : AllDataSection()
+
     data class FullScan(
-        val inProgress: Boolean,
-        val results: String
+        val inProgress: Boolean
+    ) : AllDataSection()
+
+    data class FullScanList(
+        val entries: List<FullScanEntry>,
+        val emptyMessage: String
     ) : AllDataSection()
 
     data class RawLog(
@@ -30,15 +39,23 @@ sealed class AllDataSection {
     ) : AllDataSection()
 }
 
+data class FullScanEntry(
+    val pidLabel: String,
+    val valueLabel: String,
+    val statusLabel: String
+)
+
 class AllDataAdapter(
     private val onFullScanRequested: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val items = mutableListOf<AllDataSection>()
+    private var showAllFullScan = false
 
     fun submitList(sections: List<AllDataSection>) {
         items.clear()
         items.addAll(sections)
+        showAllFullScan = false
         notifyDataSetChanged()
     }
 
@@ -48,7 +65,9 @@ class AllDataAdapter(
         return when (items[position]) {
             is AllDataSection.LiveMetrics -> VIEW_TYPE_METRICS
             is AllDataSection.Dtc -> VIEW_TYPE_DTC
+            is AllDataSection.SupportedPids -> VIEW_TYPE_SUPPORTED_PIDS
             is AllDataSection.FullScan -> VIEW_TYPE_FULL_SCAN
+            is AllDataSection.FullScanList -> VIEW_TYPE_FULL_SCAN_LIST
             is AllDataSection.RawLog -> VIEW_TYPE_RAW_LOG
         }
     }
@@ -62,9 +81,15 @@ class AllDataAdapter(
             VIEW_TYPE_DTC -> DtcViewHolder(
                 inflater.inflate(R.layout.item_all_data_dtc, parent, false)
             )
+            VIEW_TYPE_SUPPORTED_PIDS -> SupportedPidsViewHolder(
+                inflater.inflate(R.layout.item_all_data_supported_pids, parent, false)
+            )
             VIEW_TYPE_FULL_SCAN -> FullScanViewHolder(
                 inflater.inflate(R.layout.item_all_data_full_scan, parent, false),
                 onFullScanRequested
+            )
+            VIEW_TYPE_FULL_SCAN_LIST -> FullScanListViewHolder(
+                inflater.inflate(R.layout.item_all_data_full_scan_results, parent, false)
             )
             VIEW_TYPE_RAW_LOG -> RawLogViewHolder(
                 inflater.inflate(R.layout.item_all_data_raw_log, parent, false)
@@ -77,7 +102,13 @@ class AllDataAdapter(
         when (val item = items[position]) {
             is AllDataSection.LiveMetrics -> (holder as LiveMetricsViewHolder).bind(item)
             is AllDataSection.Dtc -> (holder as DtcViewHolder).bind(item)
+            is AllDataSection.SupportedPids -> (holder as SupportedPidsViewHolder).bind(item)
             is AllDataSection.FullScan -> (holder as FullScanViewHolder).bind(item)
+            is AllDataSection.FullScanList -> (holder as FullScanListViewHolder).bind(
+                item,
+                showAllFullScan,
+                ::toggleFullScanShowAll
+            )
             is AllDataSection.RawLog -> (holder as RawLogViewHolder).bind(item)
         }
     }
@@ -104,13 +135,22 @@ class AllDataAdapter(
         }
     }
 
+    private class SupportedPidsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val title: TextView = view.findViewById(R.id.allDataSupportedPidsTitle)
+        private val list: TextView = view.findViewById(R.id.allDataSupportedPidsList)
+
+        fun bind(item: AllDataSection.SupportedPids) {
+            title.text = item.title
+            list.text = item.list
+        }
+    }
+
     private class FullScanViewHolder(
         view: View,
         onFullScanRequested: () -> Unit
     ) : RecyclerView.ViewHolder(view) {
         private val button: MaterialButton = view.findViewById(R.id.allDataFullScanButton)
         private val progress: ProgressBar = view.findViewById(R.id.allDataFullScanProgress)
-        private val results: TextView = view.findViewById(R.id.allDataFullScanResults)
 
         init {
             button.setOnClickListener { onFullScanRequested() }
@@ -125,7 +165,40 @@ class AllDataAdapter(
                     R.string.all_data_full_scan_action
                 }
             )
-            results.text = item.results
+        }
+    }
+
+    private class FullScanListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val results: TextView = view.findViewById(R.id.allDataFullScanResults)
+        private val toggle: MaterialButton = view.findViewById(R.id.allDataFullScanToggle)
+
+        fun bind(
+            item: AllDataSection.FullScanList,
+            showAll: Boolean,
+            onToggleRequested: () -> Unit
+        ) {
+            val entries = if (showAll) {
+                item.entries
+            } else {
+                item.entries.take(FULL_SCAN_VISIBLE_LIMIT)
+            }
+            results.text = if (entries.isNotEmpty()) {
+                entries.joinToString(separator = "\n") { entry ->
+                    "${entry.pidLabel} — ${entry.valueLabel} (${entry.statusLabel})"
+                }
+            } else {
+                item.emptyMessage
+            }
+            val hasMore = item.entries.size > FULL_SCAN_VISIBLE_LIMIT
+            toggle.visibility = if (hasMore) View.VISIBLE else View.GONE
+            toggle.setText(
+                if (showAll) {
+                    R.string.all_data_full_scan_show_less
+                } else {
+                    R.string.all_data_full_scan_show_all
+                }
+            )
+            toggle.setOnClickListener { onToggleRequested() }
         }
     }
 
@@ -137,10 +210,23 @@ class AllDataAdapter(
         }
     }
 
+    private fun toggleFullScanShowAll() {
+        showAllFullScan = !showAllFullScan
+        val index = items.indexOfFirst { it is AllDataSection.FullScanList }
+        if (index >= 0) {
+            notifyItemChanged(index)
+        } else {
+            notifyDataSetChanged()
+        }
+    }
+
     private companion object {
         const val VIEW_TYPE_METRICS = 1
         const val VIEW_TYPE_DTC = 2
-        const val VIEW_TYPE_FULL_SCAN = 3
-        const val VIEW_TYPE_RAW_LOG = 4
+        const val VIEW_TYPE_SUPPORTED_PIDS = 3
+        const val VIEW_TYPE_FULL_SCAN = 4
+        const val VIEW_TYPE_FULL_SCAN_LIST = 5
+        const val VIEW_TYPE_RAW_LOG = 6
+        const val FULL_SCAN_VISIBLE_LIMIT = 150
     }
 }

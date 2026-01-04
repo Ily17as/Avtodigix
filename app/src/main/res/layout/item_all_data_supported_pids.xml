@@ -14,27 +14,16 @@
         android:padding="16dp">
 
         <TextView
-            android:id="@+id/allDataFullScanTitle"
+            android:id="@+id/allDataSupportedPidsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/all_data_full_scan_title"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/allDataFullScanButton"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/all_data_full_scan_action" />
-
-        <ProgressBar
-            android:id="@+id/allDataFullScanProgress"
+        <TextView
+            android:id="@+id/allDataSupportedPidsList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:indeterminate="true"
-            android:visibility="gone" />
-
+            android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
