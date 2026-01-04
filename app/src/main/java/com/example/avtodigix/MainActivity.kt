@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import android.widget.ViewFlipper
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -43,6 +44,8 @@ import com.example.avtodigix.storage.WifiResponseFormat
 import com.example.avtodigix.storage.WifiScanSnapshot
 import com.example.avtodigix.storage.WifiScanSnapshotRepository
 import com.example.avtodigix.obd.ObdErrorType
+import com.example.avtodigix.ui.AllDataAdapter
+import com.example.avtodigix.ui.AllDataSection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,10 +66,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var connectionViewModel: ConnectionViewModel
     private lateinit var pairedDeviceAdapter: PairedDeviceAdapter
     private lateinit var wifiDeviceAdapter: WifiDeviceAdapter
+    private lateinit var allDataAdapter: AllDataAdapter
     private var permissionsRequestInFlight = false
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
     private var diagnosticsModeEnabled = false
+    private var fullScanInProgress = false
+    private var fullScanResults: List<String> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,6 +105,18 @@ class MainActivity : AppCompatActivity() {
             adapter = wifiDeviceAdapter
             setHasFixedSize(false)
         }
+        allDataAdapter = AllDataAdapter {
+            Toast.makeText(
+                this,
+                getString(R.string.all_data_full_scan_unavailable),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        binding.allDataList.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = allDataAdapter
+            setHasFixedSize(false)
+        }
         val permissionsLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { results ->
@@ -114,7 +132,8 @@ class MainActivity : AppCompatActivity() {
         bindNavigation(binding.connectionBack, flipper, SCREEN_WELCOME)
         bindNavigation(binding.connectionNext, flipper, SCREEN_SUMMARY)
         bindNavigation(binding.summaryBack, flipper, SCREEN_CONNECTION)
-        bindNavigation(binding.summaryDetails, flipper, SCREEN_METRICS)
+        bindNavigation(binding.summaryDetails, flipper, SCREEN_ALL_DATA)
+        bindNavigation(binding.allDataBack, flipper, SCREEN_SUMMARY)
         bindNavigation(binding.metricsBack, flipper, SCREEN_SUMMARY)
         bindNavigation(binding.metricsNext, flipper, SCREEN_DTC) {
             connectionViewModel.requestDtcRefresh()
@@ -222,6 +241,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        updateAllDataSections()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -406,11 +426,15 @@ class MainActivity : AppCompatActivity() {
         binding.connectionDisconnect.isEnabled = state.status == ConnectionState.Status.Connecting ||
             state.status == ConnectionState.Status.Initializing ||
             state.status == ConnectionState.Status.Connected
+        val isConnected = state.status == ConnectionState.Status.Connected
+        binding.summaryDetails.isVisible = isConnected
+        binding.summaryDetailsHint.isVisible = !isConnected
 
         renderWifiDevices(state)
         renderWifiDetectionState(state)
         updateWifiSnapshotUi(latestWifiSnapshot)
         renderPermissionDialog(state.permissionStatus, permissionsLauncher)
+        updateAllDataSections()
     }
 
     private fun renderWifiDevices(state: ConnectionState) {
@@ -678,6 +702,7 @@ class MainActivity : AppCompatActivity() {
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
             dtcCount = dtcCount.takeIf { it > 0 }
         )
+        updateAllDataSections()
     }
 
     private fun renderDiagnostics(state: ObdState) {
@@ -854,6 +879,57 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateAllDataSections() {
+        val metrics = latestObdState.metrics
+        val metricsList = listOf(
+            getString(R.string.metric_engine_rpm) to (metrics?.engineRpm?.toInt()?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_vehicle_speed) to (metrics?.vehicleSpeedKph?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_engine_temp) to (metrics?.coolantTempCelsius?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_battery_voltage) to (metrics?.batteryVoltageVolts?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_fuel_trim) to (metrics?.shortTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_fuel_trim_long) to (metrics?.longTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE)
+        )
+        val dtcCount = (latestObdState.storedDtcs + latestObdState.pendingDtcs).distinct().size
+        val milStatus = if (dtcCount > 0) {
+            getString(R.string.all_data_mil_active)
+        } else {
+            getString(R.string.all_data_mil_inactive)
+        }
+        val stored = if (latestObdState.storedDtcs.isNotEmpty()) {
+            formatDtcList(latestObdState.storedDtcs)
+        } else {
+            getString(R.string.dtc_no_codes)
+        }
+        val pending = if (latestObdState.pendingDtcs.isNotEmpty()) {
+            formatDtcList(latestObdState.pendingDtcs)
+        } else {
+            getString(R.string.dtc_no_codes)
+        }
+        val fullScanResultsText = if (fullScanResults.isNotEmpty()) {
+            fullScanResults.joinToString(separator = "\n")
+        } else {
+            getString(R.string.all_data_full_scan_empty)
+        }
+        val rawLogLines = buildList {
+            latestObdState.lastCommand?.let { add(getString(R.string.all_data_raw_log_command, it)) }
+            latestObdState.lastRawResponse?.let { add(getString(R.string.all_data_raw_log_response, it)) }
+            latestConnectionState.log.takeIf { it.isNotBlank() }?.let { add(it) }
+        }
+        val rawLogText = if (rawLogLines.isNotEmpty()) {
+            rawLogLines.joinToString(separator = "\n")
+        } else {
+            getString(R.string.all_data_raw_log_empty)
+        }
+        allDataAdapter.submitList(
+            listOf(
+                AllDataSection.LiveMetrics(metricsList, milStatus),
+                AllDataSection.Dtc(stored, pending),
+                AllDataSection.FullScan(fullScanInProgress, fullScanResultsText),
+                AllDataSection.RawLog(rawLogText)
+            )
+        )
+    }
+
     private fun liveDataErrorLabel(errorType: ObdErrorType?): String? {
         return when (errorType) {
             ObdErrorType.TIMEOUT -> getString(R.string.diagnostics_error_timeout)
@@ -901,8 +977,9 @@ class MainActivity : AppCompatActivity() {
         const val SCREEN_WELCOME = 0
         const val SCREEN_CONNECTION = 1
         const val SCREEN_SUMMARY = 2
-        const val SCREEN_METRICS = 3
-        const val SCREEN_DTC = 4
+        const val SCREEN_ALL_DATA = 3
+        const val SCREEN_METRICS = 4
+        const val SCREEN_DTC = 5
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
         val IP_ADDRESS_REGEX = Regex(
             "^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$"

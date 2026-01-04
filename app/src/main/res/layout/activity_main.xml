@@ -812,6 +812,14 @@
                     android:layout_marginTop="16dp"
                     android:text="@string/action_details" />
 
+                <TextView
+                    android:id="@+id/summaryDetailsHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/summary_details_hint"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/summaryClearHistory"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -842,6 +850,49 @@
                         android:text="@string/action_next"
                         android:visibility="gone" />
                 </RelativeLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:id="@+id/allDataTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/all_data_title"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5" />
+
+                <TextView
+                    android:id="@+id/allDataSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/all_data_subtitle"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/allDataList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:nestedScrollingEnabled="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/allDataBack"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/action_back" />
             </LinearLayout>
         </ScrollView>
 
