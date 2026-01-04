@@ -911,8 +911,15 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.all_data_full_scan_empty)
         }
         val rawLogLines = buildList {
-            latestObdState.lastCommand?.let { add(getString(R.string.all_data_raw_log_command, it)) }
-            latestObdState.lastRawResponse?.let { add(getString(R.string.all_data_raw_log_response, it)) }
+            latestObdState.recentDiagnostics
+                .takeLast(RAW_LOG_VISIBLE_LIMIT)
+                .forEach { diagnostics ->
+                    add(getString(R.string.all_data_raw_log_command, diagnostics.command))
+                    add(getString(R.string.all_data_raw_log_response, diagnostics.rawResponse ?: "-"))
+                    val errorLabel = diagnostics.errorType?.let { liveDataErrorLabel(it) ?: it.name }
+                        ?: getString(R.string.all_data_raw_log_error_none)
+                    add(getString(R.string.all_data_raw_log_error, errorLabel))
+                }
             latestConnectionState.log.takeIf { it.isNotBlank() }?.let { add(it) }
         }
         val rawLogText = if (rawLogLines.isNotEmpty()) {
@@ -980,6 +987,7 @@ class MainActivity : AppCompatActivity() {
         const val SCREEN_ALL_DATA = 3
         const val SCREEN_METRICS = 4
         const val SCREEN_DTC = 5
+        const val RAW_LOG_VISIBLE_LIMIT = 50
         val NUMBER_REGEX = Regex("-?\\d+(?:\\.\\d+)?")
         val IP_ADDRESS_REGEX = Regex(
             "^(25[0-5]|2[0-4]\\d|1?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$"

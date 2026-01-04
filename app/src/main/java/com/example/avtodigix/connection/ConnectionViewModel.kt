@@ -635,12 +635,15 @@ class ConnectionViewModel(
         } else {
             _obdState.value.lastPidErrorAtMillis
         }
+        val recentDiagnostics = (_obdState.value.recentDiagnostics + diagnostics)
+            .takeLast(RECENT_DIAGNOSTICS_LIMIT)
         _obdState.value = _obdState.value.copy(
             lastCommand = diagnostics.command,
             lastRawResponse = diagnostics.rawResponse,
             lastErrorType = diagnostics.errorType,
             lastPidErrorType = lastPidErrorType,
-            lastPidErrorAtMillis = lastPidErrorAtMillis
+            lastPidErrorAtMillis = lastPidErrorAtMillis,
+            recentDiagnostics = recentDiagnostics
         )
     }
 
@@ -749,6 +752,7 @@ class ConnectionViewModel(
         private const val DTC_REFRESH_MILLIS = 20_000L
         private const val PID_READ_ERROR_THRESHOLD = 3
         private const val RECOVERY_COOLDOWN_MILLIS = 10_000L
+        private const val RECENT_DIAGNOSTICS_LIMIT = 200
     }
 }
 
@@ -797,7 +801,8 @@ data class ObdState(
     val lastPidErrorType: ObdErrorType? = null,
     val lastPidErrorAtMillis: Long? = null,
     val liveDataErrorType: ObdErrorType? = null,
-    val showReconnectButton: Boolean = false
+    val showReconnectButton: Boolean = false,
+    val recentDiagnostics: List<ObdDiagnostics> = emptyList()
 )
 
 enum class PermissionStatus {
