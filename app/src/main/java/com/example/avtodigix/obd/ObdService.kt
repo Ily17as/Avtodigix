@@ -54,29 +54,29 @@ class ObdService(
         }
     }
 
-    suspend fun fullScanMode01(supportedPids: Set<Int>): List<ObdPidRecord> {
-        return supportedPids
-            .sorted()
-            .map { pid -> readPidRaw(pid) }
-            .map { record ->
-                val decoder = PID_DECODERS[record.pid]
-                if (decoder != null && record.bytes != null) {
-                    val decoded = decoder(record.bytes)
-                    record.copy(
-                        decodedValue = decoded.value,
-                        unit = decoded.unit
-                    )
-                } else if (decoder == null) {
-                    val rawHex = record.bytes?.let { formatHexBytes(it) }
-                    record.copy(
-                        raw = rawHex ?: record.raw,
-                        decodedValue = "n/a",
-                        unit = null
-                    )
-                } else {
-                    record
-                }
+    suspend fun fullScanMode01(
+        supportedPids: Set<Int>,
+        onProgress: ((current: Int, total: Int) -> Unit)? = null
+    ): List<ObdPidRecord> {
+        val sortedPids = supportedPids.sorted()
+        val total = sortedPids.size
+        val results = mutableListOf<ObdPidRecord>()
+        sortedPids.forEachIndexed { index, pid ->
+            val record = readPidRaw(pid)
+            val decoder = PID_DECODERS[record.pid]
+            val decodedRecord = if (decoder != null && record.bytes != null) {
+                val decoded = decoder(record.bytes)
+                record.copy(
+                    decodedValue = decoded.value,
+                    unit = decoded.unit
+                )
+            } else {
+                record
             }
+            results.add(decodedRecord)
+            onProgress?.invoke(index + 1, total)
+        }
+        return results
     }
 
     suspend fun readSupportedPids(): Map<Int, Boolean> {
