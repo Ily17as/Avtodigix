@@ -137,6 +137,19 @@ class ConnectionViewModel(
                             )
                         }
                     }
+                    WifiConnectionStatus.Disconnected -> {
+                        if (connectionState.value.status == ConnectionState.Status.Connecting ||
+                            connectionState.value.status == ConnectionState.Status.Initializing ||
+                            connectionState.value.status == ConnectionState.Status.Connected
+                        ) {
+                            updateConnectionState {
+                                copy(
+                                    status = ConnectionState.Status.Idle,
+                                    log = appendLog("Wi-Fi соединение завершено.")
+                                )
+                            }
+                        }
+                    }
                     WifiConnectionStatus.Failed -> {
                         if (connectionState.value.status == ConnectionState.Status.Connecting ||
                             connectionState.value.status == ConnectionState.Status.Initializing ||
@@ -145,7 +158,8 @@ class ConnectionViewModel(
                             updateConnectionState {
                                 copy(
                                     status = ConnectionState.Status.Error,
-                                    errorMessage = "Не удалось установить Wi-Fi соединение."
+                                    errorMessage = errorMessage
+                                        ?: "Не удалось установить Wi-Fi соединение."
                                 )
                             }
                         }
@@ -529,7 +543,8 @@ class ConnectionViewModel(
             uuid = SPP_UUID,
             timeoutMillis = CONNECTION_TIMEOUT_MILLIS
         )
-        connectAndInitialize(transport) { error ->
+        val error = connectAndInitialize(transport)
+        if (error != null) {
             if (error is TimeoutCancellationException) {
                 updateConnectionState {
                     copy(
@@ -549,28 +564,37 @@ class ConnectionViewModel(
     }
 
     private suspend fun connectToWifi(host: String, port: Int) {
-        val transport = WifiObdTransport(
-            manager = wifiScannerManager,
-            host = host,
-            port = port
-        )
-        connectAndInitialize(transport) { error ->
-            val message = when (error) {
-                is SocketTimeoutException -> "Превышено время ожидания ответа. Проверьте IP и порт."
-                is UnknownHostException -> "Не удалось определить адрес устройства. Проверьте IP."
-                is NoRouteToHostException -> "IP недоступен. Проверьте подключение к сети."
-                is ConnectException -> "Порт недоступен или закрыт. Проверьте порт адаптера."
-                is IllegalArgumentException -> "Некорректные параметры Wi-Fi подключения."
-                is IOException -> "Ошибка подключения по Wi-Fi."
-                else -> "Ошибка подключения по Wi-Fi."
+        var lastError: Throwable? = null
+        repeat(WIFI_CONNECT_MAX_ATTEMPTS) { attemptIndex ->
+            val attempt = attemptIndex + 1
+            if (attempt > 1) {
+                updateConnectionState {
+                    copy(log = appendLog("Wi-Fi: повторная попытка подключения ($attempt/$WIFI_CONNECT_MAX_ATTEMPTS)."))
+                }
+                delay(WIFI_CONNECT_RETRY_DELAY_MILLIS)
             }
+            val transport = WifiObdTransport(
+                manager = wifiScannerManager,
+                host = host,
+                port = port
+            )
+            val error = connectAndInitialize(transport)
+            if (error == null) {
+                return
+            }
+            lastError = error
+            val details = formatExceptionDetails(error)
             updateConnectionState {
-                copy(
-                    status = ConnectionState.Status.Error,
-                    errorMessage = message,
-                    log = appendLog("Wi-Fi: $message")
-                )
+                copy(log = appendLog("Wi-Fi: ошибка подключения ($details)."))
             }
+        }
+        val message = buildWifiErrorMessage(lastError)
+        updateConnectionState {
+            copy(
+                status = ConnectionState.Status.Error,
+                errorMessage = message,
+                log = appendLog("Wi-Fi: $message")
+            )
         }
     }
 
@@ -625,16 +649,17 @@ class ConnectionViewModel(
         }
     }
 
-    private suspend fun connectAndInitialize(transport: ObdTransport, onError: (Throwable) -> Unit) {
+    private suspend fun connectAndInitialize(transport: ObdTransport): Throwable? {
         activeTransport = transport
-        try {
+        return try {
             transport.connect()
+            startElmSession(transport)
+            null
         } catch (error: Throwable) {
+            runCatching { transport.disconnect() }
             activeTransport = null
-            onError(error)
-            return
+            error
         }
-        startElmSession(transport)
     }
 
     private suspend fun startElmSession(transport: ObdTransport) {
@@ -647,24 +672,24 @@ class ConnectionViewModel(
             )
         }
 
-        try {
-            newSession.initialize()
-        } catch (error: IOException) {
+        newSession.initialize()
+        val smokeCheck = performSmokeCheck(newSession)
+        val elmSummary = smokeCheck.elmSummary
+        if (elmSummary != null) {
+            updateConnectionState { copy(log = appendLog(elmSummary)) }
+        }
+        if (!smokeCheck.elmOk) {
             updateConnectionState {
                 copy(
                     status = ConnectionState.Status.Error,
-                    errorMessage = "Ошибка инициализации адаптера."
+                    errorMessage = smokeCheck.elmErrorMessage ?: "ELM327 не отвечает."
                 )
             }
-            return
-        } catch (error: IllegalStateException) {
-            updateConnectionState {
-                copy(
-                    status = ConnectionState.Status.Error,
-                    errorMessage = "Ошибка при настройке ELM327."
-                )
-            }
-            return
+            throw IOException(smokeCheck.elmErrorMessage ?: "ELM327 не отвечает.")
+        }
+        val ecuSummary = smokeCheck.ecuSummary
+        if (ecuSummary != null) {
+            updateConnectionState { copy(log = appendLog(ecuSummary)) }
         }
 
         val service = ObdService(newSession, ::onDiagnosticsUpdated)
@@ -821,6 +846,76 @@ class ConnectionViewModel(
         }
     }
 
+    private fun formatExceptionDetails(error: Throwable): String {
+        val name = error::class.simpleName ?: "Ошибка"
+        val message = error.message?.takeIf { it.isNotBlank() }
+        return if (message != null) {
+            "$name: $message"
+        } else {
+            name
+        }
+    }
+
+    private fun buildWifiErrorMessage(error: Throwable?): String {
+        val details = error?.let { formatExceptionDetails(it) }
+        val baseMessage = when (error) {
+            is SocketTimeoutException -> "Превышено время ожидания ответа. Проверьте IP и порт."
+            is UnknownHostException -> "Не удалось определить адрес устройства. Проверьте IP."
+            is NoRouteToHostException -> "IP недоступен. Проверьте подключение к сети."
+            is ConnectException -> "Порт недоступен или закрыт. Закройте другие приложения и переподключите адаптер."
+            is IllegalArgumentException -> "Некорректные параметры Wi-Fi подключения."
+            is IllegalStateException -> error.message ?: "Активная сеть не Wi-Fi адаптера."
+            is IOException -> "Ошибка подключения по Wi-Fi."
+            else -> "Ошибка подключения по Wi-Fi."
+        }
+        return if (details != null) {
+            "$baseMessage ($details)"
+        } else {
+            baseMessage
+        }
+    }
+
+    private suspend fun performSmokeCheck(session: ElmSession): SmokeCheckResult {
+        val atiResult = runCatching { session.execute("ATI") }
+        val atiResponse = atiResult.getOrNull()
+        if (atiResponse == null || atiResponse.lines.isEmpty()) {
+            val errorMessage = atiResult.exceptionOrNull()?.let { formatExceptionDetails(it) }
+                ?: "ELM327 не отвечает на ATI."
+            return SmokeCheckResult(
+                elmOk = false,
+                elmSummary = "ELM нет ответа (ATI).",
+                elmErrorMessage = errorMessage
+            )
+        }
+        val atiSummary = atiResponse.lines.joinToString(" ").ifBlank { "OK" }
+        val elmSummary = "ELM OK (ATI: $atiSummary)"
+        val ecuResult = runCatching { session.execute("0100") }
+        val ecuResponse = ecuResult.getOrNull()
+        val ecuOk = ecuResponse?.let { has0100Response(it) } == true
+        val ecuSummary = if (ecuOk) {
+            "ECU OK (0100: OK)"
+        } else {
+            val detail = ecuResult.exceptionOrNull()?.let { formatExceptionDetails(it) }
+                ?: ecuResponse?.raw?.trim()?.takeIf { it.isNotBlank() }
+                ?: "NO DATA"
+            "ECU нет ответа (0100: $detail)"
+        }
+        return SmokeCheckResult(
+            elmOk = true,
+            elmSummary = elmSummary,
+            ecuSummary = ecuSummary
+        )
+    }
+
+    private fun has0100Response(response: com.example.avtodigix.elm.ElmResponse): Boolean {
+        if (response.raw.contains("NO DATA", ignoreCase = true)) {
+            return false
+        }
+        return response.lines.any { line ->
+            line.replace(" ", "").uppercase().startsWith("4100")
+        }
+    }
+
     companion object {
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
         private const val CONNECTION_TIMEOUT_MILLIS = 15_000L
@@ -829,8 +924,17 @@ class ConnectionViewModel(
         private const val PID_READ_ERROR_THRESHOLD = 3
         private const val RECOVERY_COOLDOWN_MILLIS = 10_000L
         private const val RECENT_DIAGNOSTICS_LIMIT = 200
+        private const val WIFI_CONNECT_RETRY_DELAY_MILLIS = 1_500L
+        private const val WIFI_CONNECT_MAX_ATTEMPTS = 3
     }
 }
+
+private data class SmokeCheckResult(
+    val elmOk: Boolean,
+    val elmSummary: String? = null,
+    val ecuSummary: String? = null,
+    val elmErrorMessage: String? = null
+)
 
 data class ConnectionState(
     val status: Status = Status.Idle,
