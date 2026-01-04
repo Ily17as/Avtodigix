@@ -331,7 +331,8 @@ class MainActivity : AppCompatActivity() {
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
             longTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim_long),
-            dtcCount = snapshot.dtcList.size
+            dtcCount = snapshot.dtcList.size,
+            milOn = null
         )
     }
 
@@ -698,7 +699,8 @@ class MainActivity : AppCompatActivity() {
             batteryVoltage = state.metrics?.batteryVoltageVolts,
             shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
-            dtcCount = dtcCount.takeIf { it > 0 }
+            dtcCount = dtcCount.takeIf { it > 0 },
+            milOn = state.milOn
         )
         updateAllDataSections()
     }
@@ -779,9 +781,18 @@ class MainActivity : AppCompatActivity() {
         batteryVoltage: Double?,
         shortTermFuelTrimPercent: Double?,
         longTermFuelTrimPercent: Double?,
-        dtcCount: Int?
+        dtcCount: Int?,
+        milOn: Boolean?
     ) {
         val dtcAssessment = HealthRules.evaluateDtcCount(dtcCount)
+        val resolvedDtcAssessment = if (milOn == true && dtcAssessment.status == TrafficLightStatus.GREEN) {
+            dtcAssessment.copy(
+                status = TrafficLightStatus.YELLOW,
+                message = "Индикатор MIL активен, требуется проверка ошибок/эмиссии."
+            )
+        } else {
+            dtcAssessment
+        }
         updateHealthCard(
             assessment = HealthRules.evaluateEngine(
                 engineRpm = engineRpm?.toInt(),
@@ -816,7 +827,7 @@ class MainActivity : AppCompatActivity() {
             descriptionView = binding.batteryDescription
         )
         updateHealthCard(
-            assessment = dtcAssessment,
+            assessment = resolvedDtcAssessment,
             card = binding.dtcSummaryCard,
             titleView = binding.dtcSummaryTitle,
             statusView = binding.dtcSummaryStatus,
