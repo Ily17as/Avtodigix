@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import android.widget.ViewFlipper
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -44,6 +43,7 @@ import com.example.avtodigix.storage.WifiResponseFormat
 import com.example.avtodigix.storage.WifiScanSnapshot
 import com.example.avtodigix.storage.WifiScanSnapshotRepository
 import com.example.avtodigix.obd.ObdErrorType
+import com.example.avtodigix.obd.ObdPidRecord
 import com.example.avtodigix.ui.AllDataAdapter
 import com.example.avtodigix.ui.AllDataSection
 import kotlinx.coroutines.CoroutineScope
@@ -71,8 +71,6 @@ class MainActivity : AppCompatActivity() {
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
     private var diagnosticsModeEnabled = false
-    private var fullScanInProgress = false
-    private var fullScanResults: List<String> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,11 +104,11 @@ class MainActivity : AppCompatActivity() {
             setHasFixedSize(false)
         }
         allDataAdapter = AllDataAdapter {
-            Toast.makeText(
-                this,
-                getString(R.string.all_data_full_scan_unavailable),
-                Toast.LENGTH_SHORT
-            ).show()
+            if (latestObdState.fullScanInProgress) {
+                connectionViewModel.cancelFullScan()
+            } else {
+                connectionViewModel.requestFullScan()
+            }
         }
         binding.allDataList.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -905,8 +903,8 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.dtc_no_codes)
         }
-        val fullScanResultsText = if (fullScanResults.isNotEmpty()) {
-            fullScanResults.joinToString(separator = "\n")
+        val fullScanResultsText = if (latestObdState.fullScanResults.isNotEmpty()) {
+            formatFullScanResults(latestObdState.fullScanResults)
         } else {
             getString(R.string.all_data_full_scan_empty)
         }
@@ -931,10 +929,24 @@ class MainActivity : AppCompatActivity() {
             listOf(
                 AllDataSection.LiveMetrics(metricsList, milStatus),
                 AllDataSection.Dtc(stored, pending),
-                AllDataSection.FullScan(fullScanInProgress, fullScanResultsText),
+                AllDataSection.FullScan(latestObdState.fullScanInProgress, fullScanResultsText),
                 AllDataSection.RawLog(rawLogText)
             )
         )
+    }
+
+    private fun formatFullScanResults(records: List<ObdPidRecord>): String {
+        return records.joinToString(separator = "\n") { record ->
+            val pidHex = String.format("%02X", record.pid)
+            val modeHex = String.format("%02X", record.mode)
+            val bytes = record.bytes?.joinToString(" ") { value -> String.format("%02X", value) } ?: "-"
+            val valueLabel = record.decodedValue?.let { decoded ->
+                val unitLabel = record.unit?.let { " $it" }.orEmpty()
+                " value=$decoded$unitLabel"
+            }.orEmpty()
+            val errorLabel = record.errorType?.let { " error=${it.name}" }.orEmpty()
+            "$modeHex $pidHex bytes=$bytes$valueLabel$errorLabel"
+        }
     }
 
     private fun liveDataErrorLabel(errorType: ObdErrorType?): String? {

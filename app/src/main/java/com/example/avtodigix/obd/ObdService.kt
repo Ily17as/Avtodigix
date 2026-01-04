@@ -10,6 +10,56 @@ class ObdService(
     private val session: ElmSession,
     private val diagnosticsListener: (ObdDiagnostics) -> Unit = {}
 ) {
+    suspend fun readPidRaw(pid: Int): ObdPidRecord {
+        val timestampMillis = System.currentTimeMillis()
+        val command = String.format("01 %02X", pid)
+        return try {
+            val (response, errorType) = executeWithDiagnosticsAndError(command)
+            val bytes = response.lines
+                .mapNotNull { parseHexBytes(it) }
+                .firstOrNull { it.size >= 3 && it[0] == 0x41 && it[1] == pid }
+                ?: response.lines.mapNotNull { parseHexBytes(it) }.firstOrNull()
+            ObdPidRecord(
+                mode = 0x01,
+                pid = pid,
+                timestampMillis = timestampMillis,
+                raw = response.raw,
+                bytes = bytes,
+                decodedValue = null,
+                unit = null,
+                errorType = errorType
+            )
+        } catch (error: TimeoutCancellationException) {
+            ObdPidRecord(
+                mode = 0x01,
+                pid = pid,
+                timestampMillis = timestampMillis,
+                raw = null,
+                bytes = null,
+                decodedValue = null,
+                unit = null,
+                errorType = ObdErrorType.TIMEOUT
+            )
+        } catch (error: IOException) {
+            ObdPidRecord(
+                mode = 0x01,
+                pid = pid,
+                timestampMillis = timestampMillis,
+                raw = null,
+                bytes = null,
+                decodedValue = null,
+                unit = null,
+                errorType = classifyIoError(error)
+            )
+        }
+    }
+
+    suspend fun fullScanMode01(supportedPids: Set<Int>): List<ObdPidRecord> {
+        return supportedPids
+            .sorted()
+            .map { pid -> readPidRaw(pid) }
+    }
+
     suspend fun readSupportedPids(): Map<Int, Boolean> {
         val supported = mutableSetOf<Int>()
         var basePid = 0x00
@@ -124,11 +174,14 @@ class ObdService(
         return dtcs
     }
 
-    private suspend fun executeWithDiagnostics(command: String) = try {
+    private suspend fun executeWithDiagnostics(command: String) =
+        executeWithDiagnosticsAndError(command).first
+
+    private suspend fun executeWithDiagnosticsAndError(command: String): Pair<ElmResponse, ObdErrorType?> = try {
         val response = session.execute(command)
         val errorType = classifyResponse(response)
         emitDiagnostics(command, response.raw, errorType)
-        response
+        response to errorType
     } catch (error: TimeoutCancellationException) {
         emitDiagnostics(command, null, ObdErrorType.TIMEOUT)
         throw error

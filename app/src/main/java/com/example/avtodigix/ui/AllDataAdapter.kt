@@ -118,6 +118,13 @@ class AllDataAdapter(
 
         fun bind(item: AllDataSection.FullScan) {
             progress.visibility = if (item.inProgress) View.VISIBLE else View.GONE
+            button.setText(
+                if (item.inProgress) {
+                    R.string.all_data_full_scan_cancel
+                } else {
+                    R.string.all_data_full_scan_action
+                }
+            )
             results.text = item.results
         }
     }
