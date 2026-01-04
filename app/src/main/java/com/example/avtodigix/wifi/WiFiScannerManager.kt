@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import com.example.avtodigix.transport.ScannerTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -13,15 +12,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.math.min
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 class WiFiScannerManager(
     context: Context,
@@ -31,7 +27,7 @@ class WiFiScannerManager(
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val scope = parentScope ?: CoroutineScope(SupervisorJob() + ioDispatcher)
-    private val _status = MutableStateFlow<WifiConnectionStatus>(WifiConnectionStatus.Failed)
+    private val _status = MutableStateFlow<WifiConnectionStatus>(WifiConnectionStatus.Disconnected)
     val status: StateFlow<WifiConnectionStatus> = _status
     private val _transportState = MutableStateFlow<ScannerTransport?>(null)
     val transportState: StateFlow<ScannerTransport?> = _transportState
@@ -39,8 +35,6 @@ class WiFiScannerManager(
     val discoveredDevices: StateFlow<List<WifiDiscoveredDevice>> = discoveryService.devices
 
     private var socket: Socket? = null
-    private var requestedNetwork: Network? = null
-    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     suspend fun connect(
         host: String,
@@ -50,11 +44,12 @@ class WiFiScannerManager(
     ): WifiTransport = withContext(ioDispatcher) {
         val safeConnectTimeout = min(connectTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
         val safeReadTimeout = min(readTimeoutMs, MAX_TIMEOUT_MILLIS).toInt()
-        disconnectInternal()
+        disconnectInternal(WifiConnectionStatus.Disconnected)
         _status.value = WifiConnectionStatus.Connecting
-        val network = requestWifiNetwork()
+        val network = activeWifiNetwork()
         val createdSocket = network.socketFactory.createSocket()
         return@withContext try {
+            runCatching { network.bindSocket(createdSocket) }
             createdSocket.connect(InetSocketAddress(host, port), safeConnectTimeout)
             createdSocket.soTimeout = safeReadTimeout
             socket = createdSocket
@@ -64,7 +59,6 @@ class WiFiScannerManager(
             transport
         } catch (error: Exception) {
             runCatching { createdSocket.close() }
-            releaseWifiRequest()
             _transportState.value = null
             _status.value = WifiConnectionStatus.Failed
             throw error
@@ -73,7 +67,7 @@ class WiFiScannerManager(
 
     fun disconnect() {
         scope.launch {
-            disconnectInternal()
+            disconnectInternal(WifiConnectionStatus.Disconnected)
         }
     }
 
@@ -85,56 +79,24 @@ class WiFiScannerManager(
         discoveryService.stopDiscovery()
     }
 
-    private suspend fun disconnectInternal() = withContext(ioDispatcher) {
+    private suspend fun disconnectInternal(status: WifiConnectionStatus) = withContext(ioDispatcher) {
         socket?.let { current ->
             runCatching { current.close() }
         }
         socket = null
-        releaseWifiRequest()
         _transportState.value = null
-        _status.value = WifiConnectionStatus.Failed
+        _status.value = status
     }
 
-    private suspend fun requestWifiNetwork(): Network = suspendCancellableCoroutine { continuation ->
-        releaseWifiRequest()
-        val request = NetworkRequest.Builder()
-            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-            .build()
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                if (continuation.isCompleted) {
-                    return
-                }
-                requestedNetwork = network
-                continuation.resume(network)
-            }
-
-            override fun onUnavailable() {
-                if (continuation.isCompleted) {
-                    return
-                }
-                continuation.resumeWithException(IllegalStateException("Wi-Fi network unavailable"))
-            }
-
-            override fun onLost(network: Network) {
-                if (requestedNetwork == network) {
-                    requestedNetwork = null
-                }
-            }
+    private fun activeWifiNetwork(): Network {
+        val network = connectivityManager.activeNetwork
+            ?: throw IllegalStateException("Активная сеть не найдена.")
+        val capabilities = connectivityManager.getNetworkCapabilities(network)
+            ?: throw IllegalStateException("Не удалось определить параметры сети.")
+        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            throw IllegalStateException("Активная сеть не Wi-Fi.")
         }
-        networkCallback = callback
-        connectivityManager.requestNetwork(request, callback)
-        continuation.invokeOnCancellation {
-            releaseWifiRequest()
-        }
-    }
-
-    private fun releaseWifiRequest() {
-        networkCallback?.let { callback ->
-            runCatching { connectivityManager.unregisterNetworkCallback(callback) }
-        }
-        networkCallback = null
-        requestedNetwork = null
+        return network
     }
 
     companion object {
@@ -146,6 +108,7 @@ class WiFiScannerManager(
 sealed class WifiConnectionStatus {
     data object Connected : WifiConnectionStatus()
     data object Connecting : WifiConnectionStatus()
+    data object Disconnected : WifiConnectionStatus()
     data object Failed : WifiConnectionStatus()
 }
 
