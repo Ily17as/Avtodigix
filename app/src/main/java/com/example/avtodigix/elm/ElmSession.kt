@@ -123,7 +123,10 @@ class ElmSession(
         val parsed = parseResponse(normalizedCommand, raw)
         Log.d("OBD", "RX raw=$raw lines=$parsed")
         if (parsed.isEmpty() && !allowEmpty) {
-            throw IOException("ELM returned empty response for $normalizedCommand")
+            val escapedRaw = raw.replace("\r", "\\r").replace("\n", "\\n")
+            throw IOException(
+                "ELM returned empty response for $normalizedCommand raw=$escapedRaw"
+            )
         }
         ElmResponse(raw, parsed)
     }
