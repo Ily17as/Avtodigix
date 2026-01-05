@@ -5,6 +5,7 @@ import com.example.avtodigix.elm.ElmResponse
 import com.example.avtodigix.elm.ElmSession
 import kotlinx.coroutines.TimeoutCancellationException
 import java.io.IOException
+import java.net.SocketTimeoutException
 
 class ObdService(
     private val session: ElmSession,
@@ -241,13 +242,12 @@ class ObdService(
 
     private fun classifyIoError(error: IOException): ObdErrorType? {
         val message = error.message?.uppercase().orEmpty()
-        return if (message.contains("CLOSED")) {
-            ObdErrorType.SOCKET_CLOSED
-        } else {
-            ObdErrorType.IO
+        return when {
+            error is SocketTimeoutException -> ObdErrorType.TIMEOUT
+            message.contains("TIMED OUT") -> ObdErrorType.TIMEOUT
+            message.contains("CLOSED") -> ObdErrorType.SOCKET_CLOSED
+            else -> ObdErrorType.IO
         }
-    }
-
     private fun emitDiagnostics(command: String, rawResponse: String?, errorType: ObdErrorType?) {
         val diagnostics = ObdDiagnostics(
             command = command.trim(),
