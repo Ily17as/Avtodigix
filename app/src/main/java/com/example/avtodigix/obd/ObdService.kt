@@ -224,7 +224,7 @@ class ObdService(
         throw error
     } catch (error: IOException) {
         val errorType = classifyIoError(error)
-        emitDiagnostics(command, null, errorType)
+        emitDiagnostics(command, error.message, errorType)
         throw error
     }
 
