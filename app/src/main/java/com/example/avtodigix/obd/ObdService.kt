@@ -157,6 +157,7 @@ class ObdService(
             },
             vehicleSpeedKph = readPidIfSupported(0x0D, supportedPids)?.getOrNull(2),
             coolantTempCelsius = readPidIfSupported(0x05, supportedPids)?.getOrNull(2)?.minus(40),
+            engineOilTempC = readPidIfSupported(0x5C, supportedPids)?.getOrNull(2)?.minus(40),
             intakeTempCelsius = readPidIfSupported(0x0F, supportedPids)?.getOrNull(2)?.minus(40),
             engineLoadPercent = readPidIfSupported(0x04, supportedPids)?.getOrNull(2)?.let { value ->
                 value * 100.0 / 255.0
@@ -364,6 +365,7 @@ data class LivePidSnapshot(
     val engineRpm: Double?,
     val vehicleSpeedKph: Int?,
     val coolantTempCelsius: Int?,
+    val engineOilTempC: Int?,
     val intakeTempCelsius: Int?,
     val engineLoadPercent: Double?,
     val shortTermFuelTrimPercent: Double?,
@@ -392,6 +394,7 @@ val DEFAULT_LIVE_METRICS = listOf(
     LiveMetricDefinition(0x0C, "Обороты двигателя"),
     LiveMetricDefinition(0x0D, "Скорость автомобиля"),
     LiveMetricDefinition(0x05, "Температура охлаждающей жидкости"),
+    LiveMetricDefinition(0x5C, "Температура масла"),
     LiveMetricDefinition(0x0F, "Температура впуска"),
     LiveMetricDefinition(0x04, "Нагрузка двигателя"),
     LiveMetricDefinition(0x06, "Краткосрочная коррекция топлива"),

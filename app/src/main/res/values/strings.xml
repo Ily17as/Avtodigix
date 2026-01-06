@@ -73,9 +73,9 @@
     <string name="engine_status">ЗЕЛЕНЫЙ — нормальный режим</string>
     <string name="engine_description">Обороты, температура и давление в норме.</string>
 
-    <string name="cooling_title">Охлаждение</string>
-    <string name="cooling_status">ЖЕЛТЫЙ — требуется внимание</string>
-    <string name="cooling_description">Температура охлаждающей жидкости повышена, проверьте вентилятор.</string>
+    <string name="oil_title">Масло</string>
+    <string name="oil_status">ЖЕЛТЫЙ — требуется внимание</string>
+    <string name="oil_description">Температура масла повышена, проверьте уровень и систему смазки.</string>
 
     <string name="fuel_title">Топливо</string>
     <string name="fuel_status">КРАСНЫЙ — критично</string>
