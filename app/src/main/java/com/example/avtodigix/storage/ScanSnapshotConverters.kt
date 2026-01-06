@@ -4,8 +4,9 @@ import androidx.room.TypeConverter
 import org.json.JSONArray
 import org.json.JSONObject
 
-class ScanSnapshotConverters {
+object ScanSnapshotConverters {
     @TypeConverter
+    @JvmStatic
     fun mapToString(map: Map<String, Double>): String {
         val jsonObject = JSONObject()
         map.forEach { (key, value) ->
@@ -15,6 +16,7 @@ class ScanSnapshotConverters {
     }
 
     @TypeConverter
+    @JvmStatic
     fun stringToMap(value: String): Map<String, Double> {
         if (value.isBlank()) {
             return emptyMap()
@@ -30,6 +32,7 @@ class ScanSnapshotConverters {
     }
 
     @TypeConverter
+    @JvmStatic
     fun listToString(values: List<String>): String {
         val jsonArray = JSONArray()
         values.forEach { jsonArray.put(it) }
@@ -37,6 +40,7 @@ class ScanSnapshotConverters {
     }
 
     @TypeConverter
+    @JvmStatic
     fun stringToList(value: String): List<String> {
         if (value.isBlank()) {
             return emptyList()
@@ -50,11 +54,13 @@ class ScanSnapshotConverters {
     }
 
     @TypeConverter
+    @JvmStatic
     fun formatToString(format: WifiResponseFormat): String {
         return format.name
     }
 
     @TypeConverter
+    @JvmStatic
     fun stringToFormat(value: String): WifiResponseFormat {
         return runCatching { WifiResponseFormat.valueOf(value) }
             .getOrDefault(WifiResponseFormat.Text)
