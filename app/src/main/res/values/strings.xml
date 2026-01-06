@@ -116,6 +116,7 @@
     <string name="metrics_status_lost">Соединение потеряно.</string>
     <string name="metrics_updated">Обновлено %1$d сек назад.</string>
     <string name="metrics_updated_placeholder">Обновлено недавно.</string>
+    <string name="pressure_kpa_bar_format">%1$.0f kPa / %2$.1f bar</string>
     <string name="diagnostics_mode">Режим диагностики</string>
     <string name="diagnostics_title">Диагностика</string>
     <string name="diagnostics_last_command_label">Последний запрос</string>
@@ -161,4 +162,6 @@
     <string name="all_data_raw_log_error_none">нет</string>
     <string name="all_data_mil_active">MIL статус: активен</string>
     <string name="all_data_mil_inactive">MIL статус: не активен</string>
+    <string name="all_data_oil_pressure_label">Oil pressure</string>
+    <string name="all_data_fuel_pressure_label">Fuel pressure (PID %1$s)</string>
 </resources>
