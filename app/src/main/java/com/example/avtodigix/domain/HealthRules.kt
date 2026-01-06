@@ -144,11 +144,11 @@ object HealthRules {
                 val formattedPressure = formatPressure(oilPressureKPa)
                 val pressureMessage = when (pressureStatus) {
                     TrafficLightStatus.GREEN ->
-                        "Давление масла $formattedPressure kPa в норме."
+                        "Давление масла $formattedPressure в норме."
                     TrafficLightStatus.YELLOW ->
-                        "Давление масла $formattedPressure kPa ниже нормы."
+                        "Давление масла $formattedPressure ниже нормы."
                     TrafficLightStatus.RED ->
-                        "Давление масла $formattedPressure kPa критически низкое."
+                        "Давление масла $formattedPressure критически низкое."
                     null -> null
                 }
                 pressureMessage?.let { add(it) }
@@ -317,20 +317,20 @@ object HealthRules {
                 val pressureMessage = when (fuelPressurePidUsed) {
                     0x0A -> when {
                         fuelPressureKPa < 150 ->
-                            "Давление топлива $formattedPressure kPa ниже нормы (PID 0x0A)."
+                            "Давление топлива $formattedPressure ниже нормы (PID 0x0A)."
                         fuelPressureKPa > 700 ->
-                            "Давление топлива $formattedPressure kPa выше нормы (PID 0x0A)."
+                            "Давление топлива $formattedPressure выше нормы (PID 0x0A)."
                         else ->
-                            "Давление топлива $formattedPressure kPa в норме (PID 0x0A)."
+                            "Давление топлива $formattedPressure в норме (PID 0x0A)."
                     }
                     0x22, 0x23 -> when {
                         fuelPressureKPa < 200 ->
-                            "Давление топлива $formattedPressure kPa ниже нормы (PID 0x${fuelPressurePidUsed.toString(16).uppercase()})."
+                            "Давление топлива $formattedPressure ниже нормы (PID 0x${fuelPressurePidUsed.toString(16).uppercase()})."
                         else ->
-                            "Давление топлива $formattedPressure kPa в норме (PID 0x${fuelPressurePidUsed.toString(16).uppercase()})."
+                            "Давление топлива $formattedPressure в норме (PID 0x${fuelPressurePidUsed.toString(16).uppercase()})."
                     }
                     else ->
-                        "Давление топлива $formattedPressure kPa."
+                        "Давление топлива $formattedPressure."
                 }
                 add(pressureMessage)
             } else {
@@ -358,7 +358,9 @@ object HealthRules {
     }
 
     private fun formatPressure(value: Double): String {
-        return String.format("%.0f", value)
+        val kPa = String.format("%.0f", value)
+        val bar = String.format("%.1f", value / 100.0)
+        return "$kPa kPa / $bar bar"
     }
 
     private fun maxStatus(current: TrafficLightStatus, next: TrafficLightStatus): TrafficLightStatus {

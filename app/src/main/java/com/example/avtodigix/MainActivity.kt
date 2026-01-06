@@ -916,17 +916,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun formatPressureValue(pressureKPa: Double?): String {
+        if (pressureKPa == null) {
+            return PLACEHOLDER_VALUE
+        }
+        return getString(
+            R.string.pressure_kpa_bar_format,
+            pressureKPa,
+            pressureKPa / 100.0
+        )
+    }
+
     private fun updateAllDataSections() {
         val metrics = latestObdState.metrics
         val batteryLabel = batteryVoltageLabel(metrics?.batteryVoltageSource)
+        val oilPressureLabel = getString(R.string.all_data_oil_pressure_label)
+        val oilPressureValue = formatPressureValue(metrics?.engineOilPressureKPa)
+        val fuelPressurePidLabel = metrics?.fuelPressurePidUsed?.let { pid ->
+            String.format("0x%02X", pid)
+        } ?: PLACEHOLDER_VALUE
+        val fuelPressureLabel = getString(R.string.all_data_fuel_pressure_label, fuelPressurePidLabel)
+        val fuelPressureValue = formatPressureValue(metrics?.fuelPressureKPa)
         val metricsList = listOf(
             getString(R.string.metric_engine_rpm) to (metrics?.engineRpm?.toInt()?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_vehicle_speed) to (metrics?.vehicleSpeedKph?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_engine_temp) to (metrics?.coolantTempCelsius?.toString() ?: PLACEHOLDER_VALUE),
-            getString(R.string.metric_engine_oil_pressure) to
-                (metrics?.engineOilPressureKPa?.toString() ?: PLACEHOLDER_VALUE),
+            oilPressureLabel to oilPressureValue,
             batteryLabel to (metrics?.batteryVoltageVolts?.toString() ?: PLACEHOLDER_VALUE),
-            getString(R.string.metric_fuel_pressure) to (metrics?.fuelPressureKPa?.toString() ?: PLACEHOLDER_VALUE),
+            fuelPressureLabel to fuelPressureValue,
             getString(R.string.metric_fuel_trim) to (metrics?.shortTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_fuel_trim_long) to (metrics?.longTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE)
         )
