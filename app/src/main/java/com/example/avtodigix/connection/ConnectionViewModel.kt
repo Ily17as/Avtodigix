@@ -489,6 +489,9 @@ class ConnectionViewModel(
                     fullScanProgress = finalProgress,
                     fullScanResults = results.toList()
                 )
+                session?.let { activeSession ->
+                    performSoftElmInit(activeSession)
+                }
                 if (wasPolling) {
                     startReading(service, supportedPids)
                 }
@@ -864,13 +867,32 @@ class ConnectionViewModel(
         if (nowMillis - lastRecoveryAttemptMillis < RECOVERY_COOLDOWN_MILLIS) {
             return
         }
+        if (fullScanJob?.isActive == true) {
+            return
+        }
         lastRecoveryAttemptMillis = nowMillis
         val activeSession = session ?: return
         updateConnectionState {
-            copy(log = appendLog("Повторная инициализация ELM327 (ATZ/ATSP0)."))
+            copy(log = appendLog("Повторная инициализация ELM327."))
         }
-        runCatching { activeSession.execute("ATZ") }
-        runCatching { activeSession.execute("ATSP0") }
+        val softRecovered = performSoftElmInit(activeSession)
+        if (!softRecovered) {
+            runCatching { activeSession.execute("ATZ") }
+            runCatching { activeSession.execute("ATSP0") }
+        }
+    }
+
+    private suspend fun performSoftElmInit(session: ElmSession): Boolean {
+        val commands = listOf("ATE0", "ATL0", "ATS0", "ATSP0")
+        for (command in commands) {
+            val result = runCatching { session.execute(command) }
+            if (result.isFailure) {
+                return false
+            }
+        }
+        val ecuResult = runCatching { session.execute("0100") }
+        val ecuResponse = ecuResult.getOrNull() ?: return false
+        return has0100Response(ecuResponse)
     }
 
     private fun mapReadErrorToType(error: Throwable): ObdErrorType? {
