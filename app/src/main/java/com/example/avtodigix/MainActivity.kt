@@ -338,10 +338,13 @@ class MainActivity : AppCompatActivity() {
             engineRpm = readSnapshotMetric(snapshot, R.string.metric_engine_rpm),
             vehicleSpeedKph = readSnapshotMetric(snapshot, R.string.metric_vehicle_speed),
             coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp),
-            engineOilTempC = null,
+            engineOilTempC = readSnapshotMetric(snapshot, R.string.metric_engine_oil_temp),
+            engineOilPressureKPa = readSnapshotMetric(snapshot, R.string.metric_engine_oil_pressure),
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
             longTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim_long),
+            fuelPressureKPa = readSnapshotMetric(snapshot, R.string.metric_fuel_pressure),
+            fuelPressurePidUsed = null,
             dtcCount = snapshot.dtcList.size,
             milOn = null
         )
@@ -709,9 +712,12 @@ class MainActivity : AppCompatActivity() {
             vehicleSpeedKph = state.metrics?.vehicleSpeedKph?.toDouble(),
             coolantTempCelsius = state.metrics?.coolantTempCelsius?.toDouble(),
             engineOilTempC = state.metrics?.engineOilTempC?.toDouble(),
+            engineOilPressureKPa = state.metrics?.engineOilPressureKPa,
             batteryVoltage = state.metrics?.batteryVoltageVolts,
             shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
+            fuelPressureKPa = state.metrics?.fuelPressureKPa,
+            fuelPressurePidUsed = state.metrics?.fuelPressurePidUsed,
             dtcCount = dtcCountFinal,
             milOn = state.milOn
         )
@@ -792,9 +798,12 @@ class MainActivity : AppCompatActivity() {
         vehicleSpeedKph: Double?,
         coolantTempCelsius: Double?,
         engineOilTempC: Double?,
+        engineOilPressureKPa: Double?,
         batteryVoltage: Double?,
         shortTermFuelTrimPercent: Double?,
         longTermFuelTrimPercent: Double?,
+        fuelPressureKPa: Double?,
+        fuelPressurePidUsed: Int?,
         dtcCount: Int?,
         milOn: Boolean?
     ) {
@@ -820,14 +829,19 @@ class MainActivity : AppCompatActivity() {
             descriptionView = binding.engineDescription
         )
         updateHealthCard(
-            assessment = HealthRules.evaluateOilTemp(engineOilTempC?.toInt()),
+            assessment = HealthRules.evaluateOilStatus(engineOilTempC, engineOilPressureKPa),
             card = binding.oilCard,
             titleView = binding.oilTitle,
             statusView = binding.oilStatus,
             descriptionView = binding.oilDescription
         )
         updateHealthCard(
-            assessment = HealthRules.evaluateFuelTrims(shortTermFuelTrimPercent, longTermFuelTrimPercent),
+            assessment = HealthRules.evaluateFuelStatus(
+                shortTermFuelTrimPercent,
+                longTermFuelTrimPercent,
+                fuelPressureKPa,
+                fuelPressurePidUsed
+            ),
             card = binding.fuelCard,
             titleView = binding.fuelTitle,
             statusView = binding.fuelStatus,

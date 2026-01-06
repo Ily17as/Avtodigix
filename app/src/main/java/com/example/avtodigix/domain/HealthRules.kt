@@ -95,6 +95,75 @@ object HealthRules {
         return HealthAssessment(HealthCategory.OIL, status, message)
     }
 
+    fun evaluateOilStatus(oilTempC: Double?, oilPressureKPa: Double?): HealthAssessment {
+        if (oilTempC == null && oilPressureKPa == null) {
+            return HealthAssessment(
+                category = HealthCategory.OIL,
+                status = TrafficLightStatus.YELLOW,
+                message = "Нет данных по температуре и давлению масла."
+            )
+        }
+
+        val tempStatus = oilTempC?.let { value ->
+            when {
+                value < HealthThresholds.OIL_TEMP_MIN_YELLOW_C -> TrafficLightStatus.YELLOW
+                value <= HealthThresholds.OIL_TEMP_GREEN_MAX_C -> TrafficLightStatus.GREEN
+                value <= HealthThresholds.OIL_TEMP_YELLOW_MAX_C -> TrafficLightStatus.YELLOW
+                else -> TrafficLightStatus.RED
+            }
+        }
+        val pressureStatus = oilPressureKPa?.let { value ->
+            when {
+                value < 50 -> TrafficLightStatus.RED
+                value < 100 -> TrafficLightStatus.YELLOW
+                else -> TrafficLightStatus.GREEN
+            }
+        }
+
+        val resolvedStatus = listOfNotNull(tempStatus, pressureStatus)
+            .reduce { current, next -> maxStatus(current, next) }
+
+        val messages = buildList {
+            if (oilTempC != null) {
+                val formattedTemp = formatTemperature(oilTempC)
+                val tempMessage = when (tempStatus) {
+                    TrafficLightStatus.GREEN ->
+                        "Температура масла $formattedTemp°C в норме."
+                    TrafficLightStatus.YELLOW ->
+                        "Температура масла $formattedTemp°C требует внимания."
+                    TrafficLightStatus.RED ->
+                        "Температура масла $formattedTemp°C критична."
+                    null -> null
+                }
+                tempMessage?.let { add(it) }
+            } else {
+                add("Температура масла недоступна для оценки.")
+            }
+
+            if (oilPressureKPa != null) {
+                val formattedPressure = formatPressure(oilPressureKPa)
+                val pressureMessage = when (pressureStatus) {
+                    TrafficLightStatus.GREEN ->
+                        "Давление масла $formattedPressure kPa в норме."
+                    TrafficLightStatus.YELLOW ->
+                        "Давление масла $formattedPressure kPa ниже нормы."
+                    TrafficLightStatus.RED ->
+                        "Давление масла $formattedPressure kPa критически низкое."
+                    null -> null
+                }
+                pressureMessage?.let { add(it) }
+            } else {
+                add("Давление масла недоступно для оценки.")
+            }
+        }
+
+        return HealthAssessment(
+            category = HealthCategory.OIL,
+            status = resolvedStatus,
+            message = messages.joinToString(" ")
+        )
+    }
+
     fun evaluateBatteryVoltage(voltage: Double?): HealthAssessment {
         if (voltage == null) {
             return HealthAssessment(
@@ -160,7 +229,7 @@ object HealthRules {
         }
 
         val deviation = listOfNotNull(shortTermPercent, longTermPercent)
-            .any { abs(it) > HealthThresholds.FUEL_TRIM_WARNING_ABS_PERCENT }
+            .any { abs(it) > HealthThresholds.FUEL_TRIM_YELLOW_ABS_PERCENT }
 
         val status = if (deviation) {
             TrafficLightStatus.YELLOW
@@ -181,11 +250,118 @@ object HealthRules {
         return HealthAssessment(HealthCategory.FUEL_TRIMS, status, message)
     }
 
+    fun evaluateFuelStatus(
+        shortTermPercent: Double?,
+        longTermPercent: Double?,
+        fuelPressureKPa: Double?,
+        fuelPressurePidUsed: Int?
+    ): HealthAssessment {
+        if (shortTermPercent == null && longTermPercent == null && fuelPressureKPa == null) {
+            return HealthAssessment(
+                category = HealthCategory.FUEL_TRIMS,
+                status = TrafficLightStatus.YELLOW,
+                message = "Нет данных по коррекциям топлива и давлению топлива."
+            )
+        }
+
+        val trimStatus = when {
+            shortTermPercent == null && longTermPercent == null -> null
+            listOfNotNull(shortTermPercent, longTermPercent)
+                .any { abs(it) > HealthThresholds.FUEL_TRIM_RED_ABS_PERCENT } ->
+                TrafficLightStatus.RED
+            listOfNotNull(shortTermPercent, longTermPercent)
+                .any { abs(it) > HealthThresholds.FUEL_TRIM_YELLOW_ABS_PERCENT } ->
+                TrafficLightStatus.YELLOW
+            else -> TrafficLightStatus.GREEN
+        }
+
+        val pressureMinStatus = fuelPressureKPa?.let { pressure ->
+            when (fuelPressurePidUsed) {
+                0x0A -> when {
+                    pressure < 150 -> TrafficLightStatus.YELLOW
+                    pressure > 700 -> TrafficLightStatus.YELLOW
+                    else -> null
+                }
+                0x22, 0x23 -> when {
+                    pressure < 200 -> TrafficLightStatus.YELLOW
+                    else -> null
+                }
+                else -> null
+            }
+        }
+
+        val status = listOfNotNull(trimStatus, pressureMinStatus)
+            .fold(TrafficLightStatus.GREEN) { current, next -> maxStatus(current, next) }
+
+        val messages = buildList {
+            val shortText = shortTermPercent?.let { "STFT ${formatPercent(it)}%" }
+            val longText = longTermPercent?.let { "LTFT ${formatPercent(it)}%" }
+            val trimsText = listOfNotNull(shortText, longText).joinToString(", ")
+            if (trimsText.isNotBlank()) {
+                val trimMessage = when (trimStatus) {
+                    TrafficLightStatus.GREEN ->
+                        "Топливные коррекции без отклонений: $trimsText."
+                    TrafficLightStatus.YELLOW ->
+                        "Топливные коррекции требуют внимания: $trimsText."
+                    TrafficLightStatus.RED ->
+                        "Топливные коррекции критичны: $trimsText."
+                    null -> null
+                }
+                trimMessage?.let { add(it) }
+            } else {
+                add("Данные по топливным коррекциям недоступны.")
+            }
+
+            if (fuelPressureKPa != null) {
+                val formattedPressure = formatPressure(fuelPressureKPa)
+                val pressureMessage = when (fuelPressurePidUsed) {
+                    0x0A -> when {
+                        fuelPressureKPa < 150 ->
+                            "Давление топлива $formattedPressure kPa ниже нормы (PID 0x0A)."
+                        fuelPressureKPa > 700 ->
+                            "Давление топлива $formattedPressure kPa выше нормы (PID 0x0A)."
+                        else ->
+                            "Давление топлива $formattedPressure kPa в норме (PID 0x0A)."
+                    }
+                    0x22, 0x23 -> when {
+                        fuelPressureKPa < 200 ->
+                            "Давление топлива $formattedPressure kPa ниже нормы (PID 0x${fuelPressurePidUsed.toString(16).uppercase()})."
+                        else ->
+                            "Давление топлива $formattedPressure kPa в норме (PID 0x${fuelPressurePidUsed.toString(16).uppercase()})."
+                    }
+                    else ->
+                        "Давление топлива $formattedPressure kPa."
+                }
+                add(pressureMessage)
+            } else {
+                add("Давление топлива недоступно для оценки.")
+            }
+        }
+
+        return HealthAssessment(
+            category = HealthCategory.FUEL_TRIMS,
+            status = status,
+            message = messages.joinToString(" ")
+        )
+    }
+
     private fun formatVoltage(value: Double): String {
         return String.format("%.2f", value)
     }
 
     private fun formatPercent(value: Double): String {
         return String.format("%.1f", value)
+    }
+
+    private fun formatTemperature(value: Double): String {
+        return String.format("%.0f", value)
+    }
+
+    private fun formatPressure(value: Double): String {
+        return String.format("%.0f", value)
+    }
+
+    private fun maxStatus(current: TrafficLightStatus, next: TrafficLightStatus): TrafficLightStatus {
+        return if (current.ordinal >= next.ordinal) current else next
     }
 }
