@@ -11,11 +11,11 @@ class ObdService(
     private val session: ElmSession,
     private val diagnosticsListener: (ObdDiagnostics) -> Unit = {}
 ) {
-    suspend fun readPidRaw(pid: Int): ObdPidRecord {
+    suspend fun readPidRaw(pid: Int, allowReset: Boolean = true): ObdPidRecord {
         val timestampMillis = System.currentTimeMillis()
         val command = String.format("01 %02X", pid)
         return try {
-            val (response, errorType) = executeWithDiagnosticsAndError(command)
+            val (response, errorType) = executeWithDiagnosticsAndError(command, allowReset)
             val bytes = response.lines
                 .mapNotNull { parseHexBytes(it) }
                 .firstOrNull { it.size >= 3 && it[0] == 0x41 && it[1] == pid }
@@ -64,7 +64,7 @@ class ObdService(
         val results = mutableListOf<ObdPidRecord>()
         sortedPids.forEachIndexed { index, pid ->
             val decodedRecord = try {
-                val record = readPidRaw(pid)
+                val record = readPidRaw(pid, allowReset = false)
                 val decoder = PID_DECODERS[record.pid]
                 if (decoder != null && record.bytes != null) {
                     val decoded = decoder(record.bytes)
@@ -260,10 +260,13 @@ class ObdService(
     }
 
     private suspend fun executeWithDiagnostics(command: String) =
-        executeWithDiagnosticsAndError(command).first
+        executeWithDiagnosticsAndError(command, allowReset = true).first
 
-    private suspend fun executeWithDiagnosticsAndError(command: String): Pair<ElmResponse, ObdErrorType?> = try {
-        val response = session.execute(command)
+    private suspend fun executeWithDiagnosticsAndError(
+        command: String,
+        allowReset: Boolean
+    ): Pair<ElmResponse, ObdErrorType?> = try {
+        val response = session.execute(command, allowReset = allowReset)
         val errorType = classifyResponse(response)
         emitDiagnostics(command, response.raw, errorType)
         response to errorType

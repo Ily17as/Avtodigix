@@ -877,8 +877,7 @@ class ConnectionViewModel(
         }
         val softRecovered = performSoftElmInit(activeSession)
         if (!softRecovered) {
-            runCatching { activeSession.execute("ATZ") }
-            runCatching { activeSession.execute("ATSP0") }
+            runCatching { activeSession.initialize() }
         }
     }
 

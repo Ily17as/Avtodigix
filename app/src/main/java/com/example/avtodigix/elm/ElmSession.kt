@@ -36,13 +36,14 @@ class ElmSession(
     private val queueSizeState = MutableStateFlow(0)
     private val workerJob: Job
     private var lastSentAtMillis = 0L
+    private var includeHeadersOff = false
 
     init {
         workerJob = scope.launch {
             for (next in commandQueue) {
                 if (!isActive) break
                 queueSizeState.value = queueSizeState.value - 1
-                val result = runCatching { sendWithRetry(next.command) }
+                val result = runCatching { sendWithRetry(next.command, next.allowReset) }
                 // Ensure we don't crash if the deferred is already cancelled
                 runCatching { next.deferred.complete(result) }
             }
@@ -52,6 +53,7 @@ class ElmSession(
     val queueSize: StateFlow<Int> = queueSizeState
 
     suspend fun initialize(includeHeadersOff: Boolean = false): List<String> {
+        this.includeHeadersOff = includeHeadersOff
         val responses = mutableListOf<String>()
         val initCommands = buildList {
             add("ATZ")
@@ -70,9 +72,9 @@ class ElmSession(
         return responses
     }
 
-    suspend fun execute(command: String): ElmResponse {
+    suspend fun execute(command: String, allowReset: Boolean = true): ElmResponse {
         val deferred = CompletableDeferred<Result<ElmResponse>>()
-        commandQueue.send(QueuedCommand(command, deferred))
+        commandQueue.send(QueuedCommand(command, allowReset, deferred))
         queueSizeState.value = queueSizeState.value + 1
         return deferred.await().getOrElse { throw it }
     }
@@ -82,7 +84,7 @@ class ElmSession(
         workerJob.cancel()
     }
 
-    private suspend fun sendWithRetry(command: String): ElmResponse {
+    private suspend fun sendWithRetry(command: String, allowReset: Boolean): ElmResponse {
         var attempt = 0
         var lastError: Throwable? = null
         while (attempt <= maxRetries) {
@@ -92,11 +94,13 @@ class ElmSession(
             } catch (error: TimeoutCancellationException) {
                 Log.w("OBD", "timedOut=true command=${command.trim()}")
                 lastError = error
-                resetAdapter()
+                if (allowReset) {
+                    resetAdapter()
+                }
             } catch (error: IOException) {
                 Log.w("OBD", "ioError command=${command.trim()} message=${error.message}")
                 lastError = error
-                if (!command.equals("ATZ", ignoreCase = true)) {
+                if (allowReset && !command.equals("ATZ", ignoreCase = true)) {
                     resetAdapter()
                 }
             }
@@ -105,7 +109,21 @@ class ElmSession(
     }
 
     private suspend fun resetAdapter() {
-        runCatching { sendCommand("ATZ", allowEmpty = true) }
+        val initCommands = buildList {
+            add("ATZ")
+            add("ATE0")
+            add("ATL0")
+            add("ATS0")
+            if (includeHeadersOff) {
+                add("ATH0")
+            }
+            add("ATSP0")
+            add("0100")
+        }
+        initCommands.forEach { command ->
+            val allowEmpty = command.equals("ATZ", ignoreCase = true)
+            runCatching { sendCommand(command, allowEmpty = allowEmpty) }
+        }
     }
 
     private suspend fun sendCommand(
@@ -212,6 +230,7 @@ class ElmSession(
 
     private data class QueuedCommand(
         val command: String,
+        val allowReset: Boolean,
         val deferred: CompletableDeferred<Result<ElmResponse>>
     )
 }
