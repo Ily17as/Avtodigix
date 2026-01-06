@@ -54,6 +54,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.max
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -695,7 +696,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.dtc_no_codes)
         }
-        val dtcCount = (state.storedDtcs + state.pendingDtcs).distinct().size
+        val dtcCountFinal = resolveDtcCountFinal(state)
         renderHealthSummary(
             engineRpm = state.metrics?.engineRpm,
             vehicleSpeedKph = state.metrics?.vehicleSpeedKph?.toDouble(),
@@ -703,7 +704,7 @@ class MainActivity : AppCompatActivity() {
             batteryVoltage = state.metrics?.batteryVoltageVolts,
             shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
-            dtcCount = dtcCount.takeIf { it > 0 },
+            dtcCount = dtcCountFinal,
             milOn = state.milOn
         )
         updateAllDataSections()
@@ -903,16 +904,20 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.metric_fuel_trim) to (metrics?.shortTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_fuel_trim_long) to (metrics?.longTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE)
         )
-        val dtcCount = (latestObdState.storedDtcs + latestObdState.pendingDtcs).distinct().size
-        val milOn = latestObdState.milOn ?: (dtcCount > 0)
+        val dtcCountFinal = resolveDtcCountFinal(latestObdState)
+        val milOn = latestObdState.milOn ?: (dtcCountFinal > 0)
         val milLabel = if (milOn) {
             getString(R.string.all_data_mil_active)
         } else {
             getString(R.string.all_data_mil_inactive)
         }
-        val milStatus = latestObdState.dtcCountReported?.let { reportedCount ->
-            "$milLabel, ECU DTC count=$reportedCount"
-        } ?: milLabel
+        val milStatus = if (dtcCountFinal == 0) {
+            "MIL статус: не активен, ECU DTC count=0"
+        } else {
+            latestObdState.dtcCountReported?.let { reportedCount ->
+                "$milLabel, ECU DTC count=$reportedCount"
+            } ?: milLabel
+        }
         val stored = if (latestObdState.storedDtcs.isNotEmpty()) {
             formatDtcList(latestObdState.storedDtcs)
         } else {
@@ -985,6 +990,13 @@ class MainActivity : AppCompatActivity() {
         }
         ranges.add(formatPidRange(rangeStart, previous))
         return ranges.joinToString(separator = ", ")
+    }
+
+    private fun resolveDtcCountFinal(state: ObdState): Int {
+        val storedPendingCount = (state.storedDtcs + state.pendingDtcs).distinct().size
+        return state.dtcCountReported?.let { reportedCount ->
+            max(reportedCount, storedPendingCount)
+        } ?: storedPendingCount
     }
 
     private fun formatPidRange(start: Int, end: Int): String {
