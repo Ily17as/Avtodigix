@@ -72,23 +72,24 @@ object HealthRules {
             return HealthAssessment(
                 category = HealthCategory.OIL,
                 status = TrafficLightStatus.YELLOW,
-                message = "Температура масла недоступна для оценки."
+                message = "Температура масла недоступна для оценки (PID 01 5C не поддерживаетс)."
             )
         }
 
         val status = when {
-            engineOilTempC > HealthThresholds.COOLING_RED_CELSIUS -> TrafficLightStatus.RED
-            engineOilTempC > HealthThresholds.COOLING_YELLOW_CELSIUS -> TrafficLightStatus.YELLOW
-            else -> TrafficLightStatus.GREEN
+            engineOilTempC < HealthThresholds.OIL_TEMP_MIN_YELLOW_C -> TrafficLightStatus.YELLOW
+            engineOilTempC <= HealthThresholds.OIL_TEMP_GREEN_MAX_C -> TrafficLightStatus.GREEN
+            engineOilTempC <= HealthThresholds.OIL_TEMP_YELLOW_MAX_C -> TrafficLightStatus.YELLOW
+            else -> TrafficLightStatus.RED
         }
 
         val message = when (status) {
             TrafficLightStatus.GREEN ->
                 "Температура масла ${engineOilTempC}°C в норме."
             TrafficLightStatus.YELLOW ->
-                "Температура масла ${engineOilTempC}°C выше нормы, проверьте уровень и систему смазки."
+                "Температура масла ${engineOilTempC}°C требует внимания."
             TrafficLightStatus.RED ->
-                "Температура масла ${engineOilTempC}°C критическая, остановитесь и дайте двигателю остыть."
+                "Температура масла ${engineOilTempC}°C критична."
         }
 
         return HealthAssessment(HealthCategory.OIL, status, message)

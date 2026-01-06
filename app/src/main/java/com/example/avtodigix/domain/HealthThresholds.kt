@@ -11,4 +11,8 @@ object HealthThresholds {
     const val DTC_RED_COUNT = 3
 
     const val FUEL_TRIM_WARNING_ABS_PERCENT = 10.0
+
+    const val OIL_TEMP_MIN_YELLOW_C = 0
+    const val OIL_TEMP_GREEN_MAX_C = 125
+    const val OIL_TEMP_YELLOW_MAX_C = 135
 }
