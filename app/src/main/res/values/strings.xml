@@ -99,6 +99,7 @@
     <string name="metric_vehicle_speed_value">0 км/ч</string>
     <string name="metric_engine_temp">Температура двигателя</string>
     <string name="metric_engine_temp_value">92°C · норма</string>
+    <string name="metric_engine_oil_temp">Температура масла двигателя</string>
     <string name="metric_engine_load">Нагрузка двигателя</string>
     <string name="metric_battery_voltage">Напряжение аккумулятора</string>
     <string name="metric_adapter_voltage">Напряжение питания адаптера</string>

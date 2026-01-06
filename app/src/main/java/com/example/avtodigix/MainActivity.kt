@@ -1058,6 +1058,7 @@ class MainActivity : AppCompatActivity() {
             0x0C -> getString(R.string.metric_engine_rpm)
             0x0D -> getString(R.string.metric_vehicle_speed)
             0x05 -> getString(R.string.metric_engine_temp)
+            0x5C -> getString(R.string.metric_engine_oil_temp)
             0x04 -> getString(R.string.metric_engine_load)
             0x06 -> getString(R.string.metric_fuel_trim)
             0x07 -> getString(R.string.metric_fuel_trim_long)

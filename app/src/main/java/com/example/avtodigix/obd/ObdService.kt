@@ -394,7 +394,7 @@ val DEFAULT_LIVE_METRICS = listOf(
     LiveMetricDefinition(0x0C, "Обороты двигателя"),
     LiveMetricDefinition(0x0D, "Скорость автомобиля"),
     LiveMetricDefinition(0x05, "Температура охлаждающей жидкости"),
-    LiveMetricDefinition(0x5C, "Температура масла"),
+    LiveMetricDefinition(0x5C, "Температура масла двигателя"),
     LiveMetricDefinition(0x0F, "Температура впуска"),
     LiveMetricDefinition(0x04, "Нагрузка двигателя"),
     LiveMetricDefinition(0x06, "Краткосрочная коррекция топлива"),
