@@ -63,16 +63,40 @@ class ObdService(
         val total = sortedPids.size
         val results = mutableListOf<ObdPidRecord>()
         sortedPids.forEachIndexed { index, pid ->
-            val record = readPidRaw(pid)
-            val decoder = PID_DECODERS[record.pid]
-            val decodedRecord = if (decoder != null && record.bytes != null) {
-                val decoded = decoder(record.bytes)
-                record.copy(
-                    decodedValue = decoded.value,
-                    unit = decoded.unit
+            val decodedRecord = try {
+                val record = readPidRaw(pid)
+                val decoder = PID_DECODERS[record.pid]
+                if (decoder != null && record.bytes != null) {
+                    val decoded = decoder(record.bytes)
+                    record.copy(
+                        decodedValue = decoded.value,
+                        unit = decoded.unit
+                    )
+                } else {
+                    record
+                }
+            } catch (error: TimeoutCancellationException) {
+                ObdPidRecord(
+                    mode = 0x01,
+                    pid = pid,
+                    timestampMillis = System.currentTimeMillis(),
+                    raw = null,
+                    bytes = null,
+                    decodedValue = null,
+                    unit = null,
+                    errorType = ObdErrorType.TIMEOUT
                 )
-            } else {
-                record
+            } catch (error: IOException) {
+                ObdPidRecord(
+                    mode = 0x01,
+                    pid = pid,
+                    timestampMillis = System.currentTimeMillis(),
+                    raw = null,
+                    bytes = null,
+                    decodedValue = null,
+                    unit = null,
+                    errorType = classifyIoError(error)
+                )
             }
             results.add(decodedRecord)
             onProgress?.invoke(index + 1, total)
@@ -245,9 +269,12 @@ class ObdService(
         return when {
             error is SocketTimeoutException -> ObdErrorType.TIMEOUT
             message.contains("TIMED OUT") -> ObdErrorType.TIMEOUT
+            message.contains("TIMEOUT") -> ObdErrorType.TIMEOUT
             message.contains("CLOSED") -> ObdErrorType.SOCKET_CLOSED
             else -> ObdErrorType.IO
         }
+    }
+
     private fun emitDiagnostics(command: String, rawResponse: String?, errorType: ObdErrorType?) {
         val diagnostics = ObdDiagnostics(
             command = command.trim(),
