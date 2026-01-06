@@ -67,6 +67,33 @@ object HealthRules {
         return HealthAssessment(HealthCategory.COOLING, status, message)
     }
 
+    fun evaluateOilTemp(engineOilTempC: Int?): HealthAssessment {
+        if (engineOilTempC == null) {
+            return HealthAssessment(
+                category = HealthCategory.OIL,
+                status = TrafficLightStatus.YELLOW,
+                message = "Температура масла недоступна для оценки."
+            )
+        }
+
+        val status = when {
+            engineOilTempC > HealthThresholds.COOLING_RED_CELSIUS -> TrafficLightStatus.RED
+            engineOilTempC > HealthThresholds.COOLING_YELLOW_CELSIUS -> TrafficLightStatus.YELLOW
+            else -> TrafficLightStatus.GREEN
+        }
+
+        val message = when (status) {
+            TrafficLightStatus.GREEN ->
+                "Температура масла ${engineOilTempC}°C в норме."
+            TrafficLightStatus.YELLOW ->
+                "Температура масла ${engineOilTempC}°C выше нормы, проверьте уровень и систему смазки."
+            TrafficLightStatus.RED ->
+                "Температура масла ${engineOilTempC}°C критическая, остановитесь и дайте двигателю остыть."
+        }
+
+        return HealthAssessment(HealthCategory.OIL, status, message)
+    }
+
     fun evaluateBatteryVoltage(voltage: Double?): HealthAssessment {
         if (voltage == null) {
             return HealthAssessment(

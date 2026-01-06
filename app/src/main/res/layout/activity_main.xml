@@ -625,7 +625,7 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/coolingCard"
+                    android:id="@+id/oilCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
@@ -640,28 +640,28 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/coolingTitle"
+                            android:id="@+id/oilTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/cooling_title"
+                            android:text="@string/oil_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                             android:textColor="@android:color/black" />
 
                         <TextView
-                            android:id="@+id/coolingStatus"
+                            android:id="@+id/oilStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/cooling_status"
+                            android:text="@string/oil_status"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/black" />
 
                         <TextView
-                            android:id="@+id/coolingDescription"
+                            android:id="@+id/oilDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/cooling_description"
+                            android:text="@string/oil_description"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                             android:textColor="@android:color/black" />
                     </LinearLayout>

@@ -332,6 +332,7 @@ class MainActivity : AppCompatActivity() {
             engineRpm = readSnapshotMetric(snapshot, R.string.metric_engine_rpm),
             vehicleSpeedKph = readSnapshotMetric(snapshot, R.string.metric_vehicle_speed),
             coolantTempCelsius = readSnapshotMetric(snapshot, R.string.metric_engine_temp),
+            engineOilTempC = null,
             batteryVoltage = readSnapshotMetric(snapshot, R.string.metric_battery_voltage),
             shortTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim),
             longTermFuelTrimPercent = readSnapshotMetric(snapshot, R.string.metric_fuel_trim_long),
@@ -701,6 +702,7 @@ class MainActivity : AppCompatActivity() {
             engineRpm = state.metrics?.engineRpm,
             vehicleSpeedKph = state.metrics?.vehicleSpeedKph?.toDouble(),
             coolantTempCelsius = state.metrics?.coolantTempCelsius?.toDouble(),
+            engineOilTempC = state.metrics?.engineOilTempC?.toDouble(),
             batteryVoltage = state.metrics?.batteryVoltageVolts,
             shortTermFuelTrimPercent = state.metrics?.shortTermFuelTrimPercent,
             longTermFuelTrimPercent = state.metrics?.longTermFuelTrimPercent,
@@ -783,6 +785,7 @@ class MainActivity : AppCompatActivity() {
         engineRpm: Double?,
         vehicleSpeedKph: Double?,
         coolantTempCelsius: Double?,
+        engineOilTempC: Double?,
         batteryVoltage: Double?,
         shortTermFuelTrimPercent: Double?,
         longTermFuelTrimPercent: Double?,
@@ -811,11 +814,11 @@ class MainActivity : AppCompatActivity() {
             descriptionView = binding.engineDescription
         )
         updateHealthCard(
-            assessment = HealthRules.evaluateCooling(coolantTempCelsius?.toInt()),
-            card = binding.coolingCard,
-            titleView = binding.coolingTitle,
-            statusView = binding.coolingStatus,
-            descriptionView = binding.coolingDescription
+            assessment = HealthRules.evaluateOilTemp(engineOilTempC?.toInt()),
+            card = binding.oilCard,
+            titleView = binding.oilTitle,
+            statusView = binding.oilStatus,
+            descriptionView = binding.oilDescription
         )
         updateHealthCard(
             assessment = HealthRules.evaluateFuelTrims(shortTermFuelTrimPercent, longTermFuelTrimPercent),
