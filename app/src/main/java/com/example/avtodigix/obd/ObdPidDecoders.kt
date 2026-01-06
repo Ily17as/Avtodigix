@@ -59,6 +59,13 @@ val PID_DECODERS: Map<Int, ObdPidDecoder> = mapOf(
             unit = if (pressure != null) "kPa" else null
         )
     },
+    0x22 to { bytes ->
+        val pressure = if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) * 0.079 else null
+        DecodedValue(
+            value = pressure?.let { formatNumber(it) } ?: "n/a",
+            unit = if (pressure != null) "kPa" else null
+        )
+    },
     0x0F to { bytes ->
         val temp = bytes.getOrNull(2)?.minus(40)
         DecodedValue(
@@ -67,7 +74,7 @@ val PID_DECODERS: Map<Int, ObdPidDecoder> = mapOf(
         )
     },
     0x23 to { bytes ->
-        val pressure = if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 10.0 else null
+        val pressure = if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) * 10.0 else null
         DecodedValue(
             value = pressure?.let { formatNumber(it) } ?: "n/a",
             unit = if (pressure != null) "kPa" else null
