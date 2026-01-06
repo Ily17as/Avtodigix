@@ -139,7 +139,7 @@ class ObdService(
             if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 1000.0 else null
         }
         val engineOilTempBytes = readPidIfSupported(0x5C, supportedPids)
-        val engineOilPressureBytes = readPidIfSupported(0x5D, supportedPids)
+        val engineOilPressureData = readOilPressureIfAvailable(supportedPids)
         val fuelPressureData = readFuelPressure(supportedPids)
         val (batteryVoltageVolts, batteryVoltageSource) = if (pid42Voltage != null) {
             pid42Voltage to BatteryVoltageSource.PID42
@@ -161,9 +161,7 @@ class ObdService(
             vehicleSpeedKph = readPidIfSupported(0x0D, supportedPids)?.getOrNull(2),
             coolantTempCelsius = readPidIfSupported(0x05, supportedPids)?.getOrNull(2)?.minus(40),
             engineOilTempC = engineOilTempBytes?.getOrNull(2)?.minus(40),
-            engineOilPressureKPa = engineOilPressureBytes?.getOrNull(2)?.let { value ->
-                value * 4.0
-            },
+            engineOilPressureKPa = engineOilPressureData?.pressureKPa,
             intakeTempCelsius = readPidIfSupported(0x0F, supportedPids)?.getOrNull(2)?.minus(40),
             engineLoadPercent = readPidIfSupported(0x04, supportedPids)?.getOrNull(2)?.let { value ->
                 value * 100.0 / 255.0
@@ -248,17 +246,42 @@ class ObdService(
         return readPid(pid)
     }
 
+    private suspend fun readOilPressureIfAvailable(
+        supportedPids: Set<Int>?
+    ): OilPressureReading? {
+        val bytes = readPidIfSupported(0x5D, supportedPids) ?: return null
+        val pressure = bytes.getOrNull(2)?.let { value -> value * 4.0 } ?: return null
+        Log.d(
+            "OBD",
+            "Oil pressure pid=0x5D raw=${formatHexBytes(bytes)} kPa=$pressure"
+        )
+        return OilPressureReading(
+            pressureKPa = pressure,
+            pidUsed = 0x5D,
+            rawBytes = bytes
+        )
+    }
+
     private suspend fun readFuelPressure(supportedPids: Set<Int>?): FuelPressureReading? {
-        val candidates = listOf(0x0A, 0x23)
+        val candidates = listOf(0x23, 0x22, 0x0A)
         for (pid in candidates) {
             val bytes = readPidIfSupported(pid, supportedPids) ?: continue
             val pressure = when (pid) {
                 0x0A -> bytes.getOrNull(2)?.let { value -> value * 3.0 }
+                0x22,
                 0x23 -> if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 10.0 else null
                 else -> null
             }
             if (pressure != null) {
-                return FuelPressureReading(pressureKPa = pressure, pidUsed = pid)
+                Log.d(
+                    "OBD",
+                    "Fuel pressure pid=${String.format(\"0x%02X\", pid)} raw=${formatHexBytes(bytes)} kPa=$pressure"
+                )
+                return FuelPressureReading(
+                    pressureKPa = pressure,
+                    pidUsed = pid,
+                    rawBytes = bytes
+                )
             }
         }
         return null
@@ -413,7 +436,14 @@ data class LiveMetricDefinition(
 
 private data class FuelPressureReading(
     val pressureKPa: Double,
-    val pidUsed: Int
+    val pidUsed: Int,
+    val rawBytes: List<Int>
+)
+
+private data class OilPressureReading(
+    val pressureKPa: Double,
+    val pidUsed: Int,
+    val rawBytes: List<Int>
 )
 
 data class MilReadiness(
