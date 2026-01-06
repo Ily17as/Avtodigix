@@ -100,10 +100,12 @@
     <string name="metric_engine_temp">Температура двигателя</string>
     <string name="metric_engine_temp_value">92°C · норма</string>
     <string name="metric_engine_oil_temp">Температура масла двигателя</string>
+    <string name="metric_engine_oil_pressure">Давление масла двигателя</string>
     <string name="metric_engine_load">Нагрузка двигателя</string>
     <string name="metric_battery_voltage">Напряжение аккумулятора</string>
     <string name="metric_adapter_voltage">Напряжение питания адаптера</string>
     <string name="metric_battery_voltage_value">12,1 В · низкое</string>
+    <string name="metric_fuel_pressure">Давление топлива</string>
     <string name="metric_fuel_trim">Краткосрочная топливная коррекция</string>
     <string name="metric_fuel_trim_value">+8% · норма</string>
     <string name="metric_fuel_trim_long">Долгосрочная топливная коррекция</string>
