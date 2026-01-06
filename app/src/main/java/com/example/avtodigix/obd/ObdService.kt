@@ -138,6 +138,9 @@ class ObdService(
         val pid42Voltage = pid42Bytes?.let { bytes ->
             if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 1000.0 else null
         }
+        val engineOilTempBytes = readPidIfSupported(0x5C, supportedPids)
+        val engineOilPressureBytes = readPidIfSupported(0x5D, supportedPids)
+        val fuelPressureData = readFuelPressure(supportedPids)
         val (batteryVoltageVolts, batteryVoltageSource) = if (pid42Voltage != null) {
             pid42Voltage to BatteryVoltageSource.PID42
         } else {
@@ -157,7 +160,10 @@ class ObdService(
             },
             vehicleSpeedKph = readPidIfSupported(0x0D, supportedPids)?.getOrNull(2),
             coolantTempCelsius = readPidIfSupported(0x05, supportedPids)?.getOrNull(2)?.minus(40),
-            engineOilTempC = readPidIfSupported(0x5C, supportedPids)?.getOrNull(2)?.minus(40),
+            engineOilTempC = engineOilTempBytes?.getOrNull(2)?.minus(40),
+            engineOilPressureKPa = engineOilPressureBytes?.getOrNull(2)?.let { value ->
+                value * 4.0
+            },
             intakeTempCelsius = readPidIfSupported(0x0F, supportedPids)?.getOrNull(2)?.minus(40),
             engineLoadPercent = readPidIfSupported(0x04, supportedPids)?.getOrNull(2)?.let { value ->
                 value * 100.0 / 255.0
@@ -168,6 +174,8 @@ class ObdService(
             longTermFuelTrimPercent = readPidIfSupported(0x07, supportedPids)?.getOrNull(2)?.let { value ->
                 (value - 128) * 100.0 / 128.0
             },
+            fuelPressureKPa = fuelPressureData?.pressureKPa,
+            fuelPressurePidUsed = fuelPressureData?.pidUsed,
             batteryVoltageVolts = batteryVoltageVolts,
             batteryVoltageSource = batteryVoltageSource
         )
@@ -238,6 +246,22 @@ class ObdService(
             return null
         }
         return readPid(pid)
+    }
+
+    private suspend fun readFuelPressure(supportedPids: Set<Int>?): FuelPressureReading? {
+        val candidates = listOf(0x0A, 0x23)
+        for (pid in candidates) {
+            val bytes = readPidIfSupported(pid, supportedPids) ?: continue
+            val pressure = when (pid) {
+                0x0A -> bytes.getOrNull(2)?.let { value -> value * 3.0 }
+                0x23 -> if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 10.0 else null
+                else -> null
+            }
+            if (pressure != null) {
+                return FuelPressureReading(pressureKPa = pressure, pidUsed = pid)
+            }
+        }
+        return null
     }
 
     private suspend fun readDtcs(command: String, modeByte: Int): List<String> {
@@ -366,10 +390,13 @@ data class LivePidSnapshot(
     val vehicleSpeedKph: Int?,
     val coolantTempCelsius: Int?,
     val engineOilTempC: Int?,
+    val engineOilPressureKPa: Double?,
     val intakeTempCelsius: Int?,
     val engineLoadPercent: Double?,
     val shortTermFuelTrimPercent: Double?,
     val longTermFuelTrimPercent: Double?,
+    val fuelPressureKPa: Double?,
+    val fuelPressurePidUsed: Int?,
     val batteryVoltageVolts: Double?,
     val batteryVoltageSource: BatteryVoltageSource?
 )
@@ -384,6 +411,11 @@ data class LiveMetricDefinition(
     val name: String
 )
 
+private data class FuelPressureReading(
+    val pressureKPa: Double,
+    val pidUsed: Int
+)
+
 data class MilReadiness(
     val milOn: Boolean,
     val dtcCountReported: Int,
@@ -395,8 +427,10 @@ val DEFAULT_LIVE_METRICS = listOf(
     LiveMetricDefinition(0x0D, "Скорость автомобиля"),
     LiveMetricDefinition(0x05, "Температура охлаждающей жидкости"),
     LiveMetricDefinition(0x5C, "Температура масла двигателя"),
+    LiveMetricDefinition(0x5D, "Давление масла двигателя"),
     LiveMetricDefinition(0x0F, "Температура впуска"),
     LiveMetricDefinition(0x04, "Нагрузка двигателя"),
+    LiveMetricDefinition(0x0A, "Давление топлива"),
     LiveMetricDefinition(0x06, "Краткосрочная коррекция топлива"),
     LiveMetricDefinition(0x07, "Долгосрочная коррекция топлива"),
     LiveMetricDefinition(0x42, "Напряжение модуля управления")

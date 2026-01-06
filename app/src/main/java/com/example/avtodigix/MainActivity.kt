@@ -296,8 +296,14 @@ class MainActivity : AppCompatActivity() {
             metrics.coolantTempCelsius?.let { value ->
                 put(getString(R.string.metric_engine_temp), value.toDouble())
             }
+            metrics.engineOilPressureKPa?.let { value ->
+                put(getString(R.string.metric_engine_oil_pressure), value)
+            }
             metrics.batteryVoltageVolts?.let { value ->
                 put(getString(R.string.metric_battery_voltage), value)
+            }
+            metrics.fuelPressureKPa?.let { value ->
+                put(getString(R.string.metric_fuel_pressure), value)
             }
             metrics.shortTermFuelTrimPercent?.let { value ->
                 put(getString(R.string.metric_fuel_trim), value)
@@ -903,7 +909,10 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.metric_engine_rpm) to (metrics?.engineRpm?.toInt()?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_vehicle_speed) to (metrics?.vehicleSpeedKph?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_engine_temp) to (metrics?.coolantTempCelsius?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_engine_oil_pressure) to
+                (metrics?.engineOilPressureKPa?.toString() ?: PLACEHOLDER_VALUE),
             batteryLabel to (metrics?.batteryVoltageVolts?.toString() ?: PLACEHOLDER_VALUE),
+            getString(R.string.metric_fuel_pressure) to (metrics?.fuelPressureKPa?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_fuel_trim) to (metrics?.shortTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_fuel_trim_long) to (metrics?.longTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE)
         )
@@ -1059,10 +1068,13 @@ class MainActivity : AppCompatActivity() {
             0x0D -> getString(R.string.metric_vehicle_speed)
             0x05 -> getString(R.string.metric_engine_temp)
             0x5C -> getString(R.string.metric_engine_oil_temp)
+            0x5D -> getString(R.string.metric_engine_oil_pressure)
             0x04 -> getString(R.string.metric_engine_load)
+            0x0A -> getString(R.string.metric_fuel_pressure)
             0x06 -> getString(R.string.metric_fuel_trim)
             0x07 -> getString(R.string.metric_fuel_trim_long)
             0x0F -> getString(R.string.metric_intake_temp)
+            0x23 -> getString(R.string.metric_fuel_pressure)
             0x42 -> getString(R.string.metric_battery_voltage)
             else -> null
         }
