@@ -42,6 +42,7 @@ import com.example.avtodigix.storage.ScanSnapshotRepository
 import com.example.avtodigix.storage.WifiResponseFormat
 import com.example.avtodigix.storage.WifiScanSnapshot
 import com.example.avtodigix.storage.WifiScanSnapshotRepository
+import com.example.avtodigix.obd.BatteryVoltageSource
 import com.example.avtodigix.obd.ObdErrorType
 import com.example.avtodigix.obd.ObdPidRecord
 import com.example.avtodigix.ui.AllDataAdapter
@@ -314,12 +315,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applySnapshotToUi(snapshot: ScanSnapshot) {
-        updateMetricValue(binding.metricEngineRpm, binding.metricEngineRpmValue, snapshot)
-        updateMetricValue(binding.metricVehicleSpeed, binding.metricVehicleSpeedValue, snapshot)
-        updateMetricValue(binding.metricEngineTemp, binding.metricEngineTempValue, snapshot)
-        updateMetricValue(binding.metricBatteryVoltage, binding.metricBatteryVoltageValue, snapshot)
-        updateMetricValue(binding.metricFuelTrim, binding.metricFuelTrimValue, snapshot)
-        updateMetricValue(binding.metricFuelTrimLong, binding.metricFuelTrimLongValue, snapshot)
+        updateBatteryVoltageLabels(null)
+        updateMetricValue(R.string.metric_engine_rpm, binding.metricEngineRpmValue, snapshot)
+        updateMetricValue(R.string.metric_vehicle_speed, binding.metricVehicleSpeedValue, snapshot)
+        updateMetricValue(R.string.metric_engine_temp, binding.metricEngineTempValue, snapshot)
+        updateMetricValue(R.string.metric_battery_voltage, binding.metricBatteryVoltageValue, snapshot)
+        updateMetricValue(R.string.metric_fuel_trim, binding.metricFuelTrimValue, snapshot)
+        updateMetricValue(R.string.metric_fuel_trim_long, binding.metricFuelTrimLongValue, snapshot)
 
         if (snapshot.dtcList.isNotEmpty()) {
             binding.dtcStoredDetail.text = formatDtcList(snapshot.dtcList)
@@ -338,11 +340,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateMetricValue(
-        labelView: TextView,
+        labelRes: Int,
         valueView: TextView,
         snapshot: ScanSnapshot
     ) {
-        val key = labelView.text.toString()
+        val key = getString(labelRes)
         val value = snapshot.keyMetrics[key] ?: return
         val current = valueView.text.toString()
         val updated = NUMBER_REGEX.replaceFirst(current, value.toString())
@@ -662,6 +664,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderObdState(state: ObdState) {
         latestObdState = state
+        updateBatteryVoltageLabels(state.metrics?.batteryVoltageSource)
         val liveErrorLabel = liveDataErrorLabel(state.liveDataErrorType)
         updateLiveMetrics(state.metrics, liveErrorLabel)
         renderDiagnostics(state)
@@ -891,11 +894,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateAllDataSections() {
         val metrics = latestObdState.metrics
+        val batteryLabel = batteryVoltageLabel(metrics?.batteryVoltageSource)
         val metricsList = listOf(
             getString(R.string.metric_engine_rpm) to (metrics?.engineRpm?.toInt()?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_vehicle_speed) to (metrics?.vehicleSpeedKph?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_engine_temp) to (metrics?.coolantTempCelsius?.toString() ?: PLACEHOLDER_VALUE),
-            getString(R.string.metric_battery_voltage) to (metrics?.batteryVoltageVolts?.toString() ?: PLACEHOLDER_VALUE),
+            batteryLabel to (metrics?.batteryVoltageVolts?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_fuel_trim) to (metrics?.shortTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE),
             getString(R.string.metric_fuel_trim_long) to (metrics?.longTermFuelTrimPercent?.toString() ?: PLACEHOLDER_VALUE)
         )
@@ -987,6 +991,20 @@ class MainActivity : AppCompatActivity() {
         val startHex = String.format("%02X", start)
         val endHex = String.format("%02X", end)
         return if (start == end) startHex else "$startHex-$endHex"
+    }
+
+    private fun updateBatteryVoltageLabels(source: BatteryVoltageSource?) {
+        val label = batteryVoltageLabel(source)
+        binding.metricBatteryVoltage.text = label
+        binding.batteryTitle.text = label
+    }
+
+    private fun batteryVoltageLabel(source: BatteryVoltageSource?): String {
+        return if (source == BatteryVoltageSource.ATRV) {
+            getString(R.string.metric_adapter_voltage)
+        } else {
+            getString(R.string.metric_battery_voltage)
+        }
     }
 
     private fun buildFullScanEntries(records: List<ObdPidRecord>): List<FullScanEntry> {
