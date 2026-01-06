@@ -134,6 +134,23 @@ class ObdService(
     }
 
     suspend fun readLiveData(supportedPids: Set<Int>? = null): LivePidSnapshot {
+        val pid42Bytes = readPidIfSupported(0x42, supportedPids)
+        val pid42Voltage = pid42Bytes?.let { bytes ->
+            if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 1000.0 else null
+        }
+        val (batteryVoltageVolts, batteryVoltageSource) = if (pid42Voltage != null) {
+            pid42Voltage to BatteryVoltageSource.PID42
+        } else {
+            val adapterVoltage = readAdapterVoltageVolts()
+            if (adapterVoltage != null) {
+                adapterVoltage to BatteryVoltageSource.ATRV
+            } else {
+                null to null
+            }
+        }
+        if (batteryVoltageVolts != null && batteryVoltageSource != null) {
+            Log.d("OBD", "Battery source=${batteryVoltageSource.name} value=$batteryVoltageVolts")
+        }
         return LivePidSnapshot(
             engineRpm = readPidIfSupported(0x0C, supportedPids)?.let { bytes ->
                 if (bytes.size >= 4) ((bytes[2] * 256) + bytes[3]) / 4.0 else null
@@ -150,9 +167,8 @@ class ObdService(
             longTermFuelTrimPercent = readPidIfSupported(0x07, supportedPids)?.getOrNull(2)?.let { value ->
                 (value - 128) * 100.0 / 128.0
             },
-            batteryVoltageVolts = readPidIfSupported(0x42, supportedPids)?.let { bytes ->
-                if (bytes.size >= 4) (bytes[2] * 256 + bytes[3]) / 1000.0 else null
-            }
+            batteryVoltageVolts = batteryVoltageVolts,
+            batteryVoltageSource = batteryVoltageSource
         )
     }
 
@@ -207,6 +223,13 @@ class ObdService(
         return response.lines
             .mapNotNull { parseHexBytes(it) }
             .firstOrNull { it.size >= 3 && it[0] == 0x41 && it[1] == pid }
+    }
+
+    private suspend fun readAdapterVoltageVolts(): Double? {
+        val response = executeWithDiagnostics("ATRV")
+        val raw = response.raw ?: return null
+        val match = VOLTAGE_REGEX.find(raw) ?: return null
+        return match.value.toDoubleOrNull()
     }
 
     private suspend fun readPidIfSupported(pid: Int, supportedPids: Set<Int>?): List<Int>? {
@@ -330,6 +353,7 @@ class ObdService(
 
     private companion object {
         val HEX_PAIR_REGEX = Regex("[0-9A-Fa-f]{2}")
+        val VOLTAGE_REGEX = Regex("(\\d+(?:\\.\\d+)?)")
     }
 }
 
@@ -341,8 +365,14 @@ data class LivePidSnapshot(
     val engineLoadPercent: Double?,
     val shortTermFuelTrimPercent: Double?,
     val longTermFuelTrimPercent: Double?,
-    val batteryVoltageVolts: Double?
+    val batteryVoltageVolts: Double?,
+    val batteryVoltageSource: BatteryVoltageSource?
 )
+
+enum class BatteryVoltageSource {
+    PID42,
+    ATRV
+}
 
 data class LiveMetricDefinition(
     val pid: Int,
