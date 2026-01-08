@@ -632,6 +632,16 @@
                     android:text="@string/summary_subtitle"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
+                <TextView
+                    android:id="@+id/offlineBanner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/offline_banner"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/warning_text"
+                    android:visibility="gone" />
+
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/engineCard"
                     android:layout_width="match_parent"
@@ -929,6 +939,16 @@
                     android:layout_marginTop="12dp"
                     android:text="@string/all_data_subtitle"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                <TextView
+                    android:id="@+id/offlineBannerAllData"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/offline_banner"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/warning_text"
+                    android:visibility="gone" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/allDataList"
