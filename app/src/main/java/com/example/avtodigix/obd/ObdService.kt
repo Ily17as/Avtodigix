@@ -275,7 +275,7 @@ class ObdService(
             if (pressure != null) {
                 Log.d(
                     "OBD",
-                    "Fuel pressure pid=${String.format(\"0x%02X\", pid)} raw=${formatHexBytes(bytes)} kPa=$pressure"
+                    "Fuel pressure pid=${String.format("0x%02X", pid)} raw=${formatHexBytes(bytes)} kPa=$pressure"
                 )
                 return FuelPressureReading(
                     pressureKPa = pressure,
