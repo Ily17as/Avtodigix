@@ -1031,6 +1031,59 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateAllDataSections() {
+        val snapshot = latestSnapshot
+        if (latestConnectionState.status != ConnectionState.Status.Connected && snapshot != null) {
+            fun snapshotMetricValue(labelRes: Int): String {
+                val label = getString(labelRes)
+                return snapshot.keyMetrics[label]?.toString() ?: PLACEHOLDER_VALUE
+            }
+
+            val metricsList = listOf(
+                getString(R.string.metric_engine_rpm) to snapshotMetricValue(R.string.metric_engine_rpm),
+                getString(R.string.metric_vehicle_speed) to snapshotMetricValue(R.string.metric_vehicle_speed),
+                getString(R.string.metric_engine_temp) to snapshotMetricValue(R.string.metric_engine_temp),
+                getString(R.string.metric_engine_oil_pressure) to snapshotMetricValue(
+                    R.string.metric_engine_oil_pressure
+                ),
+                getString(R.string.metric_battery_voltage) to snapshotMetricValue(
+                    R.string.metric_battery_voltage
+                ),
+                getString(R.string.metric_fuel_pressure) to snapshotMetricValue(
+                    R.string.metric_fuel_pressure
+                ),
+                getString(R.string.metric_fuel_trim) to snapshotMetricValue(R.string.metric_fuel_trim),
+                getString(R.string.metric_fuel_trim_long) to snapshotMetricValue(
+                    R.string.metric_fuel_trim_long
+                )
+            )
+            val dtcCount = snapshot.dtcList.size
+            val milLabel = if (dtcCount > 0) {
+                getString(R.string.all_data_mil_active)
+            } else {
+                getString(R.string.all_data_mil_inactive)
+            }
+            val milStatus = if (dtcCount == 0) {
+                "MIL статус: не активен, ECU DTC count=0"
+            } else {
+                "$milLabel, ECU DTC count=$dtcCount"
+            }
+            val stored = if (snapshot.dtcList.isNotEmpty()) {
+                formatDtcList(snapshot.dtcList)
+            } else {
+                getString(R.string.dtc_no_codes)
+            }
+            val pending = getString(R.string.dtc_no_codes)
+            val rawLogText = "Доступно после подключения"
+            allDataAdapter.submitList(
+                listOf(
+                    AllDataSection.LiveMetrics(metricsList, milStatus),
+                    AllDataSection.Dtc(stored, pending),
+                    AllDataSection.RawLog(rawLogText)
+                )
+            )
+            return
+        }
+
         val metrics = latestObdState.metrics
         val batteryLabel = batteryVoltageLabel(metrics?.batteryVoltageSource)
         val oilPressureLabel = getString(R.string.all_data_oil_pressure_label)
