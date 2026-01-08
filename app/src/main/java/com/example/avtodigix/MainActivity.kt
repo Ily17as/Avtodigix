@@ -59,6 +59,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
+import java.text.DateFormat
+import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -396,6 +398,15 @@ class MainActivity : AppCompatActivity() {
         binding.connectionViewLastSnapshot.isVisible = latestSnapshot != null
     }
 
+    private fun formatSnapshotTimestamp(timestampMillis: Long): String {
+        val formatter = DateFormat.getDateTimeInstance(
+            DateFormat.MEDIUM,
+            DateFormat.SHORT,
+            Locale.getDefault()
+        )
+        return formatter.format(Date(timestampMillis))
+    }
+
     private fun updateMetricValue(
         labelRes: Int,
         valueView: TextView,
@@ -495,7 +506,18 @@ class MainActivity : AppCompatActivity() {
         val canViewOffline = latestSnapshot != null
         binding.connectionViewLastSnapshot.isVisible = canViewOffline
         binding.summaryDetails.isVisible = isConnected || canViewOffline
-        binding.summaryDetailsHint.isVisible = !isConnected && !canViewOffline
+        binding.summaryDetailsHint.isVisible = !(isConnected || canViewOffline)
+        val snapshot = latestSnapshot
+        val showOfflineBanner = !isConnected && snapshot != null
+        val offlineBannerText = snapshot?.let {
+            getString(R.string.offline_banner, formatSnapshotTimestamp(it.timestampMillis))
+        }
+        binding.offlineBanner.isVisible = showOfflineBanner
+        binding.offlineBannerAllData.isVisible = showOfflineBanner
+        if (offlineBannerText != null) {
+            binding.offlineBanner.text = offlineBannerText
+            binding.offlineBannerAllData.text = offlineBannerText
+        }
 
         renderWifiDevices(state)
         renderWifiDetectionState(state)
