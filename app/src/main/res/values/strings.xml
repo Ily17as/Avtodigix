@@ -14,6 +14,13 @@
     <string name="action_retry">Повторить</string>
     <string name="action_open_settings">Открыть настройки</string>
     <string name="action_save">Сохранить</string>
+    <string name="action_onboarding_continue">Понятно</string>
+
+    <string name="onboarding_title">Быстрый старт</string>
+    <string name="onboarding_step_one">1. Подключите OBD-II адаптер.</string>
+    <string name="onboarding_step_two">2. Выберите Bluetooth или Wi-Fi и нажмите «Подключить».</string>
+    <string name="onboarding_step_three">3. Откройте сводку и метрики.</string>
+    <string name="onboarding_dont_show_again">Больше не показывать</string>
 
     <string name="welcome_title">Добро пожаловать в Avtodigix</string>
     <string name="welcome_subtitle">Стартовая инструкция для быстрой диагностики состояния автомобиля.</string>
