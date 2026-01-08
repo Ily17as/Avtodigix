@@ -16,7 +16,6 @@
     <string name="action_open_settings">Открыть настройки</string>
     <string name="action_save">Сохранить</string>
     <string name="action_onboarding_continue">Понятно</string>
-    <string name="action_view_last_snapshot">Последняя диагностика</string>
 
     <string name="onboarding_title">Быстрый старт</string>
     <string name="onboarding_step_one">1. Подключите OBD-II адаптер.</string>
@@ -39,8 +38,6 @@
     <string name="connection_status">Статус: не подключено</string>
     <string name="connection_status_detail">Проверьте адаптер и выберите способ связи.</string>
     <string name="connection_status_log">Лог: ожидание → поиск → подключение.</string>
-    <string name="offline_banner">Не подключено — показаны сохранённые данные (%1$s)</string>
-    <string name="no_saved_data">Сохранённых данных нет</string>
     <string name="connection_mode_title">Способ связи</string>
     <string name="connection_mode_bluetooth_short">Bluetooth</string>
     <string name="connection_mode_wifi_short">Wi-Fi</string>
