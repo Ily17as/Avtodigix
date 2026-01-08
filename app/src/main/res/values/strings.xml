@@ -138,12 +138,12 @@
     <string name="diagnostics_raw_response_label">Сырый ответ</string>
     <string name="diagnostics_error_label">Классификация ошибки</string>
     <string name="diagnostics_error_none">Ошибок нет</string>
-    <string name="diagnostics_error_timeout">TIMEOUT</string>
-    <string name="diagnostics_error_no_data">NO DATA</string>
-    <string name="diagnostics_error_unable_connect">UNABLE TO CONNECT</string>
-    <string name="diagnostics_error_socket_closed">SOCKET CLOSED</string>
-    <string name="diagnostics_error_negative">NEGATIVE RESPONSE</string>
-    <string name="diagnostics_error_io">IO</string>
+    <string name="diagnostics_error_timeout">ТАЙМ-АУТ</string>
+    <string name="diagnostics_error_no_data">НЕТ ДАННЫХ</string>
+    <string name="diagnostics_error_unable_connect">НЕ УДАЛОСЬ ПОДКЛЮЧИТЬСЯ</string>
+    <string name="diagnostics_error_socket_closed">СОКЕТ ЗАКРЫТ</string>
+    <string name="diagnostics_error_negative">ОТРИЦАТЕЛЬНЫЙ ОТВЕТ</string>
+    <string name="diagnostics_error_io">ВВОД/ВЫВОД</string>
     <string name="action_reconnect">Переподключиться</string>
 
     <string name="dtc_title">Коды неисправностей</string>
@@ -157,9 +157,9 @@
 
     <string name="all_data_title">Все данные</string>
     <string name="all_data_subtitle">Подробный список показателей, кодов и логов.</string>
-    <string name="all_data_live_metrics_title">Live key metrics</string>
-    <string name="all_data_dtc_title">DTC stored/pending</string>
-    <string name="all_data_full_scan_title">Full scan</string>
+    <string name="all_data_live_metrics_title">Ключевые метрики</string>
+    <string name="all_data_dtc_title">DTC: сохраненные/ожидающие</string>
+    <string name="all_data_full_scan_title">Полное сканирование</string>
     <string name="all_data_full_scan_action">Запустить сканирование</string>
     <string name="all_data_full_scan_cancel">Отменить сканирование</string>
     <string name="all_data_full_scan_empty">Результатов пока нет.</string>
@@ -168,15 +168,15 @@
     <string name="all_data_full_scan_show_all">Показать все</string>
     <string name="all_data_full_scan_show_less">Скрыть</string>
     <string name="all_data_full_scan_unavailable">Полное сканирование пока недоступно.</string>
-    <string name="all_data_supported_pids_title">Supported PIDs: %1$d</string>
-    <string name="all_data_raw_log_title">Raw log</string>
+    <string name="all_data_supported_pids_title">Поддерживаемые PID: %1$d</string>
+    <string name="all_data_raw_log_title">Сырой лог</string>
     <string name="all_data_raw_log_empty">Лог пока пуст.</string>
-    <string name="all_data_raw_log_command">CMD: %1$s</string>
-    <string name="all_data_raw_log_response">RESP: %1$s</string>
-    <string name="all_data_raw_log_error">ERR: %1$s</string>
+    <string name="all_data_raw_log_command">Команда: %1$s</string>
+    <string name="all_data_raw_log_response">Ответ: %1$s</string>
+    <string name="all_data_raw_log_error">Ошибка: %1$s</string>
     <string name="all_data_raw_log_error_none">нет</string>
     <string name="all_data_mil_active">MIL статус: активен</string>
     <string name="all_data_mil_inactive">MIL статус: не активен</string>
-    <string name="all_data_oil_pressure_label">Oil pressure</string>
-    <string name="all_data_fuel_pressure_label">Fuel pressure (PID %1$s)</string>
+    <string name="all_data_oil_pressure_label">Давление масла</string>
+    <string name="all_data_fuel_pressure_label">Давление топлива (PID %1$s)</string>
 </resources>
