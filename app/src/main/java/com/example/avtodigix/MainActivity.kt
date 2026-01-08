@@ -22,6 +22,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.color.MaterialColors
 import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.ConnectionViewModelFactory
 import com.example.avtodigix.connection.ConnectionViewModel
@@ -49,6 +50,7 @@ import com.example.avtodigix.ui.AllDataAdapter
 import com.example.avtodigix.ui.AllDataSection
 import com.example.avtodigix.ui.FullScanEntry
 import com.example.avtodigix.ui.OnboardingBottomSheetDialogFragment
+import com.example.avtodigix.ui.TroubleshootingBottomSheetDialogFragment
 import com.example.avtodigix.ui.UiPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -150,11 +152,26 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.connectionConnect.setOnClickListener {
+            val status = latestConnectionState.status
+            if (status == ConnectionState.Status.Connecting ||
+                status == ConnectionState.Status.Initializing ||
+                status == ConnectionState.Status.Connected
+            ) {
+                connectionViewModel.onDisconnectRequested()
+            } else {
+                handleConnectRequested()
+            }
+        }
+
+        binding.connectionReconnect.setOnClickListener {
             handleConnectRequested()
         }
 
-        binding.connectionDisconnect.setOnClickListener {
-            connectionViewModel.onDisconnectRequested()
+        binding.connectionTroubleshootButton.setOnClickListener {
+            TroubleshootingBottomSheetDialogFragment().show(
+                supportFragmentManager,
+                TroubleshootingBottomSheetDialogFragment.TAG
+            )
         }
 
         binding.metricsReconnect.setOnClickListener {
@@ -169,15 +186,14 @@ class MainActivity : AppCompatActivity() {
 
         val initialScannerType = connectionViewModel.connectionState.value.scannerType
         val initialUseBluetooth = initialScannerType == ScannerType.Bluetooth
-        updateConnectionModeUi(initialUseBluetooth)
-        binding.connectionModeGroup.check(
-            if (initialUseBluetooth) R.id.connectionModeBluetooth else R.id.connectionModeWifi
-        )
-        binding.connectionModeGroup.setOnCheckedChangeListener { _, checkedId ->
-            val useBluetooth = checkedId == R.id.connectionModeBluetooth
-            updateConnectionModeUi(useBluetooth)
-            val scannerType = if (useBluetooth) ScannerType.Bluetooth else ScannerType.Wifi
-            connectionViewModel.onScannerTypeSelected(scannerType)
+        updateConnectionModeSelection(initialUseBluetooth)
+        binding.connectionModeBluetoothCard.setOnClickListener {
+            updateConnectionModeSelection(true)
+            connectionViewModel.onScannerTypeSelected(ScannerType.Bluetooth)
+        }
+        binding.connectionModeWifiCard.setOnClickListener {
+            updateConnectionModeSelection(false)
+            connectionViewModel.onScannerTypeSelected(ScannerType.Wifi)
         }
 
         binding.wifiSaveButton.setOnClickListener {
@@ -391,6 +407,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         val previousStatus = latestConnectionState.status
         latestConnectionState = state
+        updateConnectionModeSelection(state.scannerType == ScannerType.Bluetooth)
         val targetLabel = when (state.scannerType) {
             ScannerType.Wifi -> {
                 val host = state.wifiHost
@@ -406,7 +423,7 @@ class MainActivity : AppCompatActivity() {
         when (state.status) {
             ConnectionState.Status.Idle -> {
                 binding.connectionStatus.text = "Статус: не подключено"
-                binding.connectionStatusDetail.text = "Нажмите Connect для начала диагностики."
+                binding.connectionStatusDetail.text = "Нажмите «Подключить»."
             }
             ConnectionState.Status.PermissionsRequired -> {
                 binding.connectionStatus.text = "Статус: требуется доступ к Bluetooth"
@@ -444,19 +461,24 @@ class MainActivity : AppCompatActivity() {
         binding.connectionStatusLog.text = state.log.ifBlank {
             getString(R.string.connection_status_log)
         }
-        binding.connectionAdapterDetail.text = state.selectedDeviceName?.let { name ->
-            "Выбран адаптер: $name"
-        } ?: getString(R.string.connection_adapter_detail)
         val adapterEnabled = BluetoothAdapter.getDefaultAdapter()?.isEnabled == true
         binding.bluetoothDisabledGroup.isVisible = !adapterEnabled
         pairedDeviceAdapter.submitList(state.pairedDevices, state.selectedDeviceAddress)
         binding.connectionPairedEmpty.isVisible = state.pairedDevices.isEmpty()
         binding.connectionPairedSettingsButton.isVisible = state.pairedDevices.isEmpty()
 
-        binding.connectionConnect.isEnabled = state.status == ConnectionState.Status.Idle ||
-            state.status == ConnectionState.Status.Error
-        binding.connectionDisconnect.isEnabled = state.status == ConnectionState.Status.Connecting ||
+        val canDisconnect = state.status == ConnectionState.Status.Connecting ||
             state.status == ConnectionState.Status.Initializing ||
+            state.status == ConnectionState.Status.Connected
+        val canConnect = state.status == ConnectionState.Status.Idle ||
+            state.status == ConnectionState.Status.Error
+        binding.connectionConnect.isEnabled = canConnect || canDisconnect
+        binding.connectionConnect.text = if (canDisconnect) {
+            getString(R.string.action_disconnect)
+        } else {
+            getString(R.string.action_connect)
+        }
+        binding.connectionReconnect.isEnabled = state.status == ConnectionState.Status.Error ||
             state.status == ConnectionState.Status.Connected
         val isConnected = state.status == ConnectionState.Status.Connected
         binding.summaryDetails.isVisible = isConnected
@@ -499,6 +521,33 @@ class MainActivity : AppCompatActivity() {
     private fun updateConnectionModeUi(useBluetooth: Boolean) {
         binding.bluetoothSection.isVisible = useBluetooth
         binding.wifiFormGroup.isVisible = !useBluetooth
+    }
+
+    private fun updateConnectionModeSelection(useBluetooth: Boolean) {
+        updateConnectionModeUi(useBluetooth)
+        val selectedStroke = MaterialColors.getColor(
+            binding.connectionModeBluetoothCard,
+            com.google.android.material.R.attr.colorPrimary
+        )
+        val defaultStroke = ContextCompat.getColor(this, R.color.device_outline)
+        val selectedText = MaterialColors.getColor(
+            binding.connectionModeBluetoothLabel,
+            com.google.android.material.R.attr.colorPrimary
+        )
+        val defaultText = MaterialColors.getColor(
+            binding.connectionModeBluetoothLabel,
+            com.google.android.material.R.attr.colorOnSurface
+        )
+        binding.connectionModeBluetoothCard.strokeColor =
+            if (useBluetooth) selectedStroke else defaultStroke
+        binding.connectionModeWifiCard.strokeColor =
+            if (useBluetooth) defaultStroke else selectedStroke
+        binding.connectionModeBluetoothLabel.setTextColor(
+            if (useBluetooth) selectedText else defaultText
+        )
+        binding.connectionModeWifiLabel.setTextColor(
+            if (useBluetooth) defaultText else selectedText
+        )
     }
 
     private fun renderWifiDetectionState(state: ConnectionState) {
