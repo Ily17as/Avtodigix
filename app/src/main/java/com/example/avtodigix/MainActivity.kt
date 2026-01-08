@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var wifiSnapshotRepository: WifiScanSnapshotRepository
     private var latestObdState: ObdState = ObdState()
     private var latestConnectionState: ConnectionState = ConnectionState()
+    private var latestSnapshot: ScanSnapshot? = null
     private var latestWifiSnapshot: WifiScanSnapshot? = null
     private var lastWifiSnapshotMillis: Long? = null
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -247,10 +248,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         ioScope.launch {
-            val latestSnapshot = repository.getLatestSnapshot()
-            if (latestSnapshot != null) {
+            val snapshot = repository.getLatestSnapshot()
+            if (snapshot != null) {
                 withContext(Dispatchers.Main) {
-                    applySnapshotToUi(latestSnapshot)
+                    latestSnapshot = snapshot
+                    applySnapshotToUi(snapshot)
                 }
             }
         }
@@ -481,8 +483,9 @@ class MainActivity : AppCompatActivity() {
         binding.connectionReconnect.isEnabled = state.status == ConnectionState.Status.Error ||
             state.status == ConnectionState.Status.Connected
         val isConnected = state.status == ConnectionState.Status.Connected
-        binding.summaryDetails.isVisible = isConnected
-        binding.summaryDetailsHint.isVisible = !isConnected
+        val canViewOffline = latestSnapshot != null
+        binding.summaryDetails.isVisible = isConnected || canViewOffline
+        binding.summaryDetailsHint.isVisible = !isConnected && !canViewOffline
 
         renderWifiDevices(state)
         renderWifiDetectionState(state)
