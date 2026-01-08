@@ -110,7 +110,7 @@
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5" />
 
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/connectionAdapterCard"
+                    android:id="@+id/connectionStepsCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
@@ -124,18 +124,34 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/connectionAdapterTitle"
+                            android:id="@+id/connectionStepsTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/connection_adapter_title"
+                            android:text="@string/connection_steps_title"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
                         <TextView
-                            android:id="@+id/connectionAdapterDetail"
+                            android:id="@+id/connectionStepOne"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/connection_adapter_detail"
+                            android:text="@string/connection_step_one"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                        <TextView
+                            android:id="@+id/connectionStepTwo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/connection_step_two"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                        <TextView
+                            android:id="@+id/connectionStepThree"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/connection_step_three"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -186,24 +202,54 @@
                     android:text="@string/connection_mode_title"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
-                <RadioGroup
-                    android:id="@+id/connectionModeGroup"
+                <LinearLayout
+                    android:id="@+id/connectionModeSelector"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
 
-                    <RadioButton
-                        android:id="@+id/connectionModeBluetooth"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/connectionModeBluetoothCard"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/connection_mode_bluetooth" />
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        app:cardElevation="0dp"
+                        app:cardUseCompatPadding="true"
+                        app:strokeColor="@color/device_outline"
+                        app:strokeWidth="1dp">
 
-                    <RadioButton
-                        android:id="@+id/connectionModeWifi"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:id="@+id/connectionModeBluetoothLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="12dp"
+                            android:text="@string/connection_mode_bluetooth_short"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/connectionModeWifiCard"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/connection_mode_wifi" />
-                </RadioGroup>
+                        android:layout_weight="1"
+                        app:cardElevation="0dp"
+                        app:cardUseCompatPadding="true"
+                        app:strokeColor="@color/device_outline"
+                        app:strokeWidth="1dp">
+
+                        <TextView
+                            android:id="@+id/connectionModeWifiLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="12dp"
+                            android:text="@string/connection_mode_wifi_short"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/bluetoothSection"
@@ -223,7 +269,7 @@
                             android:id="@+id/bluetoothDisabledText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Bluetooth выключен"
+                        android:text="@string/bluetooth_disabled"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
                         <com.google.android.material.button.MaterialButton
@@ -231,7 +277,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:text="Включить Bluetooth" />
+                        android:text="@string/action_enable_bluetooth" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/bluetoothSettingsButton"
@@ -239,7 +285,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:text="Открыть настройки Bluetooth" />
+                        android:text="@string/action_open_bluetooth_settings" />
                     </LinearLayout>
 
                     <TextView
@@ -271,7 +317,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="Открыть настройки Bluetooth"
+                        android:text="@string/action_open_bluetooth_settings"
                         android:visibility="gone" />
                 </LinearLayout>
 
@@ -407,7 +453,7 @@
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Открыть настройки Wi‑Fi" />
+                            android:text="@string/action_open_wifi_settings" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/wifiConnectButton"
@@ -492,44 +538,38 @@
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/connectionChecklist"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="@string/connection_checklist"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-
-                <TextView
-                    android:id="@+id/connectionWarning"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/connection_warning"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                    android:textColor="@color/warning_text" />
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/connectionConnect"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
                         android:text="@string/action_connect" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/connectionDisconnect"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:id="@+id/connectionReconnect"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="@string/action_disconnect" />
-                </RelativeLayout>
+                        android:layout_marginStart="12dp"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="8dp"
+                        android:text="@string/action_reconnect" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/connectionTroubleshootButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/action_troubleshoot" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -543,14 +583,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentStart="true"
-                        android:text="@string/action_back" />
+                        android:text="@string/action_back"
+                        android:visibility="gone" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/connectionNext"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:text="@string/action_next" />
+                        android:text="@string/action_next"
+                        android:visibility="gone" />
                 </RelativeLayout>
             </LinearLayout>
         </ScrollView>
