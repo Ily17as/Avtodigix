@@ -48,6 +48,8 @@ import com.example.avtodigix.obd.ObdPidRecord
 import com.example.avtodigix.ui.AllDataAdapter
 import com.example.avtodigix.ui.AllDataSection
 import com.example.avtodigix.ui.FullScanEntry
+import com.example.avtodigix.ui.OnboardingBottomSheetDialogFragment
+import com.example.avtodigix.ui.UiPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -74,17 +76,20 @@ class MainActivity : AppCompatActivity() {
     private var permissionDialogStatus: PermissionStatus? = null
     private var permissionDialog: androidx.appcompat.app.AlertDialog? = null
     private var diagnosticsModeEnabled = false
+    private lateinit var uiPrefs: UiPrefs
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        uiPrefs = UiPrefs(applicationContext)
 
         val database = AppDatabase.create(applicationContext)
         repository = ScanSnapshotRepository(database.scanSnapshotDao())
         wifiSnapshotRepository = WifiScanSnapshotRepository(database.wifiScanSnapshotDao())
 
         val flipper = binding.screenFlipper
+        flipper.displayedChild = SCREEN_CONNECTION
         val selectedDeviceStore = SelectedDeviceStore(applicationContext)
         connectionViewModel = ViewModelProvider(
             this,
@@ -258,6 +263,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        showOnboardingIfNeeded(savedInstanceState)
+    }
+
+    private fun showOnboardingIfNeeded(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null || uiPrefs.isOnboardingShown()) {
+            return
+        }
+        val onboarding = OnboardingBottomSheetDialogFragment().apply {
+            onDismissed = { dontShowAgain ->
+                uiPrefs.setOnboardingShown(dontShowAgain)
+            }
+        }
+        onboarding.show(supportFragmentManager, OnboardingBottomSheetDialogFragment.TAG)
     }
 
     private fun bindNavigation(
