@@ -151,6 +151,9 @@ class MainActivity : AppCompatActivity() {
         bindNavigation(binding.dtcFinish, flipper, SCREEN_SUMMARY) {
             saveCurrentSnapshot()
         }
+        binding.connectionViewLastSnapshot.setOnClickListener {
+            flipper.displayedChild = SCREEN_SUMMARY
+        }
 
         binding.connectionConnect.setOnClickListener {
             val status = latestConnectionState.status
@@ -253,6 +256,7 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     latestSnapshot = snapshot
                     applySnapshotToUi(snapshot)
+                    updateSnapshotButtonVisibility()
                 }
             }
         }
@@ -370,6 +374,7 @@ class MainActivity : AppCompatActivity() {
         if (snapshot.dtcList.isNotEmpty()) {
             binding.dtcStoredDetail.text = formatDtcList(snapshot.dtcList)
         }
+        updateSnapshotButtonVisibility()
 
         renderHealthSummary(
             engineRpm = readSnapshotMetric(snapshot, R.string.metric_engine_rpm),
@@ -385,6 +390,10 @@ class MainActivity : AppCompatActivity() {
             dtcCount = snapshot.dtcList.size,
             milOn = null
         )
+    }
+
+    private fun updateSnapshotButtonVisibility() {
+        binding.connectionViewLastSnapshot.isVisible = latestSnapshot != null
     }
 
     private fun updateMetricValue(
@@ -484,6 +493,7 @@ class MainActivity : AppCompatActivity() {
             state.status == ConnectionState.Status.Connected
         val isConnected = state.status == ConnectionState.Status.Connected
         val canViewOffline = latestSnapshot != null
+        binding.connectionViewLastSnapshot.isVisible = canViewOffline
         binding.summaryDetails.isVisible = isConnected || canViewOffline
         binding.summaryDetailsHint.isVisible = !isConnected && !canViewOffline
 
