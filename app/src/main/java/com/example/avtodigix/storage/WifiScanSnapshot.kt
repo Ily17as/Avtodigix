@@ -1,9 +1,5 @@
 package com.example.avtodigix.storage
 
-enum class WifiResponseFormat {
-    Text
-}
-
 data class WifiScanSnapshot(
     val timestampMillis: Long,
     val host: String,

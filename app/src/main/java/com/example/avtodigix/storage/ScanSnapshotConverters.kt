@@ -4,10 +4,10 @@ import androidx.room.TypeConverter
 import org.json.JSONArray
 import org.json.JSONObject
 
-object ScanSnapshotConverters {
+class ScanSnapshotConverters {
     @TypeConverter
-    @JvmStatic
-    fun mapToString(map: Map<String, Double>): String {
+    fun mapToString(map: Map<String, Double>?): String {
+        if (map == null) return "{}"
         val jsonObject = JSONObject()
         map.forEach { (key, value) ->
             jsonObject.put(key, value)
@@ -16,52 +16,57 @@ object ScanSnapshotConverters {
     }
 
     @TypeConverter
-    @JvmStatic
-    fun stringToMap(value: String): Map<String, Double> {
-        if (value.isBlank()) {
+    fun stringToMap(value: String?): Map<String, Double> {
+        if (value.isNullOrBlank()) {
             return emptyMap()
         }
-        val jsonObject = JSONObject(value)
-        val iterator = jsonObject.keys()
-        val map = mutableMapOf<String, Double>()
-        while (iterator.hasNext()) {
-            val key = iterator.next()
-            map[key] = jsonObject.optDouble(key)
+        return try {
+            val jsonObject = JSONObject(value)
+            val iterator = jsonObject.keys()
+            val map = mutableMapOf<String, Double>()
+            while (iterator.hasNext()) {
+                val key = iterator.next()
+                map[key] = jsonObject.optDouble(key)
+            }
+            map
+        } catch (e: Exception) {
+            emptyMap()
         }
-        return map
     }
 
     @TypeConverter
-    @JvmStatic
-    fun listToString(values: List<String>): String {
+    fun listToString(values: List<String>?): String {
+        if (values == null) return "[]"
         val jsonArray = JSONArray()
         values.forEach { jsonArray.put(it) }
         return jsonArray.toString()
     }
 
     @TypeConverter
-    @JvmStatic
-    fun stringToList(value: String): List<String> {
-        if (value.isBlank()) {
+    fun stringToList(value: String?): List<String> {
+        if (value.isNullOrBlank()) {
             return emptyList()
         }
-        val jsonArray = JSONArray(value)
-        val list = mutableListOf<String>()
-        for (index in 0 until jsonArray.length()) {
-            list.add(jsonArray.optString(index))
+        return try {
+            val jsonArray = JSONArray(value)
+            val list = mutableListOf<String>()
+            for (index in 0 until jsonArray.length()) {
+                list.add(jsonArray.optString(index))
+            }
+            list
+        } catch (e: Exception) {
+            emptyList()
         }
-        return list
     }
 
     @TypeConverter
-    @JvmStatic
-    fun formatToString(format: WifiResponseFormat): String {
-        return format.name
+    fun formatToString(format: WifiResponseFormat?): String {
+        return format?.name ?: WifiResponseFormat.Text.name
     }
 
     @TypeConverter
-    @JvmStatic
-    fun stringToFormat(value: String): WifiResponseFormat {
+    fun stringToFormat(value: String?): WifiResponseFormat {
+        if (value == null) return WifiResponseFormat.Text
         return runCatching { WifiResponseFormat.valueOf(value) }
             .getOrDefault(WifiResponseFormat.Text)
     }

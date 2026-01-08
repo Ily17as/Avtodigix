@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
 @Database(
     entities = [ScanSnapshotEntity::class, WifiScanSnapshotEntity::class],
     version = 2,
-    exportSchema = true
+    exportSchema = false
 )
 @TypeConverters(ScanSnapshotConverters::class)
 abstract class AppDatabase : RoomDatabase() {
