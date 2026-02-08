@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.view.MarginLayoutParamsCompat
 import androidx.core.view.ViewCompat
@@ -87,15 +88,31 @@ class MainActivity : AppCompatActivity() {
                 submittedAtUtc = Instant.ofEpochMilli(submittedAtMillis).toString(),
                 submittedAtMillis = submittedAtMillis
             )
-            submitFeedback(payload)
+            val feedbackFormUrl = HttpFeedbackSender.buildFallbackUrl(payload)
+            val feedbackFormUri = validateFeedbackFormUri(feedbackFormUrl)
+            if (feedbackFormUri == null) {
+                Log.e(TAG, "Invalid feedback form URL: $feedbackFormUrl")
+                feedbackSubmissionState = FeedbackSubmissionState.BrowserUnavailable
+                renderFeedbackSubmissionState()
+                return@setFragmentResultListener
+            }
+            openFeedbackFormPrefilled(feedbackFormUri, payload.submittedAtMillis)
         }
 
         observeFeedbackTriggers()
     }
 
-    private fun submitFeedback(payload: FeedbackPayload) {
-        val feedbackFormUrl = HttpFeedbackSender.buildFallbackUrl(payload)
-        openFeedbackForm(feedbackFormUrl, payload.submittedAtMillis)
+    private fun validateFeedbackFormUri(url: String): Uri? {
+        if (url.isBlank()) {
+            return null
+        }
+        val uri = Uri.parse(url)
+        val scheme = uri.scheme?.lowercase()
+        return if ((scheme == "https" || scheme == "http") && !uri.host.isNullOrBlank()) {
+            uri
+        } else {
+            null
+        }
     }
 
     private fun renderFeedbackSubmissionState() {
@@ -112,23 +129,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openFeedbackForm(url: String, openedAtMillis: Long) {
-        val uri = Uri.parse(url)
-        try {
-            CustomTabsIntent.Builder().build().launchUrl(this, uri)
+    private fun openFeedbackFormPrefilled(uri: Uri, openedAtMillis: Long) {
+        val customTabsPackage = CustomTabsClient.getPackageName(this, null)
+
+        val isOpened = if (customTabsPackage != null) {
+            try {
+                val customTabsIntent = CustomTabsIntent.Builder().build().apply {
+                    intent.setPackage(customTabsPackage)
+                }
+                customTabsIntent.launchUrl(this, uri)
+                true
+            } catch (exception: ActivityNotFoundException) {
+                false
+            }
+        } else {
+            false
+        }
+
+        if (isOpened || openFeedbackFormWithActionView(uri)) {
             feedbackManager.markFormOpened(openedAtMillis)
             feedbackSubmissionState = FeedbackSubmissionState.FormOpened
-        } catch (exception: ActivityNotFoundException) {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, uri))
-                feedbackManager.markFormOpened(openedAtMillis)
-                feedbackSubmissionState = FeedbackSubmissionState.FormOpened
-            } catch (fallbackException: ActivityNotFoundException) {
-                Log.e(TAG, "No browser found for feedback form", fallbackException)
-                feedbackSubmissionState = FeedbackSubmissionState.BrowserUnavailable
-            }
+        } else {
+            feedbackSubmissionState = FeedbackSubmissionState.BrowserUnavailable
         }
+
         renderFeedbackSubmissionState()
+    }
+
+    private fun openFeedbackFormWithActionView(uri: Uri): Boolean {
+        return try {
+            startActivity(Intent(Intent.ACTION_VIEW, uri))
+            true
+        } catch (fallbackException: ActivityNotFoundException) {
+            Log.e(TAG, "No browser found for feedback form", fallbackException)
+            false
+        }
     }
 
     private fun setupInsetsHandling() {
