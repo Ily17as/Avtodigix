@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.RatingBar
+import android.widget.Toast
 import androidx.core.os.bundleOf
 import com.example.avtodigix.R
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -28,6 +29,13 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
         val ratingBar = view.findViewById<RatingBar>(R.id.feedbackRatingBar)
         val tagsGroup = view.findViewById<ChipGroup>(R.id.feedbackTagsGroup)
         val commentInput = view.findViewById<EditText>(R.id.feedbackCommentInput)
+        var ratingSelectedByUser = false
+
+        ratingBar.setOnRatingBarChangeListener { _, _, fromUser ->
+            if (fromUser) {
+                ratingSelectedByUser = true
+            }
+        }
 
         ratingBar.setOnTouchListener { _, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN ||
@@ -39,6 +47,7 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
                 val tappedStar = ((clampedX / width) * ratingBar.numStars).toInt() + 1
                 val normalizedRating = tappedStar.coerceIn(1, ratingBar.numStars)
                 ratingBar.rating = normalizedRating.toFloat()
+                ratingSelectedByUser = true
             }
             false
         }
@@ -46,15 +55,36 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
         commentInput.filters = arrayOf(InputFilter.LengthFilter(MAX_COMMENT_LENGTH))
 
         view.findViewById<MaterialButton>(R.id.feedbackSendButton).setOnClickListener {
+            val rating = ratingBar.rating.toInt()
+            val comment = commentInput.text?.toString()?.trim().orEmpty()
+
+            if (!ratingSelectedByUser || rating !in VALID_RATING_RANGE) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.feedback_validation_rating_required),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
+            if (isCommentRequired(rating) && comment.isBlank()) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.feedback_validation_comment_required),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
             val selectedTags = tagsGroup.checkedChipIds.mapNotNull { chipId ->
                 view.findViewById<View>(chipId)?.tag?.toString()
             }
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(
-                    RESULT_RATING to ratingBar.rating.toInt().coerceIn(1, 5),
+                    RESULT_RATING to rating,
                     RESULT_TAGS to selectedTags.toTypedArray(),
-                    RESULT_COMMENT to commentInput.text?.toString()?.trim().orEmpty()
+                    RESULT_COMMENT to comment
                 )
             )
             dismiss()
@@ -72,5 +102,11 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
         const val RESULT_TAGS = "feedback_tags"
         const val RESULT_COMMENT = "feedback_comment"
         private const val MAX_COMMENT_LENGTH = 500
+        private val VALID_RATING_RANGE = 1..5
+        private const val COMMENT_REQUIRED_MAX_RATING = 3
+    }
+
+    private fun isCommentRequired(rating: Int): Boolean {
+        return rating <= COMMENT_REQUIRED_MAX_RATING
     }
 }
