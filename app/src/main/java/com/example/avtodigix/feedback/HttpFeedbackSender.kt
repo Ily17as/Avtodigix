@@ -11,9 +11,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
-import java.net.URLEncoder
 import java.net.URL
-import java.nio.charset.StandardCharsets
 
 class HttpFeedbackSender : FeedbackSender {
     override suspend fun send(payload: FeedbackPayload): FeedbackSendResult = withContext(Dispatchers.IO) {
@@ -81,20 +79,41 @@ class HttpFeedbackSender : FeedbackSender {
         // В опубликованной форме нет отдельного поля "Оценка" (1..5), поэтому используем публичный ключ rating.
         private const val REDIRECT_RATING_PARAM = "rating"
         private const val REDIRECT_COMMENT_PARAM = "answer_long_text_96199"
+        private const val FEEDBACK_EMPTY_FEATURES = "не выбрано"
+        private const val FEEDBACK_EMPTY_COMMENT = "—"
 
         fun buildRedirectUrl(payload: FeedbackPayload): String {
-            val encodedComment = URLEncoder.encode(payload.comment, StandardCharsets.UTF_8.toString())
             val normalizedRating = payload.rating.coerceIn(1, 5)
+            val feedbackMessage = buildFeedbackMessage(payload, normalizedRating)
 
             return Uri.parse(FORM_URL)
                 .buildUpon()
-                .encodedQuery(
-                    "$REDIRECT_RATING_PARAM=$normalizedRating" +
-                        "&$REDIRECT_COMMENT_PARAM=$encodedComment" +
-                        "&$REDIRECT_SOURCE_PARAM=$REDIRECT_SOURCE_VALUE"
-                )
+                .appendQueryParameter(REDIRECT_RATING_PARAM, normalizedRating.toString())
+                .appendQueryParameter(REDIRECT_COMMENT_PARAM, feedbackMessage)
+                .appendQueryParameter(REDIRECT_SOURCE_PARAM, REDIRECT_SOURCE_VALUE)
                 .build()
                 .toString()
+        }
+
+        private fun buildFeedbackMessage(payload: FeedbackPayload, normalizedRating: Int): String {
+            val features = payload.tags
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .joinToString(", ")
+                .ifBlank { FEEDBACK_EMPTY_FEATURES }
+            val comment = payload.comment.trim().ifBlank { FEEDBACK_EMPTY_COMMENT }
+
+            return buildString {
+                append("Оценка: ")
+                append(normalizedRating)
+                append("/5\n")
+                append("Понравилось: ")
+                append(features)
+                append("\n")
+                append("Комментарий: ")
+                append(comment)
+            }
         }
     }
 }

@@ -77,7 +77,11 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
             }
 
             val selectedTags = tagsGroup.checkedChipIds.mapNotNull { chipId ->
-                view.findViewById<View>(chipId)?.tag?.toString()
+                view.findViewById<com.google.android.material.chip.Chip>(chipId)
+                    ?.text
+                    ?.toString()
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
             }
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
