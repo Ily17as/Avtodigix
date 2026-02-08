@@ -7,7 +7,7 @@
     <string name="action_back">Назад</string>
     <string name="action_finish">Завершить</string>
     <string name="action_connect">Подключить</string>
-    <string name="action_disconnect">Отключить</string>
+    <string name="action_disconnect">Отключиться</string>
     <string name="action_close">Закрыть</string>
     <string name="action_details">Подробнее</string>
     <string name="action_what_to_do">Что делать</string>
@@ -16,6 +16,15 @@
     <string name="action_open_settings">Открыть настройки</string>
     <string name="action_save">Сохранить</string>
     <string name="action_onboarding_continue">Понятно</string>
+
+    <string name="action_connect_to_device">Подключиться</string>
+    <string name="connection_status_disconnected">Не подключено</string>
+    <string name="connection_status_connecting">Подключаемся…</string>
+    <string name="connection_status_connected_to">Подключено к %1$s</string>
+    <string name="connection_status_error">Ошибка: %1$s</string>
+    <string name="connection_unknown_target">устройству</string>
+    <string name="connection_unknown_error">неизвестная</string>
+    <string name="connection_success_snackbar">Подключение успешно</string>
 
     <string name="onboarding_title">Быстрый старт</string>
     <string name="onboarding_step_one">1. Подключите OBD-II адаптер.</string>
@@ -197,6 +206,26 @@
     <string name="feedback_fab">Отправить отзыв</string>
     <string name="feedback_subject">Avtodigix feedback</string>
     <string name="data_waiting_connection">Подключитесь к адаптеру для получения метрик.</string>
+    <string name="data_open_connection">Перейти к подключению</string>
+    <string name="data_updated_placeholder">Обновлено: —</string>
+    <string name="data_updated_at_format">Обновлено: %1$s</string>
+    <string name="data_status_mil_placeholder">MIL: —</string>
+    <string name="data_status_dtc_placeholder">DTC: —</string>
+    <string name="data_status_readiness_placeholder">Readiness: —</string>
+    <string name="data_status_pid_placeholder">Поддержка PID: —</string>
+    <string name="data_status_mil_on">MIL: активен</string>
+    <string name="data_status_mil_off">MIL: не активен</string>
+    <string name="data_status_dtc_format">DTC: %1$d</string>
+    <string name="data_status_readiness_format">Readiness: %1$d</string>
+    <string name="data_status_pid_format">Поддержка PID: %1$d</string>
+    <string name="data_metric_rpm_placeholder">RPM: —</string>
+    <string name="data_metric_speed_placeholder">Скорость: —</string>
+    <string name="data_metric_temp_placeholder">Темп. ОЖ: —</string>
+    <string name="data_metric_battery_placeholder">АКБ: —</string>
+    <string name="data_metric_rpm_format">RPM: %1$s</string>
+    <string name="data_metric_speed_format">Скорость: %1$s</string>
+    <string name="data_metric_temp_format">Темп. ОЖ: %1$s</string>
+    <string name="data_metric_battery_format">АКБ: %1$s</string>
     <string name="action_refresh_dtc">Обновить DTC</string>
     <string name="dtc_none">Нет кодов</string>
     <string name="history_empty">История пока пуста</string>
@@ -216,6 +245,8 @@
 
     <string name="tab_errors">Ошибки</string>
     <string name="tab_history">История</string>
+    <string name="tab_dtc">DTC</string>
+    <string name="tab_reports">Отчёты</string>
     <string name="action_save_report">Сохранить отчёт</string>
     <string name="action_share">Поделиться</string>
     <string name="action_clear_errors">Очистить ошибки</string>

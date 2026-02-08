@@ -41,18 +41,28 @@
             android:layout_marginTop="8dp"
             android:text="—" />
 
-        <TextView
-            android:id="@+id/connectionLog"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/connectionConnect"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/action_connect" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/connectionRetry"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/action_retry"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/connectionHelp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_troubleshoot" />
 
         <LinearLayout
             android:id="@+id/bluetoothGroup"

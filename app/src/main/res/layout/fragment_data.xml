@@ -16,41 +16,144 @@
             android:text="@string/nav_data"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
-        <TextView
-            android:id="@+id/connectionHint"
+        <LinearLayout
+            android:id="@+id/dataEmptyState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/data_waiting_connection" />
+            android:layout_marginTop="12dp"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/metricEngineRpmValue"
+            <TextView
+                android:id="@+id/connectionHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/data_waiting_connection" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/openConnectionButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/data_open_connection" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/dataConnectedState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="RPM: —" />
+            android:orientation="vertical"
+            android:visibility="gone">
 
-        <TextView
-            android:id="@+id/metricVehicleSpeedValue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Speed: —" />
+            <com.google.android.material.chip.Chip
+                android:id="@+id/connectionChip"
+                style="@style/Widget.MaterialComponents.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" />
 
-        <TextView
-            android:id="@+id/metricEngineTempValue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Coolant: —" />
+            <TextView
+                android:id="@+id/updatedAtValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/data_updated_placeholder" />
 
-        <TextView
-            android:id="@+id/metricBatteryVoltageValue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Battery: —" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/openIssuesButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_issues" />
+                <TextView
+                    android:id="@+id/statusMilValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_status_mil_placeholder" />
+
+                <TextView
+                    android:id="@+id/statusDtcValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_status_dtc_placeholder" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <TextView
+                    android:id="@+id/statusReadinessValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_status_readiness_placeholder" />
+
+                <TextView
+                    android:id="@+id/statusPidSupportValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_status_pid_placeholder" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/all_data_live_metrics_title"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <TextView
+                    android:id="@+id/metricEngineRpmValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_metric_rpm_placeholder" />
+
+                <TextView
+                    android:id="@+id/metricVehicleSpeedValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_metric_speed_placeholder" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <TextView
+                    android:id="@+id/metricEngineTempValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_metric_temp_placeholder" />
+
+                <TextView
+                    android:id="@+id/metricBatteryVoltageValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_metric_battery_placeholder" />
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>
