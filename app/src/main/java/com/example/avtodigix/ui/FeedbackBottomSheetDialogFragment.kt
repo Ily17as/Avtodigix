@@ -3,6 +3,7 @@ package com.example.avtodigix.ui
 import android.os.Bundle
 import android.text.InputFilter
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -27,6 +28,20 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
         val ratingBar = view.findViewById<RatingBar>(R.id.feedbackRatingBar)
         val tagsGroup = view.findViewById<ChipGroup>(R.id.feedbackTagsGroup)
         val commentInput = view.findViewById<EditText>(R.id.feedbackCommentInput)
+
+        ratingBar.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN ||
+                event.actionMasked == MotionEvent.ACTION_MOVE ||
+                event.actionMasked == MotionEvent.ACTION_UP
+            ) {
+                val width = ratingBar.width.takeIf { it > 0 } ?: return@setOnTouchListener false
+                val clampedX = event.x.coerceIn(0f, width.toFloat())
+                val tappedStar = ((clampedX / width) * ratingBar.numStars).toInt() + 1
+                val normalizedRating = tappedStar.coerceIn(1, ratingBar.numStars)
+                ratingBar.rating = normalizedRating.toFloat()
+            }
+            false
+        }
 
         commentInput.filters = arrayOf(InputFilter.LengthFilter(MAX_COMMENT_LENGTH))
 
