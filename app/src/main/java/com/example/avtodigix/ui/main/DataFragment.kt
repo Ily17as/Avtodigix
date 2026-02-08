@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.avtodigix.MainActivity
 import com.example.avtodigix.R
 import com.example.avtodigix.databinding.FragmentDataBinding
+import com.example.avtodigix.ui.UiPrefs
 import kotlinx.coroutines.launch
 
 class DataFragment : Fragment(R.layout.fragment_data) {
@@ -21,6 +22,8 @@ class DataFragment : Fragment(R.layout.fragment_data) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDataBinding.bind(view)
         val viewModel = (requireActivity() as MainActivity).connectionViewModel
+
+        updateRawComponentsVisibility()
 
         binding.openIssuesButton.setOnClickListener {
             findNavController().navigate(R.id.issuesHistoryFragment)
@@ -37,6 +40,19 @@ class DataFragment : Fragment(R.layout.fragment_data) {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateRawComponentsVisibility()
+    }
+
+    private fun updateRawComponentsVisibility() {
+        val binding = _binding ?: return
+        val uiPrefs = UiPrefs(requireContext())
+        val showRawComponents = uiPrefs.getUserMode() == UiPrefs.UserMode.Professional &&
+            uiPrefs.isDiagnosticsModeEnabled()
+        binding.openIssuesButton.isVisible = showRawComponents
     }
 
     override fun onDestroyView() {
