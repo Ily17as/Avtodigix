@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
                 submittedAtUtc = Instant.ofEpochMilli(submittedAtMillis).toString(),
                 submittedAtMillis = submittedAtMillis
             )
-            val feedbackFormUrl = HttpFeedbackSender.buildFallbackUrl(payload)
+            val feedbackFormUrl = HttpFeedbackSender.buildRedirectUrl(payload)
             val feedbackFormUri = validateFeedbackFormUri(feedbackFormUrl)
             if (feedbackFormUri == null) {
                 Log.e(TAG, "Invalid feedback form URL: $feedbackFormUrl")
