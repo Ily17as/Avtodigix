@@ -70,9 +70,13 @@ class MainActivity : AppCompatActivity() {
             FeedbackBottomSheetDialogFragment.REQUEST_KEY,
             this
         ) { _, result ->
-            val rating = result.getInt(FeedbackBottomSheetDialogFragment.RESULT_RATING, 5)
+            val rating = result.getInt(FeedbackBottomSheetDialogFragment.RESULT_RATING, 0)
             val tags = result.getStringArray(FeedbackBottomSheetDialogFragment.RESULT_TAGS)?.toList().orEmpty()
             val comment = result.getString(FeedbackBottomSheetDialogFragment.RESULT_COMMENT).orEmpty()
+            if (rating !in VALID_RATING_RANGE) {
+                Log.w(TAG, "Ignoring feedback result with invalid rating: $rating")
+                return@setFragmentResultListener
+            }
             val submittedAtMillis = System.currentTimeMillis()
             val payload = FeedbackPayload(
                 rating = rating,
@@ -274,5 +278,6 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         private const val TAG = "MainActivity"
+        private val VALID_RATING_RANGE = 1..5
     }
 }

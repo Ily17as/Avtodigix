@@ -247,6 +247,8 @@
     <string name="feedback_write_more">Написать ещё</string>
     <string name="feedback_browser_unavailable">Не удалось открыть форму отзыва</string>
     <string name="feedback_form_opened">Форма отзыва открыта в браузере</string>
+    <string name="feedback_validation_rating_required">Выберите оценку от 1 до 5 перед отправкой</string>
+    <string name="feedback_validation_comment_required">Пожалуйста, добавьте комментарий</string>
 
     <string name="tab_errors">Ошибки</string>
     <string name="tab_history">История</string>
