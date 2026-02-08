@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.avtodigix.MainActivity
 import com.example.avtodigix.R
@@ -24,6 +25,9 @@ import com.example.avtodigix.connection.PermissionStatus
 import com.example.avtodigix.connection.ScannerType
 import com.example.avtodigix.connection.WifiDeviceAdapter
 import com.example.avtodigix.databinding.FragmentConnectionBinding
+import com.example.avtodigix.ui.TroubleshootingBottomSheetDialogFragment
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
 class ConnectionFragment : Fragment(R.layout.fragment_connection) {
@@ -33,6 +37,7 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
 
     private lateinit var pairedDeviceAdapter: PairedDeviceAdapter
     private lateinit var wifiDeviceAdapter: WifiDeviceAdapter
+    private var previousStatus: ConnectionState.Status = ConnectionState.Status.Idle
 
     private val permissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -69,6 +74,17 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
             (requireActivity() as MainActivity).connectionViewModel.onScannerTypeSelected(ScannerType.Wifi)
         }
         binding.connectionConnect.setOnClickListener { handleConnectClick() }
+        binding.connectionRetry.setOnClickListener {
+            (requireActivity() as MainActivity).connectionViewModel.onConnectRequested()
+        }
+        binding.connectionHelp.setOnClickListener {
+            if (parentFragmentManager.findFragmentByTag(TroubleshootingBottomSheetDialogFragment.TAG) == null) {
+                TroubleshootingBottomSheetDialogFragment().show(
+                    parentFragmentManager,
+                    TroubleshootingBottomSheetDialogFragment.TAG
+                )
+            }
+        }
         binding.bluetoothEnableButton.setOnClickListener {
             runCatching { startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)) }
         }
@@ -106,8 +122,7 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
         binding.connectionModeBluetooth.isChecked = bluetooth
         binding.connectionModeWifi.isChecked = !bluetooth
 
-        binding.connectionStatusDetail.text = state.errorMessage ?: state.status.name
-        binding.connectionLog.text = state.log
+        binding.connectionStatusDetail.text = buildStatusLine(state)
 
         pairedDeviceAdapter.submitList(state.pairedDevices, state.selectedDeviceAddress)
         wifiDeviceAdapter.submitList(state.wifiAutoDetectResults, state.wifiHost, state.wifiPort)
@@ -119,11 +134,41 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
         binding.connectionConnect.text = if (canDisconnect) {
             getString(R.string.action_disconnect)
         } else {
-            getString(R.string.action_connect)
+            getString(R.string.action_connect_to_device)
         }
+
+        val hasError = state.status == ConnectionState.Status.Error && !state.errorMessage.isNullOrBlank()
+        binding.connectionRetry.isVisible = hasError
+        val errorColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorError)
+        val defaultStrokeColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorOutline)
+        binding.connectionHelp.strokeColor = if (hasError) android.content.res.ColorStateList.valueOf(errorColor)
+        else android.content.res.ColorStateList.valueOf(defaultStrokeColor)
+        binding.connectionHelp.strokeWidth = if (hasError) 4 else 0
+
+        if (previousStatus != ConnectionState.Status.Connected && state.status == ConnectionState.Status.Connected) {
+            Snackbar.make(binding.root, getString(R.string.connection_success_snackbar), Snackbar.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.dataFragment)
+        }
+        previousStatus = state.status
 
         if (state.permissionStatus == PermissionStatus.Requested) {
             requestBluetoothPermissionsIfNeeded()
+        }
+    }
+
+    private fun buildStatusLine(state: ConnectionState): String {
+        return when (state.status) {
+            ConnectionState.Status.Connected -> getString(
+                R.string.connection_status_connected_to,
+                state.selectedDeviceName ?: state.wifiResolvedEndpoint ?: getString(R.string.connection_unknown_target)
+            )
+            ConnectionState.Status.Connecting,
+            ConnectionState.Status.Initializing -> getString(R.string.connection_status_connecting)
+            ConnectionState.Status.Error -> getString(
+                R.string.connection_status_error,
+                state.errorMessage ?: getString(R.string.connection_unknown_error)
+            )
+            else -> getString(R.string.connection_status_disconnected)
         }
     }
 

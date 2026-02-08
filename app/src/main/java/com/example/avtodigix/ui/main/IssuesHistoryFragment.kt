@@ -22,9 +22,9 @@ class IssuesHistoryFragment : Fragment(R.layout.fragment_issues_history) {
 
         TabLayoutMediator(binding.issuesHistoryTabs, binding.issuesHistoryPager) { tab, position ->
             tab.text = if (position == 0) {
-                getString(R.string.tab_errors)
+                getString(R.string.tab_dtc)
             } else {
-                getString(R.string.tab_history)
+                getString(R.string.tab_reports)
             }
         }.attach()
     }
