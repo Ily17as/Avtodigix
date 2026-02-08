@@ -11,7 +11,9 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
+import java.net.URLEncoder
 import java.net.URL
+import java.nio.charset.StandardCharsets
 
 class HttpFeedbackSender : FeedbackSender {
     override suspend fun send(payload: FeedbackPayload): FeedbackSendResult = withContext(Dispatchers.IO) {
@@ -69,16 +71,28 @@ class HttpFeedbackSender : FeedbackSender {
         private const val TIMEOUT_MILLIS = 10_000
         private const val TAG = "HttpFeedbackSender"
 
-        fun buildFallbackUrl(payload: FeedbackPayload): String {
+        private const val REDIRECT_SOURCE_PARAM = "source"
+        private const val REDIRECT_SOURCE_VALUE = "avtodigix"
+
+        // Проверено 2026-02-08 через опубликованную форму:
+        // 1) GET https://forms.yandex.ru/u/gateway/root/form/getSurvey
+        // 2) ручная проверка prefill в URL через Playwright.
+        // Поле "Комментарий" подхватывает только внутренний id answer_long_text_96199.
+        // В опубликованной форме нет отдельного поля "Оценка" (1..5), поэтому используем публичный ключ rating.
+        private const val REDIRECT_RATING_PARAM = "rating"
+        private const val REDIRECT_COMMENT_PARAM = "answer_long_text_96199"
+
+        fun buildRedirectUrl(payload: FeedbackPayload): String {
+            val encodedComment = URLEncoder.encode(payload.comment, StandardCharsets.UTF_8.toString())
+            val normalizedRating = payload.rating.coerceIn(1, 5)
+
             return Uri.parse(FORM_URL)
                 .buildUpon()
-                .appendQueryParameter("rating", payload.rating.toString())
-                .appendQueryParameter("comment", payload.comment)
-                .appendQueryParameter("timestamp_utc", payload.submittedAtUtc)
-                .appendQueryParameter("app_version", payload.appVersion)
-                .appendQueryParameter("build", payload.buildNumber.toString())
-                .appendQueryParameter("platform", payload.platform)
-                .appendQueryParameter("device_model", payload.deviceModel.orEmpty())
+                .encodedQuery(
+                    "$REDIRECT_RATING_PARAM=$normalizedRating" +
+                        "&$REDIRECT_COMMENT_PARAM=$encodedComment" +
+                        "&$REDIRECT_SOURCE_PARAM=$REDIRECT_SOURCE_VALUE"
+                )
                 .build()
                 .toString()
         }
