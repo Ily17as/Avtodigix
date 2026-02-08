@@ -7,7 +7,7 @@ import com.example.avtodigix.R
 import com.example.avtodigix.databinding.ItemIssueDtcBinding
 import com.example.avtodigix.domain.DtcDescriptions
 
-private data class DtcItem(
+data class DtcItem(
     val code: String,
     val badge: String
 )
@@ -33,7 +33,7 @@ class DtcItemAdapter : RecyclerView.Adapter<DtcItemAdapter.DtcViewHolder>() {
         holder.bind(items[position])
     }
 
-    private class DtcViewHolder(private val binding: ItemIssueDtcBinding) : RecyclerView.ViewHolder(binding.root) {
+    class DtcViewHolder(private val binding: ItemIssueDtcBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: DtcItem) {
             val context = binding.root.context
             binding.dtcCode.text = item.code

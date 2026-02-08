@@ -344,12 +344,12 @@ class ObdService(
     }
 
     private fun classifyIoError(error: IOException): ObdErrorType? {
-        val message = error.message?.uppercase().orEmpty()
+        val message = error.message?.uppercase()
         return when {
             error is SocketTimeoutException -> ObdErrorType.TIMEOUT
-            message.contains("TIMED OUT") -> ObdErrorType.TIMEOUT
-            message.contains("TIMEOUT") -> ObdErrorType.TIMEOUT
-            message.contains("CLOSED") -> ObdErrorType.SOCKET_CLOSED
+            message?.contains("TIMED OUT") == true -> ObdErrorType.TIMEOUT
+            message?.contains("TIMEOUT") == true -> ObdErrorType.TIMEOUT
+            message?.contains("CLOSED") == true -> ObdErrorType.SOCKET_CLOSED
             else -> ObdErrorType.IO
         }
     }
@@ -361,9 +361,9 @@ class ObdService(
             errorType = errorType
         )
         if (errorType == null) {
-            Log.d("OBD", "diag command=${diagnostics.command} raw=${rawResponse.orEmpty()}")
+            Log.d("OBD", "diag command=${diagnostics.command} raw=$rawResponse")
         } else {
-            Log.w("OBD", "diag command=${diagnostics.command} error=$errorType raw=${rawResponse.orEmpty()}")
+            Log.w("OBD", "diag command=${diagnostics.command} error=$errorType raw=$rawResponse")
         }
         diagnosticsListener(diagnostics)
     }

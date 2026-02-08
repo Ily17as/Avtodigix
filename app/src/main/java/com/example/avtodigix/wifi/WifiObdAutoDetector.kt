@@ -1,6 +1,7 @@
 package com.example.avtodigix.wifi
 
 import android.content.Context
+import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
@@ -74,9 +75,10 @@ class WifiObdAutoDetector(
         )
         fastHosts.forEach { host -> addEndpoints(endpoints, host, ports) }
 
-        val dhcpInfo = wifiManager()?.dhcpInfo
-        val gatewayIp = dhcpInfo?.gateway?.let(::intToInetAddress)?.hostAddress
-        val deviceIp = dhcpInfo?.ipAddress?.let(::intToInetAddress)?.hostAddress
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val linkProperties = connectivityManager.getLinkProperties(connectivityManager.activeNetwork)
+        val gatewayIp = linkProperties?.routes?.firstOrNull { it.isDefaultRoute }?.gateway?.hostAddress
+        val deviceIp = linkProperties?.linkAddresses?.firstOrNull()?.address?.hostAddress
         val subnetPrefix = gatewayIp?.let(::prefixFromIp) ?: deviceIp?.let(::prefixFromIp)
 
         if (!gatewayIp.isNullOrBlank()) {

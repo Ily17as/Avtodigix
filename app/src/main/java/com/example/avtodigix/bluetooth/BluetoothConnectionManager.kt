@@ -23,10 +23,10 @@ import com.example.avtodigix.transport.ScannerTransport
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
+import android.bluetooth.BluetoothManager
 
 class BluetoothConnectionManager(
     private val context: Context,
-    private val adapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     parentScope: CoroutineScope? = null,
     private val retryDelayMillis: Long = 2_000,
@@ -34,6 +34,10 @@ class BluetoothConnectionManager(
     private val connectionCheckIntervalMillis: Long = 1_000
 ) {
     private val scope = parentScope ?: CoroutineScope(SupervisorJob() + ioDispatcher)
+    private val adapter: BluetoothAdapter? by lazy {
+        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothManager.adapter
+    }
     private val _status = MutableStateFlow<ConnectionStatus>(ConnectionStatus.NoConnection)
     val status: StateFlow<ConnectionStatus> = _status
     private val _socketState = MutableStateFlow<BluetoothSocket?>(null)

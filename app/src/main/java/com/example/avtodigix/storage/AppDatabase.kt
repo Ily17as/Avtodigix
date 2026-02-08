@@ -18,8 +18,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         private val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
-            override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS wifi_scan_snapshots (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

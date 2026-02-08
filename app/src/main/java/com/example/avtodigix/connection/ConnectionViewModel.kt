@@ -299,12 +299,10 @@ class ConnectionViewModel(
         viewModelScope.launch {
             runCatching { obdService?.clearDtcs() }
             requestDtcRefresh()
-            updateObdState {
-                copy(
-                    storedDtcs = emptyList(),
-                    pendingDtcs = emptyList()
-                )
-            }
+            _obdState.value = _obdState.value.copy(
+                storedDtcs = emptyList(),
+                pendingDtcs = emptyList()
+            )
         }
     }
 

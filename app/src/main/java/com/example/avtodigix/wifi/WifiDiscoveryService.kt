@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.util.concurrent.Executors
 
 data class WifiDiscoveredDevice(
     val name: String,
@@ -28,6 +29,7 @@ class WifiDiscoveryService(
     val devices: StateFlow<List<WifiDiscoveredDevice>> = _devices
     private val deviceByName = mutableMapOf<String, WifiDiscoveredDevice>()
     private var discoveryListener: NsdManager.DiscoveryListener? = null
+    private val executor = Executors.newSingleThreadExecutor()
 
     fun startDiscovery() {
         stopDiscovery()
@@ -76,12 +78,12 @@ class WifiDiscoveryService(
     private fun resolveService(serviceInfo: NsdServiceInfo) {
         nsdManager.resolveService(
             serviceInfo,
+            executor,
             object : NsdManager.ResolveListener {
                 override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) = Unit
 
                 override fun onServiceResolved(resolvedInfo: NsdServiceInfo) {
-                    val host = resolvedInfo.host?.hostAddress
-                        ?: resolvedInfo.host?.hostName
+                    val host = resolvedInfo.hostAddresses.firstOrNull()?.hostAddress
                     val port = resolvedInfo.port
                     if (host.isNullOrBlank() || port <= 0) {
                         return
