@@ -12,26 +12,26 @@ class FeedbackRepository(
         if (!connectivityChecker.isOnline()) {
             localStore.save(payload)
             Log.w(TAG, "Feedback submit skipped: no network")
-            return FeedbackSubmissionState.Error(isOffline = true)
+            return FeedbackSubmissionState.BrowserUnavailable
         }
 
         return try {
             val result = sender.send(payload)
             if (result.success) {
-                FeedbackSubmissionState.Success
+                FeedbackSubmissionState.FormOpened
             } else {
                 localStore.save(payload)
                 Log.w(TAG, "Feedback submit failed: code=${result.responseCode}")
-                FeedbackSubmissionState.Error(isOffline = false)
+                FeedbackSubmissionState.BrowserUnavailable
             }
         } catch (ioException: IOException) {
             localStore.save(payload)
             Log.w(TAG, "Feedback submit I/O failure", ioException)
-            FeedbackSubmissionState.Error(isOffline = true)
+            FeedbackSubmissionState.BrowserUnavailable
         } catch (exception: Exception) {
             localStore.save(payload)
             Log.e(TAG, "Feedback submit failed unexpectedly", exception)
-            FeedbackSubmissionState.Error(isOffline = false)
+            FeedbackSubmissionState.BrowserUnavailable
         }
     }
 

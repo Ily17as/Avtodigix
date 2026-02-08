@@ -23,10 +23,10 @@ class FeedbackPrefs(context: Context) {
         preferences.edit().putLong(KEY_LAST_PROMPT_AT, value).apply()
     }
 
-    fun getLastSubmittedAt(): Long = preferences.getLong(KEY_LAST_SUBMITTED_AT, 0L)
+    fun getLastFormOpenedAt(): Long = preferences.getLong(KEY_LAST_FORM_OPENED_AT, 0L)
 
-    fun setLastSubmittedAt(value: Long) {
-        preferences.edit().putLong(KEY_LAST_SUBMITTED_AT, value).apply()
+    fun setLastFormOpenedAt(value: Long) {
+        preferences.edit().putLong(KEY_LAST_FORM_OPENED_AT, value).apply()
     }
 
     private companion object {
@@ -34,6 +34,6 @@ class FeedbackPrefs(context: Context) {
         private const val KEY_SUCCESSFUL_CONNECTIONS = "successful_connections_count"
         private const val KEY_FIRST_FULL_SCAN_AT = "first_full_scan_at"
         private const val KEY_LAST_PROMPT_AT = "last_prompt_at"
-        private const val KEY_LAST_SUBMITTED_AT = "last_submitted_at"
+        private const val KEY_LAST_FORM_OPENED_AT = "last_form_opened_at"
     }
 }
