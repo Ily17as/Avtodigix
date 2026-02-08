@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/connectionFragment">
+
+    <fragment
+        android:id="@+id/connectionFragment"
+        android:name="com.example.avtodigix.ui.main.ConnectionFragment"
+        android:label="@string/nav_connection" />
+
+    <fragment
+        android:id="@+id/dataFragment"
+        android:name="com.example.avtodigix.ui.main.DataFragment"
+        android:label="@string/nav_data" />
+
+    <fragment
+        android:id="@+id/issuesHistoryFragment"
+        android:name="com.example.avtodigix.ui.main.IssuesHistoryFragment"
+        android:label="@string/nav_issues" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.avtodigix.ui.main.SettingsFragment"
+        android:label="@string/nav_settings" />
+</navigation>
