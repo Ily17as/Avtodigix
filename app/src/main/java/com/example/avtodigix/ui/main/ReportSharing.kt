@@ -8,6 +8,15 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private const val AVTODIGIX_SITE_URL = "https://avtodigix.tilda.ws/"
+
+fun appendSiteLinkIfMissing(text: String): String {
+    if (text.contains(AVTODIGIX_SITE_URL)) {
+        return text
+    }
+    return text.trimEnd('\n') + "\n$AVTODIGIX_SITE_URL"
+}
+
 fun buildCurrentDtcReport(context: Context, stored: List<String>, pending: List<String>): String {
     val summary = context.getString(
         R.string.dtc_summary_format,

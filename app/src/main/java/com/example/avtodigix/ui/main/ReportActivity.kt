@@ -51,7 +51,7 @@ class ReportActivity : AppCompatActivity() {
                 val intent = Intent(Intent.ACTION_SEND)
                     .setType("text/plain")
                     .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.report_history_title))
-                    .putExtra(Intent.EXTRA_TEXT, reportText)
+                    .putExtra(Intent.EXTRA_TEXT, appendSiteLinkIfMissing(reportText))
                 startActivity(Intent.createChooser(intent, getString(R.string.action_share)))
             }
         }
