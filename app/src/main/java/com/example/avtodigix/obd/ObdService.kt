@@ -187,6 +187,11 @@ class ObdService(
         return readDtcs("07", 0x47)
     }
 
+
+    suspend fun clearDtcs() {
+        executeWithDiagnostics("04")
+    }
+
     suspend fun readMilAndReadiness(): MilReadiness? {
         val response = executeWithDiagnostics("01 01")
         val bytes = response.lines

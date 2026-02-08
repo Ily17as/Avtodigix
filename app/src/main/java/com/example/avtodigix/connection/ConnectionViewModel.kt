@@ -294,6 +294,20 @@ class ConnectionViewModel(
         }
     }
 
+
+    fun clearDtcs() {
+        viewModelScope.launch {
+            runCatching { obdService?.clearDtcs() }
+            requestDtcRefresh()
+            updateObdState {
+                copy(
+                    storedDtcs = emptyList(),
+                    pendingDtcs = emptyList()
+                )
+            }
+        }
+    }
+
     fun onPermissionsResult(granted: Boolean, permanentlyDenied: Boolean) {
         if (connectionState.value.scannerType == ScannerType.Wifi) {
             return
