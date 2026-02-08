@@ -94,6 +94,14 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
         binding.wifiSettingsButton.setOnClickListener {
             runCatching { startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) }
         }
+        binding.wifiAdvancedButton.setOnClickListener {
+            if (parentFragmentManager.findFragmentByTag(WifiAdvancedSettingsDialogFragment.TAG) == null) {
+                val state = (requireActivity() as MainActivity).connectionViewModel.connectionState.value
+                WifiAdvancedSettingsDialogFragment
+                    .newInstance(state.wifiHost, state.wifiPort)
+                    .show(parentFragmentManager, WifiAdvancedSettingsDialogFragment.TAG)
+            }
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
