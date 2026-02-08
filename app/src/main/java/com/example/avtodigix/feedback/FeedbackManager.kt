@@ -18,15 +18,15 @@ class FeedbackManager(
         feedbackPrefs.setLastPromptAt(nowMillis)
     }
 
-    fun markSubmitted(nowMillis: Long = System.currentTimeMillis()) {
-        feedbackPrefs.setLastSubmittedAt(nowMillis)
+    fun markFormOpened(nowMillis: Long = System.currentTimeMillis()) {
+        feedbackPrefs.setLastFormOpenedAt(nowMillis)
     }
 
     fun shouldShowPrompt(nowMillis: Long = System.currentTimeMillis()): Boolean {
         val firstFullScanAt = feedbackPrefs.getFirstFullScanAt()
         val successfulConnections = feedbackPrefs.getSuccessfulConnectionsCount()
         val lastPromptAt = feedbackPrefs.getLastPromptAt()
-        val lastSubmittedAt = feedbackPrefs.getLastSubmittedAt()
+        val lastFormOpenedAt = feedbackPrefs.getLastFormOpenedAt()
 
         val triggerReached = firstFullScanAt > 0L || successfulConnections >= REQUIRED_CONNECTIONS
         if (!triggerReached) {
@@ -37,7 +37,7 @@ class FeedbackManager(
             return false
         }
 
-        if (lastSubmittedAt > 0L && nowMillis - lastSubmittedAt < SUBMIT_COOLDOWN_MILLIS) {
+        if (lastFormOpenedAt > 0L && nowMillis - lastFormOpenedAt < FORM_OPEN_COOLDOWN_MILLIS) {
             return false
         }
 
@@ -47,6 +47,6 @@ class FeedbackManager(
     private companion object {
         private const val REQUIRED_CONNECTIONS = 3
         private const val PROMPT_COOLDOWN_MILLIS = 7L * 24 * 60 * 60 * 1000
-        private const val SUBMIT_COOLDOWN_MILLIS = 30L * 24 * 60 * 60 * 1000
+        private const val FORM_OPEN_COOLDOWN_MILLIS = 30L * 24 * 60 * 60 * 1000
     }
 }
