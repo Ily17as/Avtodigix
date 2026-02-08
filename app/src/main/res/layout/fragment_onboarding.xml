@@ -42,6 +42,17 @@
             android:text="@string/onboarding_step_three"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
+        <TextView
+            android:id="@+id/onboardingInstructionLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="@string/onboarding_instruction_label"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            android:textColor="?attr/colorPrimary" />
+
         <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/onboardingDontShowAgain"
             android:layout_width="match_parent"

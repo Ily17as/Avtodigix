@@ -31,6 +31,8 @@
     <string name="onboarding_step_two">2. Выберите Bluetooth/Wi-Fi.</string>
     <string name="onboarding_step_three">3. Откройте сводку.</string>
     <string name="onboarding_dont_show_again">Больше не показывать</string>
+    <string name="onboarding_instruction_label">Подробная инструкция</string>
+    <string name="onboarding_instruction_url">https://avtodigix.tilda.ws/instruction</string>
 
     <string name="welcome_title">Добро пожаловать в Avtodigix</string>
     <string name="welcome_subtitle">Быстрый старт для диагностики.</string>
