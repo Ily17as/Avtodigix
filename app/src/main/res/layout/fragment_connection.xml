@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/connection_title"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/connectionModeBluetooth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/connection_mode_bluetooth_short" />
+
+            <RadioButton
+                android:id="@+id/connectionModeWifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/connection_mode_wifi_short" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/connectionStatusDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="—" />
+
+        <TextView
+            android:id="@+id/connectionLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/connectionConnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/action_connect" />
+
+        <LinearLayout
+            android:id="@+id/bluetoothGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/connectionPairedList"
+                android:layout_width="match_parent"
+                android:layout_height="180dp" />
+
+            <Button
+                android:id="@+id/bluetoothEnableButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enable Bluetooth" />
+
+            <Button
+                android:id="@+id/bluetoothSettingsButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bluetooth Settings" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wifiGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/wifiDiscoveredList"
+                android:layout_width="match_parent"
+                android:layout_height="180dp" />
+
+            <TextView
+                android:id="@+id/wifiDiscoveredEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No Wi-Fi devices" />
+
+            <Button
+                android:id="@+id/wifiSettingsButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wi-Fi Settings" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

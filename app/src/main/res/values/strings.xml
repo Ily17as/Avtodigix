@@ -179,4 +179,14 @@
     <string name="all_data_mil_inactive">MIL статус: не активен</string>
     <string name="all_data_oil_pressure_label">Давление масла</string>
     <string name="all_data_fuel_pressure_label">Давление топлива (PID %1$s)</string>
+    <string name="nav_connection">Подключение</string>
+    <string name="nav_data">Данные</string>
+    <string name="nav_issues">Ошибки</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="feedback_fab">Отправить отзыв</string>
+    <string name="feedback_subject">Avtodigix feedback</string>
+    <string name="data_waiting_connection">Подключитесь к адаптеру для получения метрик.</string>
+    <string name="action_refresh_dtc">Обновить DTC</string>
+    <string name="dtc_none">Нет кодов</string>
+    <string name="history_empty">История пока пуста</string>
 </resources>
