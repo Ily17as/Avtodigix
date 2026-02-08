@@ -10,6 +10,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.core.view.MarginLayoutParamsCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.ConnectionViewModel
 import com.example.avtodigix.connection.ConnectionViewModelFactory
@@ -55,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         binding.feedbackFab.setOnClickListener {
             showFeedbackSheet()
         }
+        setupInsetsHandling()
 
         supportFragmentManager.setFragmentResultListener(
             FeedbackBottomSheetDialogFragment.REQUEST_KEY,
@@ -88,6 +92,65 @@ class MainActivity : AppCompatActivity() {
         }
 
         observeFeedbackTriggers()
+    }
+
+
+    private fun setupInsetsHandling() {
+        val bottomNavigationLayoutParams = binding.bottomNavigation.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams
+        val feedbackFabLayoutParams = binding.feedbackFab.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams
+        val baseBottomNavigationBottomMargin = bottomNavigationLayoutParams.bottomMargin
+        val baseBottomNavigationMarginStart = MarginLayoutParamsCompat.getMarginStart(bottomNavigationLayoutParams)
+        val baseBottomNavigationMarginEnd = MarginLayoutParamsCompat.getMarginEnd(bottomNavigationLayoutParams)
+        val baseFeedbackFabBottomMargin = feedbackFabLayoutParams.bottomMargin
+        val baseFeedbackFabMarginEnd = MarginLayoutParamsCompat.getMarginEnd(feedbackFabLayoutParams)
+        val fabBottomNavigationClearance = resources.getDimensionPixelSize(R.dimen.feedback_fab_clearance_from_bottom_nav)
+
+        var systemBottomInset = 0
+
+        val updateFabPosition = {
+            val bottomNavigationHeight = binding.bottomNavigation.height
+            val requiredBottomOffset = if (bottomNavigationHeight > 0) {
+                systemBottomInset + bottomNavigationHeight + fabBottomNavigationClearance
+            } else {
+                0
+            }
+            feedbackFabLayoutParams.bottomMargin = maxOf(
+                baseFeedbackFabBottomMargin + systemBottomInset,
+                requiredBottomOffset
+            )
+            MarginLayoutParamsCompat.setMarginEnd(
+                feedbackFabLayoutParams,
+                baseFeedbackFabMarginEnd
+            )
+            binding.feedbackFab.layoutParams = feedbackFabLayoutParams
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val systemBarsInsets = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+
+            systemBottomInset = systemBarsInsets.bottom
+
+            MarginLayoutParamsCompat.setMarginStart(
+                bottomNavigationLayoutParams,
+                baseBottomNavigationMarginStart + systemBarsInsets.left
+            )
+            MarginLayoutParamsCompat.setMarginEnd(
+                bottomNavigationLayoutParams,
+                baseBottomNavigationMarginEnd + systemBarsInsets.right
+            )
+            bottomNavigationLayoutParams.bottomMargin = baseBottomNavigationBottomMargin + systemBottomInset
+            binding.bottomNavigation.layoutParams = bottomNavigationLayoutParams
+
+            updateFabPosition()
+            insets
+        }
+
+        binding.bottomNavigation.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateFabPosition()
+        }
+        ViewCompat.requestApplyInsets(binding.root)
     }
 
     private fun observeFeedbackTriggers() {
