@@ -9,12 +9,22 @@ import java.util.Date
 import java.util.Locale
 
 private const val AVTODIGIX_SITE_URL = "https://avtodigix.tilda.ws/"
+private const val AVTODIGIX_PROMO_TEXT = "Быстрая диагностика состояния авто прямо в телефоне"
 
 fun appendSiteLinkIfMissing(text: String): String {
-    if (text.contains(AVTODIGIX_SITE_URL)) {
+    val hasPromoText = text.contains(AVTODIGIX_PROMO_TEXT)
+    val hasSiteUrl = text.contains(AVTODIGIX_SITE_URL)
+    if (hasPromoText && hasSiteUrl) {
         return text
     }
-    return text.trimEnd('\n') + "\n$AVTODIGIX_SITE_URL"
+
+    val baseText = text.trimEnd('\n')
+    val tailParts = buildList {
+        if (!hasPromoText) add(AVTODIGIX_PROMO_TEXT)
+        if (!hasSiteUrl) add(AVTODIGIX_SITE_URL)
+    }
+    val separator = if (baseText.isNotEmpty()) "\n\n" else ""
+    return baseText + separator + tailParts.joinToString("\n")
 }
 
 fun buildCurrentDtcReport(context: Context, stored: List<String>, pending: List<String>): String {
