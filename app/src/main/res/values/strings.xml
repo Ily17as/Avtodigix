@@ -179,6 +179,17 @@
     <string name="all_data_mil_inactive">MIL статус: не активен</string>
     <string name="all_data_oil_pressure_label">Давление масла</string>
     <string name="all_data_fuel_pressure_label">Давление топлива (PID %1$s)</string>
+    <string name="settings_user_mode_title">Режим пользователя</string>
+    <string name="settings_user_mode_novice">Новичок</string>
+    <string name="settings_user_mode_professional">Профессионал</string>
+    <string name="settings_advanced_title">Advanced</string>
+    <string name="settings_diagnostics_mode">Диагностический режим</string>
+    <string name="settings_diagnostics_last_command_placeholder">Последний запрос: —</string>
+    <string name="settings_diagnostics_raw_response_placeholder">Сырый ответ: —</string>
+    <string name="settings_diagnostics_error_placeholder">Ошибка: —</string>
+    <string name="settings_diagnostics_last_command_value">Последний запрос: %1$s</string>
+    <string name="settings_diagnostics_raw_response_value">Сырый ответ: %1$s</string>
+    <string name="settings_diagnostics_error_value">Ошибка: %1$s</string>
     <string name="nav_connection">Подключение</string>
     <string name="nav_data">Данные</string>
     <string name="nav_issues">Ошибки</string>
