@@ -245,6 +245,13 @@
     <string name="feedback_action_later">Позже</string>
     <string name="feedback_thanks">Спасибо</string>
     <string name="feedback_write_more">Написать ещё</string>
+    <string name="feedback_sending">Отправка…</string>
+    <string name="feedback_success">Успешно отправлено</string>
+    <string name="feedback_error_generic">Ошибка отправки, попробуйте ещё раз</string>
+    <string name="feedback_error_offline">Нет сети. Ошибка отправки, попробуйте ещё раз</string>
+    <string name="feedback_open_form_fallback">Открыть форму</string>
+    <string name="feedback_form_fallback_hint">Если автоматическая отправка недоступна, отправьте отзыв через форму</string>
+    <string name="feedback_browser_unavailable">Не удалось открыть браузер</string>
 
     <string name="tab_errors">Ошибки</string>
     <string name="tab_history">История</string>

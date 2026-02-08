@@ -5,10 +5,12 @@ data class FeedbackPayload(
     val tags: List<String>,
     val comment: String,
     val appVersion: String,
-    val deviceModel: String,
-    val androidVersion: String,
+    val buildNumber: Int,
+    val platform: String,
+    val deviceModel: String?,
     val connectionType: String,
     val lastSessionResult: String,
     val dtcCount: Int,
-    val submittedAt: Long
+    val submittedAtUtc: String,
+    val submittedAtMillis: Long
 )

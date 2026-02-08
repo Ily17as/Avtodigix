@@ -14,12 +14,14 @@ class FeedbackLocalStore(context: Context) {
             put("tags", JSONArray(payload.tags))
             put("comment", payload.comment)
             put("app_version", payload.appVersion)
+            put("build_number", payload.buildNumber)
+            put("platform", payload.platform)
             put("device_model", payload.deviceModel)
-            put("android_version", payload.androidVersion)
             put("connection_type", payload.connectionType)
             put("last_session_result", payload.lastSessionResult)
             put("dtc_count", payload.dtcCount)
-            put("submitted_at", payload.submittedAt)
+            put("submitted_at_utc", payload.submittedAtUtc)
+            put("submitted_at_millis", payload.submittedAtMillis)
         }
         outputFile.appendText(json.toString() + "\n")
     }

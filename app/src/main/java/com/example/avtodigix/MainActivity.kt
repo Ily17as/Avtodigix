@@ -1,36 +1,47 @@
 package com.example.avtodigix
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.MarginLayoutParamsCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import androidx.core.view.MarginLayoutParamsCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.ConnectionViewModel
 import com.example.avtodigix.connection.ConnectionViewModelFactory
 import com.example.avtodigix.connection.ObdState
 import com.example.avtodigix.connection.SelectedDeviceStore
 import com.example.avtodigix.databinding.ActivityMainBinding
+import com.example.avtodigix.feedback.ConnectivityChecker
 import com.example.avtodigix.feedback.FeedbackLocalStore
 import com.example.avtodigix.feedback.FeedbackManager
 import com.example.avtodigix.feedback.FeedbackPayload
 import com.example.avtodigix.feedback.FeedbackPrefs
+import com.example.avtodigix.feedback.FeedbackRepository
+import com.example.avtodigix.feedback.FeedbackSubmissionState
+import com.example.avtodigix.feedback.HttpFeedbackSender
 import com.example.avtodigix.ui.FeedbackBottomSheetDialogFragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var feedbackManager: FeedbackManager
-    private lateinit var feedbackLocalStore: FeedbackLocalStore
+    private lateinit var feedbackRepository: FeedbackRepository
+    private lateinit var lastFeedbackPayload: FeedbackPayload
+
+    private var feedbackSubmissionState: FeedbackSubmissionState = FeedbackSubmissionState.Idle
     private var latestConnectionState = ConnectionState()
     private var latestObdState = ObdState()
 
@@ -47,7 +58,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         feedbackManager = FeedbackManager(FeedbackPrefs(applicationContext))
-        feedbackLocalStore = FeedbackLocalStore(applicationContext)
+        val feedbackLocalStore = FeedbackLocalStore(applicationContext)
+        feedbackRepository = FeedbackRepository(
+            sender = HttpFeedbackSender(),
+            localStore = feedbackLocalStore,
+            connectivityChecker = ConnectivityChecker(applicationContext)
+        )
 
         connectionViewModel
 
@@ -67,33 +83,97 @@ class MainActivity : AppCompatActivity() {
             val rating = result.getInt(FeedbackBottomSheetDialogFragment.RESULT_RATING, 5)
             val tags = result.getStringArray(FeedbackBottomSheetDialogFragment.RESULT_TAGS)?.toList().orEmpty()
             val comment = result.getString(FeedbackBottomSheetDialogFragment.RESULT_COMMENT).orEmpty()
-
+            val submittedAtMillis = System.currentTimeMillis()
             val payload = FeedbackPayload(
                 rating = rating,
                 tags = tags,
                 comment = comment,
                 appVersion = BuildConfig.VERSION_NAME,
-                deviceModel = Build.MODEL.orEmpty(),
-                androidVersion = Build.VERSION.RELEASE.orEmpty(),
+                buildNumber = BuildConfig.VERSION_CODE,
+                platform = "android",
+                deviceModel = Build.MODEL?.takeIf { it.isNotBlank() },
                 connectionType = latestConnectionState.scannerType.name.lowercase(),
                 lastSessionResult = latestConnectionState.status.name.lowercase(),
                 dtcCount = latestObdState.dtcCountReported ?: latestObdState.storedDtcs.size,
-                submittedAt = System.currentTimeMillis()
+                submittedAtUtc = Instant.ofEpochMilli(submittedAtMillis).toString(),
+                submittedAtMillis = submittedAtMillis
             )
-            feedbackLocalStore.save(payload)
-            feedbackManager.markSubmitted(payload.submittedAt)
-            Log.i(TAG, "Feedback saved locally (backend unavailable): $payload")
-
-            Snackbar.make(binding.root, getString(R.string.feedback_thanks), Snackbar.LENGTH_LONG)
-                .setAction(R.string.feedback_write_more) {
-                    showFeedbackSheet()
-                }
-                .show()
+            submitFeedback(payload)
         }
 
         observeFeedbackTriggers()
     }
 
+    private fun submitFeedback(payload: FeedbackPayload) {
+        lastFeedbackPayload = payload
+        lifecycleScope.launch {
+            feedbackSubmissionState = FeedbackSubmissionState.Sending
+            renderFeedbackSubmissionState()
+
+            val submitState = feedbackRepository.submit(payload)
+            feedbackSubmissionState = submitState
+            renderFeedbackSubmissionState()
+
+            if (submitState is FeedbackSubmissionState.Success) {
+                feedbackManager.markSubmitted(payload.submittedAtMillis)
+            }
+        }
+    }
+
+    private fun renderFeedbackSubmissionState() {
+        when (val state = feedbackSubmissionState) {
+            FeedbackSubmissionState.Idle -> Unit
+            FeedbackSubmissionState.Sending -> {
+                Snackbar.make(binding.root, getString(R.string.feedback_sending), Snackbar.LENGTH_SHORT).show()
+            }
+
+            FeedbackSubmissionState.Success -> {
+                Snackbar.make(binding.root, getString(R.string.feedback_success), Snackbar.LENGTH_LONG).show()
+            }
+
+            is FeedbackSubmissionState.Error -> {
+                Snackbar.make(
+                    binding.root,
+                    getString(
+                        if (state.isOffline) {
+                            R.string.feedback_error_offline
+                        } else {
+                            R.string.feedback_error_generic
+                        }
+                    ),
+                    Snackbar.LENGTH_LONG
+                ).setAction(R.string.action_retry) {
+                    if (::lastFeedbackPayload.isInitialized) {
+                        submitFeedback(lastFeedbackPayload)
+                    }
+                }.show()
+
+                if (!state.isOffline) {
+                    Snackbar.make(
+                        binding.root,
+                        getString(R.string.feedback_form_fallback_hint),
+                        Snackbar.LENGTH_LONG
+                    ).setAction(R.string.feedback_open_form_fallback) {
+                        openFeedbackFormFallback()
+                    }.show()
+                }
+            }
+        }
+    }
+
+    private fun openFeedbackFormFallback() {
+        if (!::lastFeedbackPayload.isInitialized) {
+            return
+        }
+        val fallbackUrl = HttpFeedbackSender.buildFallbackUrl(lastFeedbackPayload)
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl)))
+        } catch (exception: ActivityNotFoundException) {
+            Log.e(TAG, "No browser found for feedback fallback", exception)
+            Snackbar.make(binding.root, getString(R.string.feedback_browser_unavailable), Snackbar.LENGTH_LONG)
+                .show()
+        }
+    }
 
     private fun setupInsetsHandling() {
         val bottomNavigationLayoutParams = binding.bottomNavigation.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams
