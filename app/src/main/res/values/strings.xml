@@ -232,21 +232,21 @@
     <string name="action_refresh_dtc">Обновить DTC</string>
     <string name="dtc_none">Нет кодов</string>
     <string name="history_empty">История пока пуста</string>
-    <string name="feedback_title">Нам важно ваше мнение</string>
-    <string name="feedback_rating_label">Оцените приложение</string>
-    <string name="feedback_tags_label">Что понравилось/не понравилось?</string>
+    <string name="feedback_title">Поделитесь впечатлениями</string>
+    <string name="feedback_rating_label">Оцените ваш опыт</string>
+    <string name="feedback_tags_label">Что стоит улучшить?</string>
     <string name="feedback_tag_connection">Подключение</string>
     <string name="feedback_tag_data">Данные</string>
     <string name="feedback_tag_stability">Стабильность</string>
     <string name="feedback_tag_design">Дизайн</string>
     <string name="feedback_tag_other">Другое</string>
     <string name="feedback_comment_hint">Комментарий (до 500 символов)</string>
-    <string name="feedback_action_send">Отправить</string>
+    <string name="feedback_action_send">Продолжить</string>
     <string name="feedback_action_later">Позже</string>
     <string name="feedback_thanks">Спасибо</string>
     <string name="feedback_write_more">Написать ещё</string>
-    <string name="feedback_browser_unavailable">Не удалось открыть браузер</string>
-    <string name="feedback_form_opened">Форма отзыва открыта</string>
+    <string name="feedback_browser_unavailable">Не удалось открыть форму отзыва</string>
+    <string name="feedback_form_opened">Форма отзыва открыта в браузере</string>
 
     <string name="tab_errors">Ошибки</string>
     <string name="tab_history">История</string>
