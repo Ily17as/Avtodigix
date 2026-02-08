@@ -20,6 +20,16 @@
         android:text="@string/connection_troubleshoot_body"
         android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/connectionTroubleshootInstructionLink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:autoLink="web"
+        android:linksClickable="true"
+        android:text="@string/connection_troubleshoot_instruction_with_link"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/connectionTroubleshootClose"
         style="@style/Widget.MaterialComponents.Button.TextButton"

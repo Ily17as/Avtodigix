@@ -1,6 +1,7 @@
 package com.example.avtodigix.ui
 
 import android.os.Bundle
+import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,9 @@ class TroubleshootingBottomSheetDialogFragment : BottomSheetDialogFragment() {
         view.findViewById<MaterialTextView>(R.id.connectionTroubleshootTitle).text = content.title
         view.findViewById<MaterialTextView>(R.id.connectionTroubleshootBody).text =
             content.items.joinToString("\n") { "• $it" }
+        view.findViewById<MaterialTextView>(R.id.connectionTroubleshootInstructionLink).apply {
+            movementMethod = LinkMovementMethod.getInstance()
+        }
         view.findViewById<MaterialButton>(R.id.connectionTroubleshootClose).setOnClickListener {
             dismiss()
         }
