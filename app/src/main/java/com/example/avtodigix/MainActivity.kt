@@ -8,7 +8,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.ConnectionViewModel
@@ -48,7 +48,8 @@ class MainActivity : AppCompatActivity() {
 
         connectionViewModel
 
-        val navController = findNavController(R.id.mainNavHost)
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.mainNavHost) as NavHostFragment
+        val navController = navHostFragment.navController
         binding.bottomNavigation.setupWithNavController(navController)
 
         binding.feedbackFab.setOnClickListener {

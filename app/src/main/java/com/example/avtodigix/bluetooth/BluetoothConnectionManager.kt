@@ -35,8 +35,8 @@ class BluetoothConnectionManager(
 ) {
     private val scope = parentScope ?: CoroutineScope(SupervisorJob() + ioDispatcher)
     private val adapter: BluetoothAdapter? by lazy {
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothManager.adapter
+        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        bluetoothManager?.adapter
     }
     private val _status = MutableStateFlow<ConnectionStatus>(ConnectionStatus.NoConnection)
     val status: StateFlow<ConnectionStatus> = _status

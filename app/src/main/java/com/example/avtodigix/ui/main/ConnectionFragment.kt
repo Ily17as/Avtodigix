@@ -140,7 +140,7 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
         val hasError = state.status == ConnectionState.Status.Error && !state.errorMessage.isNullOrBlank()
         binding.connectionRetry.isVisible = hasError
         val errorColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorError)
-        val defaultStrokeColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorOutline)
+        val defaultStrokeColor = ContextCompat.getColor(requireContext(), android.R.color.darker_gray)
         binding.connectionHelp.strokeColor = if (hasError) android.content.res.ColorStateList.valueOf(errorColor)
         else android.content.res.ColorStateList.valueOf(defaultStrokeColor)
         binding.connectionHelp.strokeWidth = if (hasError) 4 else 0
