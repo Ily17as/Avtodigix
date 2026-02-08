@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="feedback_fab_margin_bottom">24dp</dimen>
+    <dimen name="feedback_fab_margin_end">20dp</dimen>
+    <dimen name="feedback_fab_clearance_from_bottom_nav">16dp</dimen>
+</resources>
