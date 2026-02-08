@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
@@ -73,6 +74,19 @@ class MainActivity : AppCompatActivity() {
             val rating = result.getInt(FeedbackBottomSheetDialogFragment.RESULT_RATING, 0)
             val tags = result.getStringArray(FeedbackBottomSheetDialogFragment.RESULT_TAGS)?.toList().orEmpty()
             val comment = result.getString(FeedbackBottomSheetDialogFragment.RESULT_COMMENT).orEmpty()
+            val normalizedComment = if (comment.length > FeedbackBottomSheetDialogFragment.MAX_COMMENT_LENGTH) {
+                Toast.makeText(
+                    this,
+                    getString(
+                        R.string.feedback_comment_trimmed,
+                        FeedbackBottomSheetDialogFragment.MAX_COMMENT_LENGTH
+                    ),
+                    Toast.LENGTH_SHORT
+                ).show()
+                comment.take(FeedbackBottomSheetDialogFragment.MAX_COMMENT_LENGTH)
+            } else {
+                comment
+            }
             if (rating !in VALID_RATING_RANGE) {
                 Log.w(TAG, "Ignoring feedback result with invalid rating: $rating")
                 return@setFragmentResultListener
@@ -81,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             val payload = FeedbackPayload(
                 rating = rating,
                 tags = tags,
-                comment = comment,
+                comment = normalizedComment,
                 appVersion = BuildConfig.VERSION_NAME,
                 buildNumber = BuildConfig.VERSION_CODE,
                 platform = "android",

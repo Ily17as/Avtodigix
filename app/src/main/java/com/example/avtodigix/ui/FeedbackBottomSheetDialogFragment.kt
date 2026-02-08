@@ -101,7 +101,7 @@ class FeedbackBottomSheetDialogFragment : BottomSheetDialogFragment() {
         const val RESULT_RATING = "feedback_rating"
         const val RESULT_TAGS = "feedback_tags"
         const val RESULT_COMMENT = "feedback_comment"
-        private const val MAX_COMMENT_LENGTH = 500
+        const val MAX_COMMENT_LENGTH = 500
         private val VALID_RATING_RANGE = 1..5
         private const val COMMENT_REQUIRED_MAX_RATING = 3
     }
