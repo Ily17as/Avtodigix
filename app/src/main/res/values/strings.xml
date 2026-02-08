@@ -213,4 +213,36 @@
     <string name="feedback_action_later">Позже</string>
     <string name="feedback_thanks">Спасибо</string>
     <string name="feedback_write_more">Написать ещё</string>
+
+    <string name="tab_errors">Ошибки</string>
+    <string name="tab_history">История</string>
+    <string name="action_save_report">Сохранить отчёт</string>
+    <string name="action_share">Поделиться</string>
+    <string name="action_clear_errors">Очистить ошибки</string>
+    <string name="clear_errors_confirm">Очистить сохранённые и ожидающие ошибки?</string>
+    <string name="dtc_summary_format">Stored: %1$d, Pending: %2$d</string>
+    <string name="dtc_badge_stored">Stored</string>
+    <string name="dtc_badge_pending">Pending</string>
+    <string name="dtc_description_unknown">Описание недоступно</string>
+    <string name="dtc_troubleshoot_title">Что делать с ошибками</string>
+    <string name="recommendation_connection_power">Проверьте питание адаптера.</string>
+    <string name="recommendation_connection_radio">Включите Bluetooth/Wi-Fi.</string>
+    <string name="recommendation_connection_pairing">Выполните сопряжение в настройках.</string>
+    <string name="recommendation_connection_restart">Перезапустите адаптер и попробуйте снова.</string>
+    <string name="recommendation_dtc_primary_fix">Сначала устраните причину ошибки, а не только код.</string>
+    <string name="recommendation_dtc_pending_observe">Pending ошибки наблюдайте после 1–2 поездок.</string>
+    <string name="recommendation_dtc_save_report">Сохраните отчёт перед ремонтом для сравнения.</string>
+    <string name="recommendation_dtc_clear_after_fix">Очищайте ошибки только после выполнения работ.</string>
+    <string name="report_current_title">Отчёт по текущим ошибкам</string>
+    <string name="report_history_title">Отчёт из истории</string>
+    <string name="report_list_summary">DTC: %1$d · Статус: %2$s</string>
+    <string name="report_status_ok">OK</string>
+    <string name="report_status_has_issues">Есть ошибки</string>
+    <string name="report_dtc_count">Количество DTC: %1$d</string>
+    <string name="report_metrics_title">Ключевые метрики</string>
+    <string name="report_metrics_block">Ключевые метрики:
+%1$s</string>
+    <string name="report_dtc_block">DTC:
+%1$s</string>
+
 </resources>
