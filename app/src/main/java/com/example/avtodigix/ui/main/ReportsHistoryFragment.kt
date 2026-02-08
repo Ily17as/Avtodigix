@@ -28,7 +28,7 @@ class ReportsHistoryFragment : Fragment(R.layout.fragment_history_tab) {
             val shareIntent = Intent(Intent.ACTION_SEND)
                 .setType("text/plain")
                 .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.report_history_title))
-                .putExtra(Intent.EXTRA_TEXT, report)
+                .putExtra(Intent.EXTRA_TEXT, appendSiteLinkIfMissing(report))
             startActivity(Intent.createChooser(shareIntent, getString(R.string.action_share)))
         }
     )

@@ -86,7 +86,7 @@ class IssuesTabFragment : Fragment(R.layout.fragment_issues_tab) {
         val intent = Intent(Intent.ACTION_SEND)
             .setType("text/plain")
             .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.report_current_title))
-            .putExtra(Intent.EXTRA_TEXT, content)
+            .putExtra(Intent.EXTRA_TEXT, appendSiteLinkIfMissing(content))
         startActivity(Intent.createChooser(intent, getString(R.string.action_share)))
     }
 
