@@ -107,6 +107,12 @@
                 android:text="No Wi-Fi devices" />
 
             <Button
+                android:id="@+id/wifiAdvancedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/connection_wifi_advanced" />
+
+            <Button
                 android:id="@+id/wifiSettingsButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
