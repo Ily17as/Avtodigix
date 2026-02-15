@@ -48,3 +48,8 @@ Avto-scan app for car users.
 ## Документация
 - [Поддерживаемые параметры и ограничения](docs/supported-parameters.md)
 - [Протестированные адаптеры и автомобили](docs/tested-adapters.md)
+
+
+## iOS-версия (Flutter)
+В репозитории добавлен отдельный Flutter-проект для iOS: [`flutter_ios/`](flutter_ios/README.md).
+
