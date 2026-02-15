@@ -4,6 +4,10 @@ class FeedbackManager(
     private val feedbackPrefs: FeedbackPrefs
 ) {
     fun shouldShowPromptOnSecondAppLaunch(): Boolean {
+        if (feedbackPrefs.hasSubmittedFeedback()) {
+            return false
+        }
+
         val updatedOpenCount = feedbackPrefs.getAppOpenCount() + 1
         feedbackPrefs.setAppOpenCount(updatedOpenCount)
 
@@ -33,7 +37,15 @@ class FeedbackManager(
         feedbackPrefs.setLastFormOpenedAt(nowMillis)
     }
 
+    fun markFeedbackSubmitted() {
+        feedbackPrefs.setHasSubmittedFeedback(true)
+    }
+
     fun shouldShowPromptForExternalTrigger(nowMillis: Long = System.currentTimeMillis()): Boolean {
+        if (feedbackPrefs.hasSubmittedFeedback()) {
+            return false
+        }
+
         val lastPromptAt = feedbackPrefs.getLastPromptAt()
         val lastFormOpenedAt = feedbackPrefs.getLastFormOpenedAt()
 
@@ -49,6 +61,10 @@ class FeedbackManager(
     }
 
     fun shouldShowPrompt(nowMillis: Long = System.currentTimeMillis()): Boolean {
+        if (feedbackPrefs.hasSubmittedFeedback()) {
+            return false
+        }
+
         val firstFullScanAt = feedbackPrefs.getFirstFullScanAt()
         val lastPromptAt = feedbackPrefs.getLastPromptAt()
         val lastFormOpenedAt = feedbackPrefs.getLastFormOpenedAt()
