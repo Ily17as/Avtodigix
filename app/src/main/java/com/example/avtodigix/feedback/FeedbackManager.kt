@@ -3,9 +3,20 @@ package com.example.avtodigix.feedback
 class FeedbackManager(
     private val feedbackPrefs: FeedbackPrefs
 ) {
-    fun recordSuccessfulConnection() {
-        val updatedCount = feedbackPrefs.getSuccessfulConnectionsCount() + 1
-        feedbackPrefs.setSuccessfulConnectionsCount(updatedCount)
+    fun shouldShowPromptOnSecondAppLaunch(): Boolean {
+        val updatedOpenCount = feedbackPrefs.getAppOpenCount() + 1
+        feedbackPrefs.setAppOpenCount(updatedOpenCount)
+
+        if (feedbackPrefs.isSecondLaunchPromptShown()) {
+            return false
+        }
+
+        return if (updatedOpenCount == SECOND_LAUNCH_COUNT) {
+            feedbackPrefs.setSecondLaunchPromptShown(true)
+            true
+        } else {
+            false
+        }
     }
 
     fun recordFirstFullScan(nowMillis: Long = System.currentTimeMillis()) {
@@ -22,13 +33,27 @@ class FeedbackManager(
         feedbackPrefs.setLastFormOpenedAt(nowMillis)
     }
 
-    fun shouldShowPrompt(nowMillis: Long = System.currentTimeMillis()): Boolean {
-        val firstFullScanAt = feedbackPrefs.getFirstFullScanAt()
-        val successfulConnections = feedbackPrefs.getSuccessfulConnectionsCount()
+    fun shouldShowPromptForExternalTrigger(nowMillis: Long = System.currentTimeMillis()): Boolean {
         val lastPromptAt = feedbackPrefs.getLastPromptAt()
         val lastFormOpenedAt = feedbackPrefs.getLastFormOpenedAt()
 
-        val triggerReached = firstFullScanAt > 0L || successfulConnections >= REQUIRED_CONNECTIONS
+        if (lastPromptAt > 0L && nowMillis - lastPromptAt < PROMPT_COOLDOWN_MILLIS) {
+            return false
+        }
+
+        if (lastFormOpenedAt > 0L && nowMillis - lastFormOpenedAt < FORM_OPEN_COOLDOWN_MILLIS) {
+            return false
+        }
+
+        return true
+    }
+
+    fun shouldShowPrompt(nowMillis: Long = System.currentTimeMillis()): Boolean {
+        val firstFullScanAt = feedbackPrefs.getFirstFullScanAt()
+        val lastPromptAt = feedbackPrefs.getLastPromptAt()
+        val lastFormOpenedAt = feedbackPrefs.getLastFormOpenedAt()
+
+        val triggerReached = firstFullScanAt > 0L
         if (!triggerReached) {
             return false
         }
@@ -45,7 +70,7 @@ class FeedbackManager(
     }
 
     private companion object {
-        private const val REQUIRED_CONNECTIONS = 3
+        private const val SECOND_LAUNCH_COUNT = 2
         private const val PROMPT_COOLDOWN_MILLIS = 7L * 24 * 60 * 60 * 1000
         private const val FORM_OPEN_COOLDOWN_MILLIS = 30L * 24 * 60 * 60 * 1000
     }

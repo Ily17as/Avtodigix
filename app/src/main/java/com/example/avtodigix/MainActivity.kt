@@ -17,6 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.avtodigix.connection.ConnectionState
@@ -42,6 +43,9 @@ class MainActivity : AppCompatActivity() {
     private var feedbackSubmissionState: FeedbackSubmissionState = FeedbackSubmissionState.Idle
     private var latestConnectionState = ConnectionState()
     private var latestObdState = ObdState()
+    private var hasConnectedSuccessfullyInSession = false
+    private var currentDestinationId: Int? = null
+    private var sawIssuesScreenWithUsefulData = false
 
     val connectionViewModel: ConnectionViewModel by lazy {
         ViewModelProvider(
@@ -61,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.mainNavHost) as NavHostFragment
         val navController = navHostFragment.navController
         binding.bottomNavigation.setupWithNavController(navController)
+        observeErrorScreenJourney(navController)
 
         binding.feedbackFab.setOnClickListener {
             showFeedbackSheet()
@@ -117,6 +122,7 @@ class MainActivity : AppCompatActivity() {
             openFeedbackFormPrefilled(feedbackFormUri, payload.submittedAtMillis)
         }
 
+        maybePromptFeedbackOnSecondLaunch()
         observeFeedbackTriggers()
     }
 
@@ -247,22 +253,24 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     connectionViewModel.connectionState.collect { state ->
-                        val previousStatus = latestConnectionState.status
                         latestConnectionState = state
-                        if (previousStatus != ConnectionState.Status.Connected &&
-                            state.status == ConnectionState.Status.Connected
-                        ) {
-                            feedbackManager.recordSuccessfulConnection()
-                            maybePromptFeedback()
+                        if (state.status == ConnectionState.Status.Connected) {
+                            hasConnectedSuccessfullyInSession = true
                         }
                     }
                 }
                 launch {
                     connectionViewModel.obdState.collect { state ->
                         val fullScanFinished = latestObdState.fullScanInProgress && !state.fullScanInProgress
-                        val hasScanResults = state.fullScanResults.isNotEmpty()
+                        val hasUsefulScanResults = hasUsefulScanResults(state)
                         latestObdState = state
-                        if (fullScanFinished && hasScanResults) {
+                        if (currentDestinationId == R.id.issuesHistoryFragment &&
+                            hasConnectedSuccessfullyInSession &&
+                            hasNonZeroDiagnosticData(state)
+                        ) {
+                            sawIssuesScreenWithUsefulData = true
+                        }
+                        if (fullScanFinished && hasUsefulScanResults) {
                             feedbackManager.recordFirstFullScan()
                             maybePromptFeedback()
                         }
@@ -272,12 +280,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeErrorScreenJourney(navController: NavController) {
+        currentDestinationId = navController.currentDestination?.id
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val previousDestinationId = currentDestinationId
+            currentDestinationId = destination.id
+
+            if (destination.id == R.id.issuesHistoryFragment &&
+                hasConnectedSuccessfullyInSession &&
+                hasNonZeroDiagnosticData(latestObdState)
+            ) {
+                sawIssuesScreenWithUsefulData = true
+            }
+
+            if (previousDestinationId == R.id.issuesHistoryFragment &&
+                destination.id != R.id.issuesHistoryFragment &&
+                sawIssuesScreenWithUsefulData &&
+                hasConnectedSuccessfullyInSession &&
+                hasNonZeroDiagnosticData(latestObdState)
+            ) {
+                maybePromptFeedbackForExternalTrigger()
+                sawIssuesScreenWithUsefulData = false
+            }
+        }
+    }
+
+    private fun maybePromptFeedbackForExternalTrigger() {
+        if (!feedbackManager.shouldShowPromptForExternalTrigger()) {
+            return
+        }
+        feedbackManager.markPromptShown()
+        showFeedbackSheet()
+    }
+
     private fun maybePromptFeedback() {
         if (!feedbackManager.shouldShowPrompt()) {
             return
         }
         feedbackManager.markPromptShown()
         showFeedbackSheet()
+    }
+
+    private fun hasUsefulScanResults(state: ObdState): Boolean {
+        return state.fullScanResults.any { record ->
+            val hasNonZeroBytes = record.bytes?.any { it != 0 } == true
+            val hasNonZeroDecodedValue = record.decodedValue
+                ?.replace(',', '.')
+                ?.toDoubleOrNull()
+                ?.let { kotlin.math.abs(it) > 0.0 } == true
+            hasNonZeroBytes || hasNonZeroDecodedValue
+        }
+    }
+
+    private fun hasNonZeroDiagnosticData(state: ObdState): Boolean {
+        val hasReportedDtcs = (state.dtcCountReported ?: 0) > 0 ||
+            state.storedDtcs.isNotEmpty() ||
+            state.pendingDtcs.isNotEmpty() ||
+            state.milOn == true
+        return hasReportedDtcs || hasUsefulScanResults(state)
+    }
+
+    private fun maybePromptFeedbackOnSecondLaunch() {
+        if (feedbackManager.shouldShowPromptOnSecondAppLaunch()) {
+            showFeedbackSheet()
+        }
     }
 
     private fun showFeedbackSheet() {
