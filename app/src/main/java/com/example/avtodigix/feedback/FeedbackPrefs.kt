@@ -36,6 +36,13 @@ class FeedbackPrefs(context: Context) {
         preferences.edit().putBoolean(KEY_SECOND_LAUNCH_PROMPT_SHOWN, value).apply()
     }
 
+    fun hasSubmittedFeedback(): Boolean =
+        preferences.getBoolean(KEY_HAS_SUBMITTED_FEEDBACK, false)
+
+    fun setHasSubmittedFeedback(value: Boolean) {
+        preferences.edit().putBoolean(KEY_HAS_SUBMITTED_FEEDBACK, value).apply()
+    }
+
     private companion object {
         private const val PREFS_NAME = "feedback_prefs"
         private const val KEY_FIRST_FULL_SCAN_AT = "first_full_scan_at"
@@ -43,5 +50,6 @@ class FeedbackPrefs(context: Context) {
         private const val KEY_LAST_FORM_OPENED_AT = "last_form_opened_at"
         private const val KEY_APP_OPEN_COUNT = "app_open_count"
         private const val KEY_SECOND_LAUNCH_PROMPT_SHOWN = "second_launch_prompt_shown"
+        private const val KEY_HAS_SUBMITTED_FEEDBACK = "has_submitted_feedback"
     }
 }
