@@ -96,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                 Log.w(TAG, "Ignoring feedback result with invalid rating: $rating")
                 return@setFragmentResultListener
             }
+            feedbackManager.markFeedbackSubmitted()
             val submittedAtMillis = System.currentTimeMillis()
             val payload = FeedbackPayload(
                 rating = rating,
