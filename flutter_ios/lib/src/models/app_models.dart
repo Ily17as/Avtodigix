@@ -2,8 +2,8 @@ enum ScannerType { bluetooth, wifi }
 enum ConnectionStatus { idle, initializing, permissionsRequired, connecting, connected, error }
 enum UserMode { novice, professional }
 
-class ConnectionState {
-  const ConnectionState({
+class AppConnectionState {
+  const AppConnectionState({
     this.scannerType = ScannerType.bluetooth,
     this.status = ConnectionStatus.idle,
     this.selectedDeviceName,
@@ -23,7 +23,7 @@ class ConnectionState {
   final String? errorMessage;
   final List<String> log;
 
-  ConnectionState copyWith({
+  AppConnectionState copyWith({
     ScannerType? scannerType,
     ConnectionStatus? status,
     String? selectedDeviceName,
@@ -33,7 +33,7 @@ class ConnectionState {
     String? errorMessage,
     List<String>? log,
   }) {
-    return ConnectionState(
+    return AppConnectionState(
       scannerType: scannerType ?? this.scannerType,
       status: status ?? this.status,
       selectedDeviceName: selectedDeviceName ?? this.selectedDeviceName,
