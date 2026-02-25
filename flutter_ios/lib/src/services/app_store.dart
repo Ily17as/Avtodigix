@@ -15,7 +15,7 @@ class AppStore extends ChangeNotifier {
   static const _userModeKey = 'user_mode';
   static const _diagnosticsKey = 'diagnostics_mode';
 
-  ConnectionState connectionState = const ConnectionState();
+  AppConnectionState connectionState = const AppConnectionState();
   ObdState obdState = const ObdState();
   List<ScanSnapshot> snapshots = const [];
   bool onboardingSeen = false;

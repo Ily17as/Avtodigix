@@ -149,7 +149,7 @@ class _ConnectionTabState extends State<_ConnectionTab> {
     );
   }
 
-  String _statusText(ConnectionState state) {
+  String _statusText(AppConnectionState state) {
     switch (state.status) {
       case ConnectionStatus.connected:
         return 'Подключено к ${state.selectedDeviceName ?? state.wifiResolvedEndpoint ?? 'устройству'}';
