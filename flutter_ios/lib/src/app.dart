@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'models/app_models.dart';
 import 'services/app_store.dart';
@@ -12,8 +13,23 @@ class AvtodigixApp extends StatefulWidget {
 }
 
 class _AvtodigixAppState extends State<AvtodigixApp> {
+  static final Uri _feedbackUri = Uri.parse(
+    'https://forms.yandex.ru/u/681f9b4084227c924223e522?source=avtodigix',
+  );
+
   final AppStore store = AppStore();
   int currentIndex = 0;
+
+  Future<void> _openFeedbackForm() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final opened = await launchUrl(_feedbackUri, mode: LaunchMode.externalApplication);
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(opened ? 'Форма отзыва открыта в браузере' : 'Не удалось открыть форму отзыва'),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -58,6 +74,11 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
             NavigationDestination(icon: Icon(Icons.error_outline), label: 'Ошибки'),
             NavigationDestination(icon: Icon(Icons.settings), label: 'Настройки'),
           ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _openFeedbackForm,
+          icon: const Icon(Icons.feedback_outlined),
+          label: const Text('Отзыв'),
         ),
       ),
     );
