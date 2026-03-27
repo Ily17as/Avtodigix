@@ -13,21 +13,168 @@ class AvtodigixApp extends StatefulWidget {
 }
 
 class _AvtodigixAppState extends State<AvtodigixApp> {
-  static final Uri _feedbackUri = Uri.parse(
-    'https://forms.yandex.ru/u/681f9b4084227c924223e522?source=avtodigix',
-  );
+  static final Uri _feedbackBaseUri = Uri.parse('https://forms.yandex.ru/u/681f9b4084227c924223e522');
+  static const int _maxCommentLength = 500;
+  static const List<String> _feedbackTags = ['Подключение', 'Данные', 'Стабильность', 'Дизайн', 'Другое'];
 
   final AppStore store = AppStore();
   int currentIndex = 0;
 
-  Future<void> _openFeedbackForm() async {
+  Future<void> _openFeedbackForm(Uri feedbackUri) async {
     final messenger = ScaffoldMessenger.of(context);
-    final opened = await launchUrl(_feedbackUri, mode: LaunchMode.externalApplication);
+    bool opened = false;
+    try {
+      opened = await launchUrl(feedbackUri, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        opened = await launchUrl(feedbackUri, mode: LaunchMode.inAppBrowserView);
+      }
+    } catch (_) {
+      opened = false;
+    }
 
     messenger.showSnackBar(
       SnackBar(
         content: Text(opened ? 'Форма отзыва открыта в браузере' : 'Не удалось открыть форму отзыва'),
       ),
+    );
+  }
+
+  Future<void> _showFeedbackSheet() async {
+    var rating = 0;
+    final selectedTags = <String>{};
+    final commentController = TextEditingController();
+
+    final payload = await showModalBottomSheet<_FeedbackDraft>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final requiresComment = rating in [1, 2, 3];
+            final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + keyboardInset),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Поделитесь впечатлениями', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 12),
+                      const Text('Оцените ваш опыт'),
+                      RatingBar(
+                        rating: rating.toDouble(),
+                        onChanged: (value) => setSheetState(() => rating = value.toInt()),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('Что стоит улучшить?'),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _feedbackTags
+                            .map(
+                              (tag) => FilterChip(
+                                label: Text(tag),
+                                selected: selectedTags.contains(tag),
+                                onSelected: (enabled) {
+                                  setSheetState(() {
+                                    if (enabled) {
+                                      selectedTags.add(tag);
+                                    } else {
+                                      selectedTags.remove(tag);
+                                    }
+                                  });
+                                },
+                              ),
+                            )
+                            .toList(growable: false),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: commentController,
+                        maxLength: _maxCommentLength,
+                        minLines: 3,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          hintText: 'Комментарий (до 500 символов)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(bottomSheetContext).pop(),
+                              child: const Text('Позже'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () {
+                                final normalizedComment = commentController.text.trim();
+                                if (rating < 1 || rating > 5) {
+                                  ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
+                                    const SnackBar(content: Text('Выберите оценку от 1 до 5 перед отправкой')),
+                                  );
+                                  return;
+                                }
+                                if (requiresComment && normalizedComment.isEmpty) {
+                                  ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
+                                    const SnackBar(content: Text('Пожалуйста, добавьте комментарий')),
+                                  );
+                                  return;
+                                }
+                                Navigator.of(bottomSheetContext).pop(
+                                  _FeedbackDraft(
+                                    rating: rating,
+                                    tags: selectedTags.toList(growable: false),
+                                    comment: normalizedComment,
+                                  ),
+                                );
+                              },
+                              child: const Text('Продолжить'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    commentController.dispose();
+    if (payload == null) {
+      return;
+    }
+
+    final feedbackUri = _buildFeedbackRedirectUri(payload);
+    await _openFeedbackForm(feedbackUri);
+  }
+
+  Uri _buildFeedbackRedirectUri(_FeedbackDraft payload) {
+    final normalizedRating = payload.rating.clamp(1, 5);
+    final features = payload.tags.map((it) => it.trim()).where((it) => it.isNotEmpty).toSet().join(', ').trim();
+    final message = StringBuffer()
+      ..write('Оценка: $normalizedRating/5\n')
+      ..write('Понравилось: ${features.isEmpty ? 'не выбрано' : features}\n')
+      ..write('Комментарий: ${payload.comment.isEmpty ? '—' : payload.comment}');
+
+    return _feedbackBaseUri.replace(
+      queryParameters: {
+        'rating': normalizedRating.toString(),
+        'answer_long_text_96199': message.toString(),
+        'source': 'avtodigix',
+      },
     );
   }
 
@@ -76,10 +223,47 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _openFeedbackForm,
+          onPressed: _showFeedbackSheet,
           icon: const Icon(Icons.feedback_outlined),
           label: const Text('Отзыв'),
         ),
+      ),
+    );
+  }
+}
+
+class _FeedbackDraft {
+  const _FeedbackDraft({
+    required this.rating,
+    required this.tags,
+    required this.comment,
+  });
+
+  final int rating;
+  final List<String> tags;
+  final String comment;
+}
+
+class RatingBar extends StatelessWidget {
+  const RatingBar({required this.rating, required this.onChanged, super.key});
+
+  final double rating;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(
+        5,
+        (index) {
+          final starIndex = index + 1;
+          return IconButton(
+            icon: Icon(starIndex <= rating ? Icons.star_rounded : Icons.star_outline_rounded),
+            color: Theme.of(context).colorScheme.primary,
+            onPressed: () => onChanged(starIndex.toDouble()),
+            tooltip: '$starIndex',
+          );
+        },
       ),
     );
   }
