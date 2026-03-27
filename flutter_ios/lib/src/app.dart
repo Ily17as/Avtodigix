@@ -51,7 +51,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
       builder: (bottomSheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final requiresComment = rating in [1, 2, 3];
+            final requiresComment = rating <= 3;
             final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
             return SafeArea(
               child: Padding(
