@@ -26,17 +26,26 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
 
   Future<void> _openFeedbackForm(Uri feedbackUri) async {
     final messenger = ScaffoldMessenger.of(context);
-    try {
-      final opened = await launchUrl(feedbackUri, mode: LaunchMode.platformDefault);
-      if (opened) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Форма отзыва открыта в браузере'),
-          ),
-        );
-        return;
+    final launchModes = <LaunchMode>[
+      LaunchMode.externalApplication,
+      LaunchMode.platformDefault,
+    ];
+
+    for (final mode in launchModes) {
+      try {
+        final opened = await launchUrl(feedbackUri, mode: mode);
+        if (opened) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Форма отзыва открыта в браузере'),
+            ),
+          );
+          return;
+        }
+      } catch (_) {
+        // Пробуем следующий режим открытия ссылки.
       }
-    } catch (_) {}
+    }
 
     if (!mounted) {
       return;
