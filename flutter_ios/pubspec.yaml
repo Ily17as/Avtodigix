@@ -21,3 +21,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+flutter_icons:
+  ios: true
+  image_path: assets/icon/app_icon.png
