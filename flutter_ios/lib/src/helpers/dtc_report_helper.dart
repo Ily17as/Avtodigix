@@ -1,3 +1,5 @@
+import '../models/app_models.dart';
+
 const List<String> dtcRecommendations = [
   'Сначала устраните причину ошибки, а не только код.',
   'Pending ошибки наблюдайте после 1–2 поездок.',
@@ -20,6 +22,28 @@ String buildCurrentDtcReport({
   return [
     'Текущий отчёт DTC',
     summary,
+    '',
+    'Коды ошибок',
+    normalizedDtcLines,
+  ].join('\n');
+}
+
+String buildSnapshotReport({
+  required ScanSnapshot snapshot,
+  required String formattedTimestamp,
+}) {
+  final metrics = snapshot.metrics.entries.map((entry) => '${entry.key}: ${entry.value}').join('\n');
+  final normalizedMetrics = metrics.isEmpty ? '—' : metrics;
+  final dtcLines = snapshot.dtcs.map((code) => '$code: Описание недоступно').join('\n');
+  final normalizedDtcLines = dtcLines.isEmpty ? 'Нет кодов' : dtcLines;
+
+  return [
+    'Отчёт из истории',
+    formattedTimestamp,
+    'Количество DTC: ${snapshot.dtcs.length}',
+    '',
+    'Ключевые метрики',
+    normalizedMetrics,
     '',
     'Коды ошибок',
     normalizedDtcLines,

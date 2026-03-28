@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'helpers/dtc_report_helper.dart';
 import 'models/app_models.dart';
+import 'report_details.dart';
 import 'services/app_store.dart';
 
 class AvtodigixApp extends StatefulWidget {
@@ -676,6 +677,15 @@ class _ReportsTab extends StatelessWidget {
   const _ReportsTab({required this.store});
   final AppStore store;
 
+  Future<void> _shareSnapshot(ScanSnapshot snapshot) async {
+    final formatter = DateFormat('dd.MM.yyyy HH:mm');
+    final report = buildSnapshotReport(
+      snapshot: snapshot,
+      formattedTimestamp: formatter.format(snapshot.timestamp),
+    );
+    await Share.share(report, subject: 'Отчёт из истории');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (store.snapshots.isEmpty) return const Center(child: Text('История пока пуста'));
@@ -687,11 +697,43 @@ class _ReportsTab extends StatelessWidget {
         return ListTile(
           title: Text(f.format(s.timestamp)),
           subtitle: Text('DTC: ${s.dtcs.length} · Статус: ${s.dtcs.isEmpty ? 'OK' : 'Есть ошибки'}'),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => ReportDetails(snapshot: s),
+              ),
+            );
+          },
+          trailing: PopupMenuButton<_ReportAction>(
+            onSelected: (action) async {
+              if (action == _ReportAction.open) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ReportDetails(snapshot: s),
+                  ),
+                );
+              } else if (action == _ReportAction.share) {
+                await _shareSnapshot(s);
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: _ReportAction.open,
+                child: Text('Открыть'),
+              ),
+              PopupMenuItem(
+                value: _ReportAction.share,
+                child: Text('Поделиться'),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 }
+
+enum _ReportAction { open, share }
 
 class _SettingsTab extends StatelessWidget {
   const _SettingsTab({required this.store});
