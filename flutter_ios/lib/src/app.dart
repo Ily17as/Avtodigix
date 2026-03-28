@@ -23,21 +23,20 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
 
   final AppStore store = AppStore();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  late final VoidCallback _storeListener;
   int currentIndex = 0;
 
-  BuildContext get _materialContext {
-    final context = _navigatorKey.currentContext;
-    if (context == null) {
-      throw StateError('Material context is not ready yet');
-    }
-    return context;
-  }
+  BuildContext? get _materialContext => _navigatorKey.currentContext;
 
   Future<void> _openFeedbackForm(Uri feedbackUri) async {
     if (!mounted) {
       return;
     }
-    final messenger = ScaffoldMessenger.of(_materialContext);
+    final materialContext = _materialContext;
+    if (materialContext == null) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(materialContext);
     final launchModes = <LaunchMode>[
       LaunchMode.externalApplication,
       LaunchMode.platformDefault,
@@ -64,7 +63,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     }
 
     await showDialog<void>(
-      context: _materialContext,
+      context: materialContext,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Не удалось открыть форму отзыва'),
         content: SelectableText(feedbackUri.toString()),
@@ -92,19 +91,24 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   }
 
   Future<void> _showFeedbackSheet() async {
+    final materialContext = _materialContext;
+    if (materialContext == null) {
+      return;
+    }
     var rating = 0;
     final selectedTags = <String>{};
-    final commentController = TextEditingController();
+    var commentText = '';
 
     final payload = await showModalBottomSheet<_FeedbackDraft>(
-      context: _materialContext,
+      context: materialContext,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (bottomSheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final requiresComment = rating <= 3;
-            final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+            final rawKeyboardInset = MediaQuery.of(context).viewInsets.bottom;
+            final keyboardInset = rawKeyboardInset.isFinite && rawKeyboardInset >= 0 ? rawKeyboardInset : 0.0;
             return SafeArea(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + keyboardInset),
@@ -146,10 +150,10 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
                       ),
                       const SizedBox(height: 12),
                       TextField(
-                        controller: commentController,
                         maxLength: _maxCommentLength,
                         minLines: 3,
                         maxLines: 5,
+                        onChanged: (value) => commentText = value,
                         decoration: const InputDecoration(
                           hintText: 'Комментарий (до 500 символов)',
                           border: OutlineInputBorder(),
@@ -168,7 +172,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
                           Expanded(
                             child: FilledButton(
                               onPressed: () {
-                                final normalizedComment = commentController.text.trim();
+                                final normalizedComment = commentText.trim();
                                 if (rating < 1 || rating > 5) {
                                   ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
                                     const SnackBar(content: Text('Выберите оценку от 1 до 5 перед отправкой')),
@@ -204,7 +208,6 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
       },
     );
 
-    commentController.dispose();
     if (payload == null) {
       return;
     }
@@ -233,12 +236,17 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   @override
   void initState() {
     super.initState();
+    _storeListener = () {
+      if (!mounted) return;
+      setState(() {});
+    };
     store.init();
-    store.addListener(() => setState(() {}));
+    store.addListener(_storeListener);
   }
 
   @override
   void dispose() {
+    store.removeListener(_storeListener);
     store.dispose();
     super.dispose();
   }
@@ -604,6 +612,12 @@ class _IssuesHistoryTabState extends State<_IssuesHistoryTab> with SingleTickerP
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    tabController.dispose();
+    super.dispose();
   }
 
   @override
