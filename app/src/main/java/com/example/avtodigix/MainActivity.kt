@@ -32,6 +32,8 @@ import com.example.avtodigix.feedback.FeedbackPrefs
 import com.example.avtodigix.feedback.FeedbackSubmissionState
 import com.example.avtodigix.feedback.HttpFeedbackSender
 import com.example.avtodigix.ui.FeedbackBottomSheetDialogFragment
+import com.example.avtodigix.ui.OnboardingBottomSheetDialogFragment
+import com.example.avtodigix.ui.UiPrefs
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -39,6 +41,7 @@ import java.time.Instant
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var feedbackManager: FeedbackManager
+    private lateinit var uiPrefs: UiPrefs
 
     private var feedbackSubmissionState: FeedbackSubmissionState = FeedbackSubmissionState.Idle
     private var latestConnectionState = ConnectionState()
@@ -60,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         feedbackManager = FeedbackManager(FeedbackPrefs(applicationContext))
+        uiPrefs = UiPrefs(applicationContext)
         connectionViewModel
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.mainNavHost) as NavHostFragment
@@ -123,6 +127,7 @@ class MainActivity : AppCompatActivity() {
             openFeedbackFormPrefilled(feedbackFormUri, payload.submittedAtMillis)
         }
 
+        maybeShowOnboarding()
         maybePromptFeedbackOnSecondLaunch()
         observeFeedbackTriggers()
     }
@@ -342,13 +347,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun maybePromptFeedbackOnSecondLaunch() {
+        if (isOnboardingVisible()) {
+            return
+        }
         if (feedbackManager.shouldShowPromptOnSecondAppLaunch()) {
             showFeedbackSheet()
         }
     }
 
+    private fun maybeShowOnboarding() {
+        if (uiPrefs.isOnboardingShown() || isOnboardingVisible()) {
+            return
+        }
+        OnboardingBottomSheetDialogFragment().show(
+            supportFragmentManager,
+            OnboardingBottomSheetDialogFragment.TAG
+        )
+    }
+
+    private fun isOnboardingVisible(): Boolean {
+        return supportFragmentManager.findFragmentByTag(OnboardingBottomSheetDialogFragment.TAG) != null
+    }
+
     private fun showFeedbackSheet() {
-        if (supportFragmentManager.findFragmentByTag(FeedbackBottomSheetDialogFragment.TAG) != null) {
+        if (supportFragmentManager.findFragmentByTag(FeedbackBottomSheetDialogFragment.TAG) != null ||
+            isOnboardingVisible()
+        ) {
             return
         }
         FeedbackBottomSheetDialogFragment().show(

@@ -1,5 +1,14 @@
 # Avtodigix UI Flow
 
+## First launch logic (Android + iOS)
+
+- On first app launch, onboarding is shown before any feedback prompt.
+- The "Don't show again" checkbox controls persistence:
+  - Checked → onboarding is marked as shown and is not displayed on next launches.
+  - Unchecked → onboarding is not marked as shown and may appear again on next launch.
+- Feedback bottom sheet must not be shown while onboarding is visible.
+- This rule is одинаковая для обеих платформ: Android и iOS используют одну и ту же последовательность при первом запуске.
+
 ## Overview
 The UI is a five-screen, linear onboarding flow with explicit **Back**/**Next** navigation. Each screen is full-screen and scrollable, allowing dense status and warning content.
 

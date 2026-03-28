@@ -16,6 +16,7 @@ import com.google.android.material.button.MaterialButton
 class OnboardingBottomSheetDialogFragment : BottomSheetDialogFragment() {
     var onDismissed: ((Boolean) -> Unit)? = null
     private var dontShowAgainCheckBox: CheckBox? = null
+    private var wasConfirmed = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,6 +33,9 @@ class OnboardingBottomSheetDialogFragment : BottomSheetDialogFragment() {
             openInstructionUrl()
         }
         view.findViewById<MaterialButton>(R.id.onboardingAction).setOnClickListener {
+            val dontShowAgain = dontShowAgainCheckBox?.isChecked == true
+            UiPrefs(requireContext()).setOnboardingShown(dontShowAgain)
+            wasConfirmed = true
             dismiss()
         }
     }
@@ -49,7 +53,10 @@ class OnboardingBottomSheetDialogFragment : BottomSheetDialogFragment() {
     }
 
     override fun onDismiss(dialog: DialogInterface) {
-        onDismissed?.invoke(dontShowAgainCheckBox?.isChecked == true)
+        if (wasConfirmed) {
+            onDismissed?.invoke(dontShowAgainCheckBox?.isChecked == true)
+        }
+        wasConfirmed = false
         dontShowAgainCheckBox = null
         super.onDismiss(dialog)
     }
