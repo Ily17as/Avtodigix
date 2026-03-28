@@ -23,6 +23,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
 
   final AppStore store = AppStore();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  late final VoidCallback _storeListener;
   int currentIndex = 0;
 
   BuildContext get _materialContext {
@@ -104,7 +105,8 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final requiresComment = rating <= 3;
-            final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+            final rawKeyboardInset = MediaQuery.of(context).viewInsets.bottom;
+            final keyboardInset = rawKeyboardInset.isFinite && rawKeyboardInset >= 0 ? rawKeyboardInset : 0.0;
             return SafeArea(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + keyboardInset),
@@ -233,12 +235,17 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   @override
   void initState() {
     super.initState();
+    _storeListener = () {
+      if (!mounted) return;
+      setState(() {});
+    };
     store.init();
-    store.addListener(() => setState(() {}));
+    store.addListener(_storeListener);
   }
 
   @override
   void dispose() {
+    store.removeListener(_storeListener);
     store.dispose();
     super.dispose();
   }
@@ -604,6 +611,12 @@ class _IssuesHistoryTabState extends State<_IssuesHistoryTab> with SingleTickerP
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    tabController.dispose();
+    super.dispose();
   }
 
   @override
