@@ -11,6 +11,8 @@ class AppConnectionState {
     this.wifiPort,
     this.wifiResolvedEndpoint,
     this.errorMessage,
+    this.isRetryable = false,
+    this.troubleshootingSteps = const [],
     this.log = const ['Лог: ожидание → поиск → подключение.'],
   });
 
@@ -21,6 +23,8 @@ class AppConnectionState {
   final int? wifiPort;
   final String? wifiResolvedEndpoint;
   final String? errorMessage;
+  final bool isRetryable;
+  final List<String> troubleshootingSteps;
   final List<String> log;
 
   AppConnectionState copyWith({
@@ -31,6 +35,8 @@ class AppConnectionState {
     int? wifiPort,
     String? wifiResolvedEndpoint,
     String? errorMessage,
+    bool? isRetryable,
+    List<String>? troubleshootingSteps,
     List<String>? log,
   }) {
     return AppConnectionState(
@@ -41,6 +47,8 @@ class AppConnectionState {
       wifiPort: wifiPort ?? this.wifiPort,
       wifiResolvedEndpoint: wifiResolvedEndpoint ?? this.wifiResolvedEndpoint,
       errorMessage: errorMessage,
+      isRetryable: isRetryable ?? this.isRetryable,
+      troubleshootingSteps: troubleshootingSteps ?? this.troubleshootingSteps,
       log: log ?? this.log,
     );
   }

@@ -25,6 +25,27 @@ class AppStore extends ChangeNotifier {
   Timer? _metricsTimer;
   final Random _random = Random();
 
+  static const String statusDisconnected = 'Не подключено';
+  static const String statusConnecting = 'Подключаемся…';
+  static const String statusConnectedPrefix = 'Подключено к';
+  static const String statusErrorPrefix = 'Ошибка:';
+  static const String unknownTarget = 'устройству';
+  static const String unknownError = 'неизвестная';
+  static const String retryAction = 'Повторить';
+  static const String troubleshootingAction = 'Что делать, если не подключается?';
+
+  static const String errorInvalidWifiHost = 'Введите корректный IP-адрес.';
+  static const String errorInvalidWifiPort = 'Введите порт от 1 до 65535.';
+  static const String errorWifiConnection = 'Ошибка подключения по Wi‑Fi.';
+  static const String errorBluetoothConnection = 'Ошибка подключения Bluetooth.';
+
+  static const List<String> troubleshootingSteps = [
+    'Проверьте питание адаптера.',
+    'Включите Bluetooth/Wi‑Fi.',
+    'Выполните сопряжение в настройках.',
+    'Перезапустите адаптер и попробуйте снова.',
+  ];
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     onboardingSeen = prefs.getBool(_onboardingKey) ?? false;
@@ -48,20 +69,52 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> connect({String? host, int? port}) async {
-    connectionState = connectionState.copyWith(status: ConnectionStatus.connecting, errorMessage: null);
+    connectionState = connectionState.copyWith(
+      status: ConnectionStatus.connecting,
+      errorMessage: null,
+      isRetryable: false,
+      troubleshootingSteps: troubleshootingSteps,
+    );
     notifyListeners();
     await Future<void>.delayed(const Duration(milliseconds: 900));
     if (connectionState.scannerType == ScannerType.wifi) {
       final resolvedHost = host ?? connectionState.wifiHost ?? '192.168.0.10';
       final resolvedPort = port ?? connectionState.wifiPort ?? 35000;
+      final validHost = RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(resolvedHost);
+      final validPort = resolvedPort > 0 && resolvedPort <= 65535;
+
+      if (!validHost) {
+        _setConnectionError(errorInvalidWifiHost);
+        return;
+      }
+      if (!validPort) {
+        _setConnectionError(errorInvalidWifiPort);
+        return;
+      }
+
+      if (_random.nextInt(100) < 25) {
+        _setConnectionError(errorWifiConnection);
+        return;
+      }
       connectionState = connectionState.copyWith(
         status: ConnectionStatus.connected,
         wifiHost: resolvedHost,
         wifiPort: resolvedPort,
         wifiResolvedEndpoint: '$resolvedHost:$resolvedPort',
+        errorMessage: null,
+        isRetryable: false,
       );
     } else {
-      connectionState = connectionState.copyWith(status: ConnectionStatus.connected, selectedDeviceName: 'OBDII Scanner');
+      if (_random.nextInt(100) < 20) {
+        _setConnectionError(errorBluetoothConnection);
+        return;
+      }
+      connectionState = connectionState.copyWith(
+        status: ConnectionStatus.connected,
+        selectedDeviceName: 'OBDII Scanner',
+        errorMessage: null,
+        isRetryable: false,
+      );
     }
     _startMetricsStream();
     notifyListeners();
@@ -69,8 +122,37 @@ class AppStore extends ChangeNotifier {
 
   void disconnect() {
     _metricsTimer?.cancel();
-    connectionState = connectionState.copyWith(status: ConnectionStatus.idle, errorMessage: null);
+    connectionState = connectionState.copyWith(
+      status: ConnectionStatus.idle,
+      errorMessage: null,
+      isRetryable: false,
+      troubleshootingSteps: troubleshootingSteps,
+    );
     obdState = const ObdState();
+    notifyListeners();
+  }
+
+  Future<void> retryConnect({String? host, int? port}) => connect(host: host, port: port);
+
+  void resetWifiAdvancedToAuto() {
+    connectionState = connectionState.copyWith(
+      wifiHost: null,
+      wifiPort: null,
+      wifiResolvedEndpoint: null,
+      errorMessage: null,
+      isRetryable: false,
+    );
+    notifyListeners();
+  }
+
+  void _setConnectionError(String message) {
+    _metricsTimer?.cancel();
+    connectionState = connectionState.copyWith(
+      status: ConnectionStatus.error,
+      errorMessage: message,
+      isRetryable: true,
+      troubleshootingSteps: troubleshootingSteps,
+    );
     notifyListeners();
   }
 

@@ -317,8 +317,19 @@ class _ConnectionTabState extends State<_ConnectionTab> {
   final portController = TextEditingController(text: '35000');
 
   @override
+  void dispose() {
+    hostController.dispose();
+    portController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = widget.store.connectionState;
+    final hasError = state.status == ConnectionStatus.error;
+    final errorColor = Theme.of(context).colorScheme.error;
+    final connectLabel = state.status == ConnectionStatus.connected ? 'Отключиться' : 'Подключиться';
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -337,36 +348,162 @@ class _ConnectionTabState extends State<_ConnectionTab> {
         ),
         if (state.scannerType == ScannerType.wifi) ...[
           const SizedBox(height: 12),
-          TextField(controller: hostController, decoration: const InputDecoration(labelText: 'IP-адрес')),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            title: const Text('Дополнительно'),
+            subtitle: const Text('Ручные параметры Wi‑Fi'),
+            children: [
+              TextField(controller: hostController, decoration: const InputDecoration(labelText: 'IP-адрес')),
+              const SizedBox(height: 8),
+              TextField(controller: portController, decoration: const InputDecoration(labelText: 'Порт')),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    widget.store.resetWifiAdvancedToAuto();
+                    hostController.text = '192.168.0.10';
+                    portController.text = '35000';
+                  },
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Сбросить на авто'),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
-          TextField(controller: portController, decoration: const InputDecoration(labelText: 'Порт')),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _openSystemSetting(SystemQuickAction.wifi),
+                icon: const Icon(Icons.wifi),
+                label: const Text('Настройки Wi‑Fi'),
+              ),
+            ],
+          ),
+        ] else ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _openSystemSetting(SystemQuickAction.bluetooth),
+                icon: const Icon(Icons.bluetooth),
+                label: const Text('Настройки Bluetooth'),
+              ),
+            ],
+          ),
         ],
         const SizedBox(height: 16),
         FilledButton(
           onPressed: state.status == ConnectionStatus.connected
               ? widget.store.disconnect
               : () => widget.store.connect(host: hostController.text, port: int.tryParse(portController.text)),
-          child: Text(state.status == ConnectionStatus.connected ? 'Отключиться' : 'Подключиться'),
+          child: Text(connectLabel),
+        ),
+        if (hasError && state.isRetryable) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => widget.store.retryConnect(host: hostController.text, port: int.tryParse(portController.text)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: errorColor, width: 2),
+              foregroundColor: errorColor,
+            ),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Повторить'),
+          ),
         ),
         const SizedBox(height: 12),
         Text(_statusText(state)),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () => _showTroubleshootingSheet(state),
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: hasError ? errorColor : Theme.of(context).colorScheme.outline),
+            foregroundColor: hasError ? errorColor : null,
+          ),
+          icon: const Icon(Icons.help_outline),
+          label: const Text('Что делать, если не подключается?'),
+        ),
       ],
+    );
+  }
+
+  Future<void> _showTroubleshootingSheet(AppConnectionState state) async {
+    final steps = state.troubleshootingSteps.isEmpty ? AppStore.troubleshootingSteps : state.troubleshootingSteps;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Не подключается', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              ...steps.map((step) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text('• $step'),
+                  )),
+              const SizedBox(height: 8),
+              const Text('Подробная инструкция: https://avtodigix.tilda.ws/instruction'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSystemSetting(SystemQuickAction action) async {
+    final platform = Theme.of(context).platform;
+    final candidates = switch (action) {
+      SystemQuickAction.bluetooth => <Uri>[
+          if (platform == TargetPlatform.iOS) Uri.parse('App-Prefs:Bluetooth'),
+          Uri.parse('app-settings:'),
+        ],
+      SystemQuickAction.wifi => <Uri>[
+          if (platform == TargetPlatform.iOS) Uri.parse('App-Prefs:WIFI'),
+          Uri.parse('app-settings:'),
+        ],
+    };
+
+    for (final uri in candidates) {
+      try {
+        if (await canLaunchUrl(uri) && await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+          return;
+        }
+      } catch (_) {
+        // fallback to next option
+      }
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Не удалось открыть настройки. Откройте их вручную.')),
     );
   }
 
   String _statusText(AppConnectionState state) {
     switch (state.status) {
       case ConnectionStatus.connected:
-        return 'Подключено к ${state.selectedDeviceName ?? state.wifiResolvedEndpoint ?? 'устройству'}';
+        return '${AppStore.statusConnectedPrefix} ${state.selectedDeviceName ?? state.wifiResolvedEndpoint ?? AppStore.unknownTarget}';
       case ConnectionStatus.connecting:
-        return 'Подключаемся…';
+        return AppStore.statusConnecting;
       case ConnectionStatus.error:
-        return 'Ошибка: ${state.errorMessage ?? 'неизвестная'}';
+        return '${AppStore.statusErrorPrefix} ${state.errorMessage ?? AppStore.unknownError}';
       default:
-        return 'Не подключено';
+        return AppStore.statusDisconnected;
     }
   }
 }
+
+enum SystemQuickAction { bluetooth, wifi }
 
 class _DataTab extends StatelessWidget {
   const _DataTab({required this.store});
