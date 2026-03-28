@@ -447,7 +447,7 @@ class _ConnectionTabState extends State<_ConnectionTab> {
             icon: const Icon(Icons.refresh),
             label: const Text('Повторить'),
           ),
-        ),
+        ],
         const SizedBox(height: 12),
         Text(_statusText(state)),
         const SizedBox(height: 12),
