@@ -22,14 +22,21 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   static const List<String> _feedbackTags = ['Подключение', 'Данные', 'Стабильность', 'Дизайн', 'Другое'];
 
   final AppStore store = AppStore();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   late final VoidCallback _storeListener;
   int currentIndex = 0;
+
+  BuildContext? get _materialContext => _navigatorKey.currentContext;
 
   Future<void> _openFeedbackForm(Uri feedbackUri) async {
     if (!mounted) {
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
+    final materialContext = _materialContext;
+    if (materialContext == null) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(materialContext);
     final launchModes = <LaunchMode>[
       LaunchMode.externalApplication,
       LaunchMode.platformDefault,
@@ -56,7 +63,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     }
 
     await showDialog<void>(
-      context: context,
+      context: materialContext,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Не удалось открыть форму отзыва'),
         content: SelectableText(feedbackUri.toString()),
@@ -84,12 +91,16 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   }
 
   Future<void> _showFeedbackSheet() async {
+    final materialContext = _materialContext;
+    if (materialContext == null) {
+      return;
+    }
     var rating = 0;
     final selectedTags = <String>{};
     var commentText = '';
 
     final payload = await showModalBottomSheet<_FeedbackDraft>(
-      context: context,
+      context: materialContext,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (bottomSheetContext) {
