@@ -22,10 +22,22 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   static const List<String> _feedbackTags = ['Подключение', 'Данные', 'Стабильность', 'Дизайн', 'Другое'];
 
   final AppStore store = AppStore();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   int currentIndex = 0;
 
+  BuildContext get _materialContext {
+    final context = _navigatorKey.currentContext;
+    if (context == null) {
+      throw StateError('Material context is not ready yet');
+    }
+    return context;
+  }
+
   Future<void> _openFeedbackForm(Uri feedbackUri) async {
-    final messenger = ScaffoldMessenger.of(context);
+    if (!mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(_materialContext);
     final launchModes = <LaunchMode>[
       LaunchMode.externalApplication,
       LaunchMode.platformDefault,
@@ -52,7 +64,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     }
 
     await showDialog<void>(
-      context: context,
+      context: _materialContext,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Не удалось открыть форму отзыва'),
         content: SelectableText(feedbackUri.toString()),
@@ -85,7 +97,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     final commentController = TextEditingController();
 
     final payload = await showModalBottomSheet<_FeedbackDraft>(
-      context: context,
+      context: _materialContext,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (bottomSheetContext) {
@@ -234,6 +246,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Avtodigix iOS',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
       home: Scaffold(
