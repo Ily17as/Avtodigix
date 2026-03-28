@@ -254,7 +254,6 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: _navigatorKey,
       title: 'Avtodigix iOS',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
       home: Scaffold(
