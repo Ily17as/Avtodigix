@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,19 +26,46 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
 
   Future<void> _openFeedbackForm(Uri feedbackUri) async {
     final messenger = ScaffoldMessenger.of(context);
-    bool opened = false;
     try {
-      opened = await launchUrl(feedbackUri, mode: LaunchMode.externalApplication);
-      if (!opened) {
-        opened = await launchUrl(feedbackUri, mode: LaunchMode.inAppBrowserView);
+      final opened = await launchUrl(feedbackUri, mode: LaunchMode.platformDefault);
+      if (opened) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Форма отзыва открыта в браузере'),
+          ),
+        );
+        return;
       }
-    } catch (_) {
-      opened = false;
+    } catch (_) {}
+
+    if (!mounted) {
+      return;
     }
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(opened ? 'Форма отзыва открыта в браузере' : 'Не удалось открыть форму отзыва'),
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Не удалось открыть форму отзыва'),
+        content: SelectableText(feedbackUri.toString()),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: feedbackUri.toString()));
+              if (!mounted) {
+                return;
+              }
+              Navigator.of(dialogContext).pop();
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Ссылка на форму скопирована')),
+              );
+            },
+            child: const Text('Скопировать ссылку'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Закрыть'),
+          ),
+        ],
       ),
     );
   }
