@@ -41,7 +41,7 @@ class AppStore extends ChangeNotifier {
 
   static const List<String> troubleshootingSteps = [
     'Проверьте питание адаптера.',
-    'Включите Bluetooth/Wi‑Fi.',
+    'Включите Bluetooth/Wi-Fi.',
     'Выполните сопряжение в настройках.',
     'Перезапустите адаптер и попробуйте снова.',
   ];

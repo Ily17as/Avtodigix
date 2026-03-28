@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'helpers/dtc_report_helper.dart';
 import 'models/app_models.dart';
 import 'services/app_store.dart';
 
@@ -576,6 +578,71 @@ class _DtcTab extends StatelessWidget {
   const _DtcTab({required this.store});
   final AppStore store;
 
+  Future<void> _shareCurrentReport(BuildContext context) async {
+    final report = buildCurrentDtcReport(
+      stored: store.obdState.storedDtcs,
+      pending: store.obdState.pendingDtcs,
+    );
+    await Share.share(report, subject: 'Текущий отчёт DTC');
+  }
+
+  Future<void> _showRecommendationsSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Что делать с ошибками',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                ...List.generate(
+                  dtcRecommendations.length,
+                  (index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text('${index + 1}. ${dtcRecommendations[index]}'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmAndClearErrors(BuildContext context) async {
+    final shouldClear = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          content: const Text('Очистить коды ошибок? Это действие нельзя отменить.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Отмена'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Очистить ошибки'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldClear == true) {
+      await store.clearErrors();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = [...store.obdState.storedDtcs, ...store.obdState.pendingDtcs];
@@ -589,9 +656,15 @@ class _DtcTab extends StatelessWidget {
         const SizedBox(height: 16),
         Wrap(
           spacing: 8,
+          runSpacing: 8,
           children: [
             FilledButton(onPressed: store.saveReport, child: const Text('Сохранить отчёт')),
-            OutlinedButton(onPressed: store.clearErrors, child: const Text('Очистить ошибки')),
+            OutlinedButton(onPressed: () => _shareCurrentReport(context), child: const Text('Поделиться')),
+            OutlinedButton(onPressed: () => _confirmAndClearErrors(context), child: const Text('Очистить ошибки')),
+            TextButton(
+              onPressed: () => _showRecommendationsSheet(context),
+              child: const Text('Что делать с ошибками'),
+            ),
           ],
         ),
       ],
