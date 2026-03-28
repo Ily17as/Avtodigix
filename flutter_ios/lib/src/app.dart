@@ -22,23 +22,14 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   static const List<String> _feedbackTags = ['Подключение', 'Данные', 'Стабильность', 'Дизайн', 'Другое'];
 
   final AppStore store = AppStore();
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   late final VoidCallback _storeListener;
   int currentIndex = 0;
-
-  BuildContext get _materialContext {
-    final context = _navigatorKey.currentContext;
-    if (context == null) {
-      throw StateError('Material context is not ready yet');
-    }
-    return context;
-  }
 
   Future<void> _openFeedbackForm(Uri feedbackUri) async {
     if (!mounted) {
       return;
     }
-    final messenger = ScaffoldMessenger.of(_materialContext);
+    final messenger = ScaffoldMessenger.of(context);
     final launchModes = <LaunchMode>[
       LaunchMode.externalApplication,
       LaunchMode.platformDefault,
@@ -65,7 +56,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     }
 
     await showDialog<void>(
-      context: _materialContext,
+      context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Не удалось открыть форму отзыва'),
         content: SelectableText(feedbackUri.toString()),
@@ -95,10 +86,10 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   Future<void> _showFeedbackSheet() async {
     var rating = 0;
     final selectedTags = <String>{};
-    final commentController = TextEditingController();
+    var commentText = '';
 
     final payload = await showModalBottomSheet<_FeedbackDraft>(
-      context: _materialContext,
+      context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (bottomSheetContext) {
@@ -148,10 +139,10 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
                       ),
                       const SizedBox(height: 12),
                       TextField(
-                        controller: commentController,
                         maxLength: _maxCommentLength,
                         minLines: 3,
                         maxLines: 5,
+                        onChanged: (value) => commentText = value,
                         decoration: const InputDecoration(
                           hintText: 'Комментарий (до 500 символов)',
                           border: OutlineInputBorder(),
@@ -170,7 +161,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
                           Expanded(
                             child: FilledButton(
                               onPressed: () {
-                                final normalizedComment = commentController.text.trim();
+                                final normalizedComment = commentText.trim();
                                 if (rating < 1 || rating > 5) {
                                   ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
                                     const SnackBar(content: Text('Выберите оценку от 1 до 5 перед отправкой')),
@@ -206,7 +197,6 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
       },
     );
 
-    commentController.dispose();
     if (payload == null) {
       return;
     }
@@ -253,7 +243,6 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: _navigatorKey,
       title: 'Avtodigix iOS',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
       home: Scaffold(
