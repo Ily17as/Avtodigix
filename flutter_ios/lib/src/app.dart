@@ -22,18 +22,11 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
   static const List<String> _feedbackTags = ['Подключение', 'Данные', 'Стабильность', 'Дизайн', 'Другое'];
 
   final AppStore store = AppStore();
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   late final VoidCallback _storeListener;
   int currentIndex = 0;
 
-  BuildContext? get _materialContext => _navigatorKey.currentContext;
-
-  Future<void> _openFeedbackForm(Uri feedbackUri) async {
+  Future<void> _openFeedbackForm(BuildContext materialContext, Uri feedbackUri) async {
     if (!mounted) {
-      return;
-    }
-    final materialContext = _materialContext;
-    if (materialContext == null) {
       return;
     }
     final messenger = ScaffoldMessenger.of(materialContext);
@@ -90,11 +83,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     );
   }
 
-  Future<void> _showFeedbackSheet() async {
-    final materialContext = _materialContext;
-    if (materialContext == null) {
-      return;
-    }
+  Future<void> _showFeedbackSheet(BuildContext materialContext) async {
     var rating = 0;
     final selectedTags = <String>{};
     var commentText = '';
@@ -213,7 +202,7 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     }
 
     final feedbackUri = _buildFeedbackRedirectUri(payload);
-    await _openFeedbackForm(feedbackUri);
+    await _openFeedbackForm(materialContext, feedbackUri);
   }
 
   Uri _buildFeedbackRedirectUri(_FeedbackDraft payload) {
@@ -256,36 +245,38 @@ class _AvtodigixAppState extends State<AvtodigixApp> {
     return MaterialApp(
       title: 'Avtodigix iOS',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Avtodigix')),
-        body: Stack(
-          children: [
-            IndexedStack(
-              index: currentIndex,
-              children: [
-                _ConnectionTab(store: store),
-                _DataTab(store: store),
-                _IssuesHistoryTab(store: store),
-                _SettingsTab(store: store),
-              ],
-            ),
-            if (!store.onboardingSeen) _OnboardingOverlay(store: store),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: currentIndex,
-          onDestinationSelected: (value) => setState(() => currentIndex = value),
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.usb), label: 'Подключение'),
-            NavigationDestination(icon: Icon(Icons.monitor_heart), label: 'Данные'),
-            NavigationDestination(icon: Icon(Icons.error_outline), label: 'Ошибки'),
-            NavigationDestination(icon: Icon(Icons.settings), label: 'Настройки'),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _showFeedbackSheet,
-          icon: const Icon(Icons.feedback_outlined),
-          label: const Text('Отзыв'),
+      home: Builder(
+        builder: (materialContext) => Scaffold(
+          appBar: AppBar(title: const Text('Avtodigix')),
+          body: Stack(
+            children: [
+              IndexedStack(
+                index: currentIndex,
+                children: [
+                  _ConnectionTab(store: store),
+                  _DataTab(store: store),
+                  _IssuesHistoryTab(store: store),
+                  _SettingsTab(store: store),
+                ],
+              ),
+              if (!store.onboardingSeen) _OnboardingOverlay(store: store),
+            ],
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: currentIndex,
+            onDestinationSelected: (value) => setState(() => currentIndex = value),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.usb), label: 'Подключение'),
+              NavigationDestination(icon: Icon(Icons.monitor_heart), label: 'Данные'),
+              NavigationDestination(icon: Icon(Icons.error_outline), label: 'Ошибки'),
+              NavigationDestination(icon: Icon(Icons.settings), label: 'Настройки'),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _showFeedbackSheet(materialContext),
+            icon: const Icon(Icons.feedback_outlined),
+            label: const Text('Отзыв'),
+          ),
         ),
       ),
     );
