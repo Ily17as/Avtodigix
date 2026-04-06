@@ -7,7 +7,20 @@
     <fragment
         android:id="@+id/connectionFragment"
         android:name="com.example.avtodigix.ui.main.ConnectionFragment"
-        android:label="@string/nav_connection" />
+        android:label="@string/nav_connection">
+        <action
+            android:id="@+id/action_connectionFragment_to_dailyCheckResultFragment"
+            app:destination="@id/dailyCheckResultFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dailyCheckResultFragment"
+        android:name="com.example.avtodigix.ui.dailycheck.DailyCheckResultFragment"
+        android:label="@string/nav_daily_check">
+        <action
+            android:id="@+id/action_dailyCheckResultFragment_to_dataFragment"
+            app:destination="@id/dataFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/dataFragment"
