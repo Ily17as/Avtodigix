@@ -203,7 +203,7 @@
     <string name="settings_diagnostics_raw_response_value">Сырый ответ: %1$s</string>
     <string name="settings_diagnostics_error_value">Ошибка: %1$s</string>
     <string name="nav_connection">Подключить</string>
-    <string name="nav_data">Показатели</string>
+    <string name="nav_data">Pro mode</string>
     <string name="nav_issues">Ошибки</string>
     <string name="nav_settings">Настройки</string>
     <string name="nav_daily_check_card_details">Детали проверки</string>
@@ -222,6 +222,17 @@
     <string name="data_status_dtc_format">DTC: %1$d</string>
     <string name="data_status_readiness_format">Readiness: %1$d</string>
     <string name="data_status_pid_format">Поддержка PID: %1$d</string>
+    <string name="data_supported_pid_list_placeholder">Список PID: —</string>
+    <string name="data_dtc_details_title">DTC details</string>
+    <string name="data_dtc_details_placeholder">Stored: — · Pending: —</string>
+    <string name="data_dtc_details_format">Stored: %1$s\nPending: %2$s</string>
+    <string name="data_raw_response_title">Raw response</string>
+    <string name="data_raw_response_placeholder">Сырый ответ: —</string>
+    <string name="data_raw_response_value">Сырый ответ: %1$s</string>
+    <string name="data_diagnostic_tools_title">Diagnostic tools</string>
+    <string name="data_open_dtc_details">Открыть DTC details</string>
+    <string name="data_open_diagnostic_tools">Открыть diagnostic tools</string>
+    <string name="data_placeholder_dash">—</string>
     <string name="data_metric_rpm_placeholder">RPM: —</string>
     <string name="data_metric_speed_placeholder">Скорость: —</string>
     <string name="data_metric_temp_placeholder">Темп. ОЖ: —</string>
@@ -325,6 +336,7 @@
     <string name="daily_check_recommendation_title">Рекомендация</string>
     <string name="daily_check_recommendation_text">Планово проверьте аккумулятор и клеммы в ближайшую неделю. Если запуск станет тяжелее, сделайте тест нагрузки.</string>
     <string name="daily_check_recommendation_cta">История</string>
+    <string name="daily_check_pro_mode_cta">Войти в Pro mode</string>
     <string name="daily_check_history_title">История проверок</string>
     <string name="daily_check_history_empty">История ежедневных проверок пока пуста</string>
     <string name="daily_check_history_item_format">%1$s — %2$d/100 — %3$s — %4$s — %5$s</string>

@@ -316,6 +316,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="@string/daily_check_recommendation_cta" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dailyCheckProModeButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/daily_check_pro_mode_cta" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
