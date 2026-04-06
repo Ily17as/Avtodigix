@@ -206,6 +206,7 @@
     <string name="nav_data">Показатели</string>
     <string name="nav_issues">Ошибки</string>
     <string name="nav_settings">Настройки</string>
+    <string name="nav_daily_check_card_details">Детали проверки</string>
     <string name="feedback_fab">Отправить отзыв</string>
     <string name="feedback_subject">Avtodigix feedback</string>
     <string name="data_waiting_connection">Подключитесь к адаптеру для получения метрик.</string>
@@ -324,4 +325,39 @@
     <string name="daily_check_recommendation_title">Рекомендация</string>
     <string name="daily_check_recommendation_text">Планово проверьте аккумулятор и клеммы в ближайшую неделю. Если запуск станет тяжелее, сделайте тест нагрузки.</string>
     <string name="daily_check_recommendation_cta">Открыть подробные показатели</string>
+    <string name="daily_check_details_subtitle">Объясняем простым языком: что это значит сейчас и что делать дальше.</string>
+    <string name="daily_check_details_title_format">%1$s: подробности</string>
+    <string name="daily_check_details_status_title">Что значит статус</string>
+    <string name="daily_check_details_metrics_title">Текущие ключевые показатели</string>
+    <string name="daily_check_details_baseline_title">Сравнение с обычным состоянием</string>
+    <string name="daily_check_details_next_actions_title">Что делать дальше</string>
+    <string name="daily_check_details_status_meaning_format">Статус: %1$s</string>
+    <string name="daily_check_details_metrics_format">Сейчас: %1$s</string>
+    <string name="daily_check_details_baseline_format">Сравнение: %1$s</string>
+    <string name="daily_check_details_next_actions_format">Дальше: %1$s</string>
+
+    <string name="daily_check_details_engine_status">Норма: двигатель работает ровно, критичных симптомов не видно.</string>
+    <string name="daily_check_details_engine_metrics">Холостой ход около 760 об/мин, температура двигателя 92°C, нагрузка в пределах нормы.</string>
+    <string name="daily_check_details_engine_baseline">Почти как обычно: обороты и температура отличаются незначительно от ваших последних поездок.</string>
+    <string name="daily_check_details_engine_recommendation">Можно продолжать эксплуатацию. Если появятся вибрации или плавающие обороты, сделайте расширенную проверку.</string>
+
+    <string name="daily_check_details_fuel_status">Есть внимание: топливная смесь немного беднее обычного на холостом ходу.</string>
+    <string name="daily_check_details_fuel_metrics">Краткосрочная коррекция около +8%, долгосрочная около +3%, давление топлива без резких провалов.</string>
+    <string name="daily_check_details_fuel_baseline">Немного хуже обычного: коррекция выросла примерно на 4% относительно базового уровня.</string>
+    <string name="daily_check_details_fuel_recommendation">Заправляйтесь на проверенной АЗС и проверьте подсос воздуха во впуске при ближайшем ТО.</string>
+
+    <string name="daily_check_details_battery_status">Есть внимание: при запуске напряжение проседает ниже вашего типичного уровня.</string>
+    <string name="daily_check_details_battery_metrics">Пусковое напряжение около 12,1 В, заряд после запуска стабилизируется в рабочем диапазоне.</string>
+    <string name="daily_check_details_battery_baseline">Чуть хуже обычного утра: просадка выражена сильнее, чем в предыдущих сессиях.</string>
+    <string name="daily_check_details_battery_recommendation">Проверьте клеммы и состояние АКБ в ближайшую неделю. Если запуск стал тяжелее — сделайте тест под нагрузкой.</string>
+
+    <string name="daily_check_details_cooling_status">Норма: система охлаждения выводит двигатель в рабочую температуру без признаков перегрева.</string>
+    <string name="daily_check_details_cooling_metrics">Температура стабильно держится в рабочем диапазоне, прогрев до нормы проходит без скачков.</string>
+    <string name="daily_check_details_cooling_baseline">Лучше или на уровне обычного: выход в рабочую температуру произошел чуть быстрее, чем обычно.</string>
+    <string name="daily_check_details_cooling_recommendation">Ничего срочного. Просто следите за уровнем охлаждающей жидкости по регламенту.</string>
+
+    <string name="daily_check_details_errors_status">Норма: новых ошибок не обнаружено, критичных предупреждений по датчикам нет.</string>
+    <string name="daily_check_details_errors_metrics">Активных DTC сейчас нет, индикатор Check Engine не показывает новых событий.</string>
+    <string name="daily_check_details_errors_baseline">Стабильно: состояние совпадает с вашим обычным сценарием без новых кодов.</string>
+    <string name="daily_check_details_errors_recommendation">Продолжайте наблюдение. Если загорится Check Engine — повторите проверку и сохраните отчет.</string>
 </resources>
