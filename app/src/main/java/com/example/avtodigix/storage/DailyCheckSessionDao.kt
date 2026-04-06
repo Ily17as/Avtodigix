@@ -24,6 +24,16 @@ interface DailyCheckSessionDao {
         SELECT * FROM daily_check_sessions
         WHERE vehicleId = :vehicleId AND success = 1
         ORDER BY finishedAtMillis DESC
+        LIMIT :limit
+        """
+    )
+    suspend fun getRecentSuccessfulSessions(vehicleId: String, limit: Int): List<DailyCheckSessionEntity>
+
+    @Query(
+        """
+        SELECT * FROM daily_check_sessions
+        WHERE vehicleId = :vehicleId AND success = 1
+        ORDER BY finishedAtMillis DESC
         LIMIT 1
         """
     )

@@ -12,6 +12,11 @@ class DailyCheckSessionRepository(private val dao: DailyCheckSessionDao) {
             .map { it.toModel().toDomainModel() }
     }
 
+    suspend fun getRecentSuccessfulSessions(vehicleId: String, limit: Int): List<CheckSession> {
+        return dao.getRecentSuccessfulSessions(vehicleId, limit)
+            .map { it.toModel().toDomainModel() }
+    }
+
     suspend fun getLastSuccessfulSession(vehicleId: String): CheckSession? {
         return dao.getLastSuccessfulSession(vehicleId)
             ?.toModel()
