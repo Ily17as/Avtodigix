@@ -324,7 +324,17 @@
 
     <string name="daily_check_recommendation_title">Рекомендация</string>
     <string name="daily_check_recommendation_text">Планово проверьте аккумулятор и клеммы в ближайшую неделю. Если запуск станет тяжелее, сделайте тест нагрузки.</string>
-    <string name="daily_check_recommendation_cta">Открыть подробные показатели</string>
+    <string name="daily_check_recommendation_cta">История</string>
+    <string name="daily_check_history_title">История проверок</string>
+    <string name="daily_check_history_empty">История ежедневных проверок пока пуста</string>
+    <string name="daily_check_history_item_format">%1$s — %2$d/100 — %3$s — %4$s — %5$s</string>
+    <string name="daily_check_history_overall_ok">общий статус: норма</string>
+    <string name="daily_check_history_overall_attention">общий статус: внимание</string>
+    <string name="daily_check_history_overall_critical">общий статус: критично</string>
+    <string name="daily_check_history_drive_allowed">поездка: можно ехать</string>
+    <string name="daily_check_history_drive_not_recommended">поездка: не рекомендуется</string>
+    <string name="daily_check_history_new_signal">новый сигнал</string>
+    <string name="daily_check_history_no_new_signal">без новых сигналов</string>
     <string name="daily_check_details_subtitle">Объясняем простым языком: что это значит сейчас и что делать дальше.</string>
     <string name="daily_check_details_title_format">%1$s: подробности</string>
     <string name="daily_check_details_status_title">Что значит статус</string>

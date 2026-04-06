@@ -27,11 +27,11 @@
         android:name="com.example.avtodigix.ui.dailycheck.DailyCheckResultFragment"
         android:label="@string/nav_daily_check">
         <action
-            android:id="@+id/action_dailyCheckResultFragment_to_dataFragment"
-            app:destination="@id/dataFragment" />
-        <action
             android:id="@+id/action_dailyCheckResultFragment_to_dailyCheckCardDetailsFragment"
             app:destination="@id/dailyCheckCardDetailsFragment" />
+        <action
+            android:id="@+id/action_dailyCheckResultFragment_to_dailyCheckHistoryFragment"
+            app:destination="@id/dailyCheckHistoryFragment" />
     </fragment>
 
     <fragment
@@ -54,6 +54,11 @@
             android:name="recommendation"
             app:argType="string" />
     </fragment>
+
+    <fragment
+        android:id="@+id/dailyCheckHistoryFragment"
+        android:name="com.example.avtodigix.ui.dailycheck.DailyCheckHistoryFragment"
+        android:label="@string/daily_check_history_title" />
 
     <fragment
         android:id="@+id/dataFragment"
