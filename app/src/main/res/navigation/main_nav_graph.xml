@@ -29,6 +29,30 @@
         <action
             android:id="@+id/action_dailyCheckResultFragment_to_dataFragment"
             app:destination="@id/dataFragment" />
+        <action
+            android:id="@+id/action_dailyCheckResultFragment_to_dailyCheckCardDetailsFragment"
+            app:destination="@id/dailyCheckCardDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dailyCheckCardDetailsFragment"
+        android:name="com.example.avtodigix.ui.dailycheck.DailyCheckCardDetailsFragment"
+        android:label="@string/nav_daily_check_card_details">
+        <argument
+            android:name="systemType"
+            app:argType="string" />
+        <argument
+            android:name="status"
+            app:argType="string" />
+        <argument
+            android:name="metrics"
+            app:argType="string" />
+        <argument
+            android:name="baselineComparison"
+            app:argType="string" />
+        <argument
+            android:name="recommendation"
+            app:argType="string" />
     </fragment>
 
     <fragment
