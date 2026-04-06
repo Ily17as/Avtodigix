@@ -479,7 +479,7 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
             strokeColorRes = R.color.dc_status_unknown,
             iconRes = android.R.drawable.ic_menu_help
         )
-    )
+    }
 
     companion object {
         private const val EMPTY_VALUE = "—"
