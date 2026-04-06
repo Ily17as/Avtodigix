@@ -33,6 +33,12 @@ class DataFragment : Fragment(R.layout.fragment_data) {
         binding.openConnectionButton.setOnClickListener {
             findNavController().navigate(R.id.connectionFragment)
         }
+        binding.openDtcDetailsButton.setOnClickListener {
+            findNavController().navigate(R.id.issuesHistoryFragment)
+        }
+        binding.openDiagnosticToolsButton.setOnClickListener {
+            findNavController().navigate(R.id.settingsFragment)
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -76,6 +82,10 @@ class DataFragment : Fragment(R.layout.fragment_data) {
             R.string.data_status_pid_format,
             latestObdState.supportedPids.size
         )
+        binding.supportedPidsList.text = latestObdState.supportedPids
+            .sorted()
+            .joinToString(separator = ", ") { pid -> String.format("0x%02X", pid) }
+            .ifBlank { getString(R.string.data_supported_pid_list_placeholder) }
 
         binding.metricEngineRpmValue.text = getString(
             R.string.data_metric_rpm_format,
@@ -92,6 +102,13 @@ class DataFragment : Fragment(R.layout.fragment_data) {
         binding.metricBatteryVoltageValue.text = getString(
             R.string.data_metric_battery_format,
             latestObdState.metrics?.batteryVoltageVolts?.toString() ?: "—"
+        )
+        val stored = latestObdState.storedDtcs.joinToString(", ").ifBlank { getString(R.string.dtc_none) }
+        val pending = latestObdState.pendingDtcs.joinToString(", ").ifBlank { getString(R.string.dtc_none) }
+        binding.dtcDetailsValue.text = getString(R.string.data_dtc_details_format, stored, pending)
+        binding.rawResponseValue.text = getString(
+            R.string.data_raw_response_value,
+            latestObdState.lastRawResponse ?: getString(R.string.data_placeholder_dash)
         )
 
         val updatedAt = latestObdState.lastUpdatedMillis?.let { timeFormatter.format(Date(it)) } ?: "—"

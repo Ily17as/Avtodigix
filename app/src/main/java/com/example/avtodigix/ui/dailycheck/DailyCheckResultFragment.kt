@@ -78,6 +78,9 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         binding.dailyCheckCtaButton.setOnClickListener {
             findNavController().navigate(R.id.action_dailyCheckResultFragment_to_dailyCheckHistoryFragment)
         }
+        binding.dailyCheckProModeButton.setOnClickListener {
+            findNavController().navigate(R.id.dataFragment)
+        }
     }
 
     private fun openCardDetails(systemCard: SystemCardDetails) {
