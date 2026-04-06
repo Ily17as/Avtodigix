@@ -29,9 +29,48 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDailyCheckResultBinding.bind(view)
 
-        renderBaselineStates()
-        trackFinishedAnalytics()
+        setupResultInteractions()
 
+        binding.dailyCheckCtaButton.setOnClickListener {
+            (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_open_history")
+            findNavController().navigate(R.id.action_dailyCheckResultFragment_to_dailyCheckHistoryFragment)
+        }
+        binding.dailyCheckProModeButton.setOnClickListener {
+            (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_open_pro_mode")
+            findNavController().navigate(R.id.dataFragment)
+        }
+
+        binding.dailyCheckNoDataCtaButton.setOnClickListener {
+            (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_empty_start")
+            findNavController().navigate(R.id.dailyCheckProgressFragment)
+        }
+
+        val repository = DailyCheckSessionRepository(AppDatabase.create(requireContext()).dailyCheckSessionDao())
+        viewLifecycleOwner.lifecycleScope.launch {
+            val stableVehicleId = SelectedDeviceStore(requireContext()).getSelectedDeviceAddress()
+            val vehicleId = resolveVehicleId(vin = null, stableDeviceOrCarId = stableVehicleId)
+            val latestSession = repository.getRecentSessions(vehicleId = vehicleId, limit = 1).firstOrNull()
+            if (latestSession == null) {
+                renderNoDataState()
+                return@launch
+            }
+            renderDataState()
+            renderBaselineStates(repository = repository, vehicleId = vehicleId)
+            trackFinishedAnalytics(repository = repository, vehicleId = vehicleId)
+        }
+    }
+
+    private fun renderNoDataState() {
+        binding.dailyCheckNoDataCard.isVisible = true
+        binding.dailyCheckContentContainer.isVisible = false
+    }
+
+    private fun renderDataState() {
+        binding.dailyCheckNoDataCard.isVisible = false
+        binding.dailyCheckContentContainer.isVisible = true
+    }
+
+    private fun setupResultInteractions() {
         binding.dailyCheckEngineCard.setOnClickListener {
             openCardDetails(
                 systemCard = SystemCardDetails(
@@ -91,44 +130,30 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
                 )
             )
         }
-
-        binding.dailyCheckCtaButton.setOnClickListener {
-            (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_open_history")
-            findNavController().navigate(R.id.action_dailyCheckResultFragment_to_dailyCheckHistoryFragment)
-        }
-        binding.dailyCheckProModeButton.setOnClickListener {
-            (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_open_pro_mode")
-            findNavController().navigate(R.id.dataFragment)
-        }
     }
 
-    private fun renderBaselineStates() {
-        val repository = DailyCheckSessionRepository(AppDatabase.create(requireContext()).dailyCheckSessionDao())
+    private suspend fun renderBaselineStates(repository: DailyCheckSessionRepository, vehicleId: String) {
         val baselineCalculator = VehicleBaselineCalculator(repository)
-        viewLifecycleOwner.lifecycleScope.launch {
-            val stableVehicleId = SelectedDeviceStore(requireContext()).getSelectedDeviceAddress()
-            val vehicleId = resolveVehicleId(vin = null, stableDeviceOrCarId = stableVehicleId)
-            val baseline = baselineCalculator.getBaseline(vehicleId)
+        val baseline = baselineCalculator.getBaseline(vehicleId)
 
-            val noHistory = !baseline.hasHistory
-            val partialResult = baseline.isPartial
-            val firstChecks = baseline.isEarlyBaseline
+        val noHistory = !baseline.hasHistory
+        val partialResult = baseline.isPartial
+        val firstChecks = baseline.isEarlyBaseline
 
-            showBaselineComparison = !noHistory
-            binding.dailyCheckChangesCard.isVisible = !noHistory
-            binding.dailyCheckPartialBadge.isVisible = partialResult
-            binding.dailyCheckBaselineInfo.isVisible = noHistory || firstChecks
-            binding.dailyCheckBaselineInfo.text = when {
-                noHistory -> getString(R.string.daily_check_no_history_message)
-                firstChecks -> getString(R.string.daily_check_first_checks_message)
-                else -> ""
-            }
-            if (partialResult) {
-                binding.dailyCheckSummary.text = getString(R.string.daily_check_partial_summary)
-                if (!hasTrackedPartialResult) {
-                    hasTrackedPartialResult = true
-                    (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_partial_result")
-                }
+        showBaselineComparison = !noHistory
+        binding.dailyCheckChangesCard.isVisible = !noHistory
+        binding.dailyCheckPartialBadge.isVisible = partialResult
+        binding.dailyCheckBaselineInfo.isVisible = noHistory || firstChecks
+        binding.dailyCheckBaselineInfo.text = when {
+            noHistory -> getString(R.string.daily_check_no_history_message)
+            firstChecks -> getString(R.string.daily_check_first_checks_message)
+            else -> ""
+        }
+        if (partialResult) {
+            binding.dailyCheckSummary.text = getString(R.string.daily_check_partial_summary)
+            if (!hasTrackedPartialResult) {
+                hasTrackedPartialResult = true
+                (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_partial_result")
             }
         }
     }
@@ -148,24 +173,19 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         )
     }
 
-    private fun trackFinishedAnalytics() {
+    private suspend fun trackFinishedAnalytics(repository: DailyCheckSessionRepository, vehicleId: String) {
         if (hasTrackedFinished) {
             return
         }
         hasTrackedFinished = true
-        viewLifecycleOwner.lifecycleScope.launch {
-            val repository = DailyCheckSessionRepository(AppDatabase.create(requireContext()).dailyCheckSessionDao())
-            val stableVehicleId = SelectedDeviceStore(requireContext()).getSelectedDeviceAddress()
-            val vehicleId = resolveVehicleId(vin = null, stableDeviceOrCarId = stableVehicleId)
-            val recentSessions = repository.getRecentSessions(vehicleId = vehicleId, limit = 2)
-            val latestSession = recentSessions.firstOrNull()
-            val previousSession = recentSessions.getOrNull(1)
-            val params = buildFinishedParams(latestSession, previousSession)
-            (requireActivity() as MainActivity).analyticsTracker.trackEvent(
-                name = "daily_check_finished",
-                params = params
-            )
-        }
+        val recentSessions = repository.getRecentSessions(vehicleId = vehicleId, limit = 2)
+        val latestSession = recentSessions.firstOrNull()
+        val previousSession = recentSessions.getOrNull(1)
+        val params = buildFinishedParams(latestSession, previousSession)
+        (requireActivity() as MainActivity).analyticsTracker.trackEvent(
+            name = "daily_check_finished",
+            params = params
+        )
     }
 
     private fun buildFinishedParams(

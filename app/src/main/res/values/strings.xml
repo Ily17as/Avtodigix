@@ -28,8 +28,8 @@
 
     <string name="onboarding_title">Быстрый старт</string>
     <string name="onboarding_step_one">1. Подключите OBD-II адаптер.</string>
-    <string name="onboarding_step_two">2. Выберите Bluetooth/Wi-Fi.</string>
-    <string name="onboarding_step_three">3. Откройте сводку.</string>
+    <string name="onboarding_step_two">2. На вкладке «Подключить» выберите Bluetooth/Wi-Fi.</string>
+    <string name="onboarding_step_three">3. Запустите ежедневную проверку и дождитесь результата.</string>
     <string name="onboarding_dont_show_again">Больше не показывать</string>
     <string name="onboarding_instruction_label">Подробная инструкция</string>
     <string name="onboarding_instruction_url">https://avtodigix.tilda.ws/instruction</string>
@@ -316,6 +316,9 @@
     <string name="daily_check_partial_summary">Недостаточно данных для полной оценки</string>
     <string name="daily_check_partial_badge">Частичный результат</string>
     <string name="daily_check_first_checks_message">Сейчас мы формируем персональную норму по вашим первым проверкам.</string>
+    <string name="daily_check_no_data_title">Пока нет данных проверки</string>
+    <string name="daily_check_no_data_message">Запустите ежедневную проверку, чтобы увидеть результат и рекомендации.</string>
+    <string name="daily_check_no_data_cta">Запустить проверку</string>
     <string name="daily_check_no_history_message">Истории пока нет — показываем только текущий статус без сравнений.</string>
 
     <string name="daily_check_drive_question_title">Можно ли ехать</string>
