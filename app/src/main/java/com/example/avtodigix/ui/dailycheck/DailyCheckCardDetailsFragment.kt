@@ -16,12 +16,12 @@ class DailyCheckCardDetailsFragment : Fragment(R.layout.fragment_daily_check_car
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDailyCheckCardDetailsBinding.bind(view)
 
-        val systemType = requireArguments().getString(ARG_SYSTEM_TYPE).orEmpty()
-        val status = requireArguments().getString(ARG_STATUS).orEmpty()
-        val metrics = requireArguments().getString(ARG_METRICS).orEmpty()
-        val baselineComparison = requireArguments().getString(ARG_BASELINE_COMPARISON).orEmpty()
+        val systemType = requireArguments().getString(ARG_SYSTEM_TYPE).orEmpty().ifBlank { EMPTY_VALUE }
+        val status = requireArguments().getString(ARG_STATUS).orEmpty().ifBlank { EMPTY_VALUE }
+        val metrics = requireArguments().getString(ARG_METRICS).orEmpty().ifBlank { EMPTY_VALUE }
+        val baselineComparison = requireArguments().getString(ARG_BASELINE_COMPARISON).orEmpty().ifBlank { EMPTY_VALUE }
         val showBaselineComparison = requireArguments().getBoolean(ARG_SHOW_BASELINE_COMPARISON, true)
-        val recommendation = requireArguments().getString(ARG_RECOMMENDATION).orEmpty()
+        val recommendation = requireArguments().getString(ARG_RECOMMENDATION).orEmpty().ifBlank { EMPTY_VALUE }
 
         binding.dailyCheckDetailsTitle.text = getString(R.string.daily_check_details_title_format, systemType)
         binding.dailyCheckDetailsStatusMeaning.text = getString(
@@ -51,6 +51,7 @@ class DailyCheckCardDetailsFragment : Fragment(R.layout.fragment_daily_check_car
     }
 
     companion object {
+        private const val EMPTY_VALUE = "—"
         const val ARG_SYSTEM_TYPE = "systemType"
         const val ARG_STATUS = "status"
         const val ARG_METRICS = "metrics"

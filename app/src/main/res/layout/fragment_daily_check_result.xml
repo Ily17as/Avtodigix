@@ -77,7 +77,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/daily_check_score_value"
                     android:textAppearance="@style/TextAppearance.Material3.DisplaySmall"
                     android:textStyle="bold" />
 
@@ -86,7 +85,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="@string/daily_check_overall_status_value"
                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
                 <TextView
@@ -94,7 +92,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/daily_check_summary_value"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -119,18 +116,18 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
                 <TextView
+                    android:id="@+id/dailyCheckDriveAnswer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="@string/daily_check_drive_answer"
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/dailyCheckDriveReason"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="@string/daily_check_drive_reason"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -154,24 +151,24 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
                 <TextView
+                    android:id="@+id/dailyCheckChangeItem1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/daily_check_change_item_1"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <TextView
+                    android:id="@+id/dailyCheckChangeItem2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="@string/daily_check_change_item_2"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <TextView
+                    android:id="@+id/dailyCheckChangeItem3"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="@string/daily_check_change_item_3"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -230,9 +227,9 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
 
                 <TextView
+                    android:id="@+id/dailyCheckEngineStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/daily_check_system_engine_status"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -259,9 +256,9 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
 
                 <TextView
+                    android:id="@+id/dailyCheckFuelStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/daily_check_system_fuel_status"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -288,9 +285,9 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
 
                 <TextView
+                    android:id="@+id/dailyCheckBatteryStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/daily_check_system_battery_status"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -317,9 +314,9 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
 
                 <TextView
+                    android:id="@+id/dailyCheckCoolingStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/daily_check_system_cooling_status"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -346,9 +343,9 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
 
                 <TextView
+                    android:id="@+id/dailyCheckErrorsStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/daily_check_system_errors_status"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -372,10 +369,10 @@
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
                 <TextView
+                    android:id="@+id/dailyCheckRecommendationText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/daily_check_recommendation_text"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.button.MaterialButton
