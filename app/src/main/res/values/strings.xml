@@ -202,8 +202,8 @@
     <string name="settings_diagnostics_last_command_value">Последний запрос: %1$s</string>
     <string name="settings_diagnostics_raw_response_value">Сырый ответ: %1$s</string>
     <string name="settings_diagnostics_error_value">Ошибка: %1$s</string>
-    <string name="nav_connection">Подключение</string>
-    <string name="nav_data">Данные</string>
+    <string name="nav_connection">Подключить</string>
+    <string name="nav_data">Показатели</string>
     <string name="nav_issues">Ошибки</string>
     <string name="nav_settings">Настройки</string>
     <string name="feedback_fab">Отправить отзыв</string>
@@ -284,4 +284,36 @@
     <string name="report_dtc_block">DTC:
 %1$s</string>
 
+
+    <string name="nav_daily_check">Ежедневная проверка</string>
+
+    <string name="daily_check_status_title">Главный статус</string>
+    <string name="daily_check_score_value">86 / 100</string>
+    <string name="daily_check_overall_status_value">Состояние: можно ехать</string>
+    <string name="daily_check_summary_value">Критичных проблем нет. Есть пара пунктов, на которые стоит посмотреть в ближайшие дни.</string>
+
+    <string name="daily_check_drive_question_title">Можно ли ехать</string>
+    <string name="daily_check_drive_answer">Да, можно ехать спокойно.</string>
+    <string name="daily_check_drive_reason">Лампочка Check Engine не горит, перегрева нет, питание стабильное.</string>
+
+    <string name="daily_check_changes_title">Что изменилось</string>
+    <string name="daily_check_change_item_1">• Напряжение аккумулятора немного ниже обычного утром.</string>
+    <string name="daily_check_change_item_2">• Расход на холостом ходу вырос примерно на 4%.</string>
+    <string name="daily_check_change_item_3">• Температура охлаждающей жидкости вышла в норму быстрее, чем вчера.</string>
+
+    <string name="daily_check_system_cards_title">Системы автомобиля</string>
+    <string name="daily_check_system_engine_title">Двигатель</string>
+    <string name="daily_check_system_engine_status">Норма. Работает ровно, без резких отклонений.</string>
+    <string name="daily_check_system_fuel_title">Топливо</string>
+    <string name="daily_check_system_fuel_status">Есть внимание. Смесь слегка обеднена на холостом ходу.</string>
+    <string name="daily_check_system_battery_title">Аккумулятор</string>
+    <string name="daily_check_system_battery_status">Есть внимание. Утром напряжение проседает при запуске.</string>
+    <string name="daily_check_system_cooling_title">Охлаждение</string>
+    <string name="daily_check_system_cooling_status">Норма. Температура в рабочем диапазоне.</string>
+    <string name="daily_check_system_errors_title">Ошибки и датчики</string>
+    <string name="daily_check_system_errors_status">Норма. Новых кодов ошибок нет.</string>
+
+    <string name="daily_check_recommendation_title">Рекомендация</string>
+    <string name="daily_check_recommendation_text">Планово проверьте аккумулятор и клеммы в ближайшую неделю. Если запуск станет тяжелее, сделайте тест нагрузки.</string>
+    <string name="daily_check_recommendation_cta">Открыть подробные показатели</string>
 </resources>
