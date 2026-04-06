@@ -155,7 +155,7 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
 
         if (previousStatus != ConnectionState.Status.Connected && state.status == ConnectionState.Status.Connected) {
             Snackbar.make(binding.root, getString(R.string.connection_success_snackbar), Snackbar.LENGTH_SHORT).show()
-            findNavController().navigate(R.id.action_connectionFragment_to_dailyCheckResultFragment)
+            findNavController().navigate(R.id.action_connectionFragment_to_dailyCheckProgressFragment)
         }
         previousStatus = state.status
 

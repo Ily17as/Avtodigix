@@ -9,7 +9,16 @@
         android:name="com.example.avtodigix.ui.main.ConnectionFragment"
         android:label="@string/nav_connection">
         <action
-            android:id="@+id/action_connectionFragment_to_dailyCheckResultFragment"
+            android:id="@+id/action_connectionFragment_to_dailyCheckProgressFragment"
+            app:destination="@id/dailyCheckProgressFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dailyCheckProgressFragment"
+        android:name="com.example.avtodigix.ui.dailycheck.DailyCheckProgressFragment"
+        android:label="@string/nav_daily_check">
+        <action
+            android:id="@+id/action_dailyCheckProgressFragment_to_dailyCheckResultFragment"
             app:destination="@id/dailyCheckResultFragment" />
     </fragment>
 

@@ -287,6 +287,14 @@
 
     <string name="nav_daily_check">Ежедневная проверка</string>
 
+    <string name="daily_check_progress_title">Проверяем состояние машины перед поездкой</string>
+    <string name="daily_check_progress_elapsed">Прошло: %1$d c</string>
+    <string name="daily_check_progress_step_connect">подключение к адаптеру</string>
+    <string name="daily_check_progress_step_read">чтение параметров</string>
+    <string name="daily_check_progress_step_analyze">анализ состояния</string>
+    <string name="daily_check_progress_step_done">✓ %1$s</string>
+    <string name="daily_check_progress_step_active">• %1$s</string>
+    <string name="daily_check_progress_step_pending">○ %1$s</string>
     <string name="daily_check_status_title">Главный статус</string>
     <string name="daily_check_score_value">86 / 100</string>
     <string name="daily_check_overall_status_value">Состояние: можно ехать</string>
