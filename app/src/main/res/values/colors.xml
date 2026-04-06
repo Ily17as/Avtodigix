@@ -4,4 +4,26 @@
     <color name="traffic_red">#C62828</color>
     <color name="warning_text">#B00020</color>
     <color name="device_outline">#B0B0B0</color>
+
+    <color name="dc_bg_top">#111826</color>
+    <color name="dc_bg_bottom">#0A0F18</color>
+    <color name="dc_surface">#162033</color>
+    <color name="dc_surface_alt">#1D2A40</color>
+    <color name="dc_stroke">#2C3A53</color>
+    <color name="dc_text_primary">#F3F7FF</color>
+    <color name="dc_text_secondary">#B1BED8</color>
+
+    <color name="dc_status_ok">#3DDC97</color>
+    <color name="dc_status_warn">#FFB547</color>
+    <color name="dc_status_error">#FF6B6B</color>
+    <color name="dc_status_unknown">#8A9BB8</color>
+
+    <color name="dc_chip_ok_bg">#1D5D43</color>
+    <color name="dc_chip_warn_bg">#5D451D</color>
+    <color name="dc_chip_error_bg">#5F2028</color>
+    <color name="dc_chip_unknown_bg">#2A3954</color>
+
+    <color name="dc_button_primary">#6C8BFF</color>
+    <color name="dc_button_primary_pressed">#5977E8</color>
+    <color name="dc_button_on_primary">#081228</color>
 </resources>

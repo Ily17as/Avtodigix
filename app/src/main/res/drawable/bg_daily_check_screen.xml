@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/dc_chip_warn_bg" />
-    <corners android:radius="@dimen/dc_chip_radius" />
+    <gradient
+        android:angle="270"
+        android:endColor="@color/dc_bg_bottom"
+        android:startColor="@color/dc_bg_top" />
 </shape>
