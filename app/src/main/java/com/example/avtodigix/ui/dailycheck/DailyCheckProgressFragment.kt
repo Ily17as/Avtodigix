@@ -20,6 +20,8 @@ class DailyCheckProgressFragment : Fragment(R.layout.fragment_daily_check_progre
     private var _binding: FragmentDailyCheckProgressBinding? = null
     private val binding get() = _binding!!
     private var hasNavigatedToResult = false
+    private var hasTrackedConnectionSuccess = false
+    private var hasTrackedConnectionFailure = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -87,6 +89,16 @@ class DailyCheckProgressFragment : Fragment(R.layout.fragment_daily_check_progre
     private fun renderConnectionState(state: ConnectionState) {
         val showConnectionError = state.status == ConnectionState.Status.Error && !hasNavigatedToResult
         binding.dailyCheckConnectionErrorCard.isVisible = showConnectionError
+
+        val analyticsTracker = (requireActivity() as MainActivity).analyticsTracker
+        if (!hasTrackedConnectionSuccess && state.status == ConnectionState.Status.Connected) {
+            hasTrackedConnectionSuccess = true
+            analyticsTracker.trackEvent("daily_check_connection_success")
+        }
+        if (!hasTrackedConnectionFailure && state.status == ConnectionState.Status.Error) {
+            hasTrackedConnectionFailure = true
+            analyticsTracker.trackEvent("daily_check_connection_failed")
+        }
     }
 
     private fun renderStep(textView: android.widget.TextView, isCompleted: Boolean, isCurrent: Boolean) {

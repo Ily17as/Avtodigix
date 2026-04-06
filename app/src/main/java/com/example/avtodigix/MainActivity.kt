@@ -25,6 +25,8 @@ import com.example.avtodigix.connection.ConnectionViewModel
 import com.example.avtodigix.connection.ConnectionViewModelFactory
 import com.example.avtodigix.connection.ObdState
 import com.example.avtodigix.connection.SelectedDeviceStore
+import com.example.avtodigix.analytics.AnalyticsTracker
+import com.example.avtodigix.analytics.LogcatAnalyticsTracker
 import com.example.avtodigix.databinding.ActivityMainBinding
 import com.example.avtodigix.feedback.FeedbackManager
 import com.example.avtodigix.feedback.FeedbackPayload
@@ -49,6 +51,10 @@ class MainActivity : AppCompatActivity() {
     private var hasConnectedSuccessfullyInSession = false
     private var currentDestinationId: Int? = null
     private var sawIssuesScreenWithUsefulData = false
+
+    val analyticsTracker: AnalyticsTracker by lazy {
+        LogcatAnalyticsTracker()
+    }
 
     val connectionViewModel: ConnectionViewModel by lazy {
         ViewModelProvider(

@@ -154,6 +154,7 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
         binding.connectionHelp.strokeWidth = if (hasError) 4 else 0
 
         if (previousStatus != ConnectionState.Status.Connected && state.status == ConnectionState.Status.Connected) {
+            (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_started")
             Snackbar.make(binding.root, getString(R.string.connection_success_snackbar), Snackbar.LENGTH_SHORT).show()
             findNavController().navigate(R.id.action_connectionFragment_to_dailyCheckProgressFragment)
         }
