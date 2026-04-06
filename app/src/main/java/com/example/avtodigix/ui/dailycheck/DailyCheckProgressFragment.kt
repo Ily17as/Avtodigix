@@ -2,6 +2,7 @@ package com.example.avtodigix.ui.dailycheck
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -9,6 +10,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.avtodigix.MainActivity
 import com.example.avtodigix.R
+import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.DailyCheckSessionState
 import com.example.avtodigix.connection.DailyCheckStage
 import com.example.avtodigix.databinding.FragmentDailyCheckProgressBinding
@@ -23,12 +25,28 @@ class DailyCheckProgressFragment : Fragment(R.layout.fragment_daily_check_progre
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDailyCheckProgressBinding.bind(view)
 
+        binding.dailyCheckConnectionRetryButton.setOnClickListener {
+            (requireActivity() as MainActivity).connectionViewModel.onConnectRequested()
+        }
+        binding.dailyCheckOpenLastResultButton.setOnClickListener {
+            findNavController().navigate(R.id.action_dailyCheckProgressFragment_to_dailyCheckResultFragment)
+        }
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 (requireActivity() as MainActivity)
                     .connectionViewModel
                     .dailyCheckSessionState
                     .collect(::renderState)
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                (requireActivity() as MainActivity)
+                    .connectionViewModel
+                    .connectionState
+                    .collect(::renderConnectionState)
             }
         }
     }
@@ -64,6 +82,11 @@ class DailyCheckProgressFragment : Fragment(R.layout.fragment_daily_check_progre
             hasNavigatedToResult = true
             findNavController().navigate(R.id.action_dailyCheckProgressFragment_to_dailyCheckResultFragment)
         }
+    }
+
+    private fun renderConnectionState(state: ConnectionState) {
+        val showConnectionError = state.status == ConnectionState.Status.Error && !hasNavigatedToResult
+        binding.dailyCheckConnectionErrorCard.isVisible = showConnectionError
     }
 
     private fun renderStep(textView: android.widget.TextView, isCompleted: Boolean, isCurrent: Boolean) {
