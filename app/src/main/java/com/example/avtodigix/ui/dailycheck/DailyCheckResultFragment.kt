@@ -2,18 +2,29 @@ package com.example.avtodigix.ui.dailycheck
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.avtodigix.R
+import com.example.avtodigix.connection.SelectedDeviceStore
+import com.example.avtodigix.dailycheck.baseline.VehicleBaselineCalculator
 import com.example.avtodigix.databinding.FragmentDailyCheckResultBinding
+import com.example.avtodigix.domain.resolveVehicleId
+import com.example.avtodigix.storage.AppDatabase
+import com.example.avtodigix.storage.DailyCheckSessionRepository
+import kotlinx.coroutines.launch
 
 class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) {
     private var _binding: FragmentDailyCheckResultBinding? = null
     private val binding get() = _binding!!
+    private var showBaselineComparison: Boolean = true
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDailyCheckResultBinding.bind(view)
+
+        renderBaselineStates()
 
         binding.dailyCheckEngineCard.setOnClickListener {
             openCardDetails(
@@ -83,6 +94,33 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         }
     }
 
+    private fun renderBaselineStates() {
+        val repository = DailyCheckSessionRepository(AppDatabase.create(requireContext()).dailyCheckSessionDao())
+        val baselineCalculator = VehicleBaselineCalculator(repository)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val stableVehicleId = SelectedDeviceStore(requireContext()).getSelectedDeviceAddress()
+            val vehicleId = resolveVehicleId(vin = null, stableDeviceOrCarId = stableVehicleId)
+            val baseline = baselineCalculator.getBaseline(vehicleId)
+
+            val noHistory = !baseline.hasHistory
+            val partialResult = baseline.isPartial
+            val firstChecks = baseline.isEarlyBaseline
+
+            showBaselineComparison = !noHistory
+            binding.dailyCheckChangesCard.isVisible = !noHistory
+            binding.dailyCheckPartialBadge.isVisible = partialResult
+            binding.dailyCheckBaselineInfo.isVisible = noHistory || firstChecks
+            binding.dailyCheckBaselineInfo.text = when {
+                noHistory -> getString(R.string.daily_check_no_history_message)
+                firstChecks -> getString(R.string.daily_check_first_checks_message)
+                else -> ""
+            }
+            if (partialResult) {
+                binding.dailyCheckSummary.text = getString(R.string.daily_check_partial_summary)
+            }
+        }
+    }
+
     private fun openCardDetails(systemCard: SystemCardDetails) {
         findNavController().navigate(
             R.id.action_dailyCheckResultFragment_to_dailyCheckCardDetailsFragment,
@@ -91,6 +129,7 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
                 status = systemCard.status,
                 metrics = systemCard.metrics,
                 baselineComparison = systemCard.baselineComparison,
+                showBaselineComparison = showBaselineComparison,
                 recommendation = systemCard.recommendation
             )
         )

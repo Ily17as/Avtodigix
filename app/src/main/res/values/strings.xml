@@ -307,10 +307,16 @@
     <string name="daily_check_progress_step_done">✓ %1$s</string>
     <string name="daily_check_progress_step_active">• %1$s</string>
     <string name="daily_check_progress_step_pending">○ %1$s</string>
+    <string name="daily_check_connection_error_title">Не удалось подключиться к адаптеру</string>
+    <string name="daily_check_open_last_result">Открыть последний результат</string>
     <string name="daily_check_status_title">Главный статус</string>
     <string name="daily_check_score_value">86 / 100</string>
     <string name="daily_check_overall_status_value">Состояние: можно ехать</string>
     <string name="daily_check_summary_value">Критичных проблем нет. Есть пара пунктов, на которые стоит посмотреть в ближайшие дни.</string>
+    <string name="daily_check_partial_summary">Недостаточно данных для полной оценки</string>
+    <string name="daily_check_partial_badge">Частичный результат</string>
+    <string name="daily_check_first_checks_message">Сейчас мы формируем персональную норму по вашим первым проверкам.</string>
+    <string name="daily_check_no_history_message">Истории пока нет — показываем только текущий статус без сравнений.</string>
 
     <string name="daily_check_drive_question_title">Можно ли ехать</string>
     <string name="daily_check_drive_answer">Да, можно ехать спокойно.</string>

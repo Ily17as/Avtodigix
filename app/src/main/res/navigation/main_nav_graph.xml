@@ -51,6 +51,10 @@
             android:name="baselineComparison"
             app:argType="string" />
         <argument
+            android:name="showBaselineComparison"
+            app:argType="boolean"
+            android:defaultValue="true" />
+        <argument
             android:name="recommendation"
             app:argType="string" />
     </fragment>
