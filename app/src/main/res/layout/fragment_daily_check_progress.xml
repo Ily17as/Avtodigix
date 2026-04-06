@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    tools:context=".ui.dailycheck.DailyCheckProgressFragment">
+
+    <TextView
+        android:id="@+id/dailyCheckProgressTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/daily_check_progress_title"
+        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/dailyCheckProgressIndicator"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dailyCheckProgressTitle" />
+
+    <TextView
+        android:id="@+id/dailyCheckProgressElapsed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        tools:text="Прошло: 8 c"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dailyCheckProgressIndicator" />
+
+    <LinearLayout
+        android:id="@+id/dailyCheckProgressSteps"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dailyCheckProgressElapsed">
+
+        <TextView
+            android:id="@+id/dailyCheckProgressStepConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:tag="@string/daily_check_progress_step_connect"
+            android:text="@string/daily_check_progress_step_connect"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+        <TextView
+            android:id="@+id/dailyCheckProgressStepRead"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:tag="@string/daily_check_progress_step_read"
+            android:text="@string/daily_check_progress_step_read"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+        <TextView
+            android:id="@+id/dailyCheckProgressStepAnalyze"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:tag="@string/daily_check_progress_step_analyze"
+            android:text="@string/daily_check_progress_step_analyze"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

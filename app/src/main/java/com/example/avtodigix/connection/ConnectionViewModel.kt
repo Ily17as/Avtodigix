@@ -45,10 +45,13 @@ class ConnectionViewModel(
     val connectionState: StateFlow<ConnectionState> = _connectionState
     private val _obdState = MutableStateFlow(ObdState())
     val obdState: StateFlow<ObdState> = _obdState
+    private val _dailyCheckSessionState = MutableStateFlow(DailyCheckSessionState())
+    val dailyCheckSessionState: StateFlow<DailyCheckSessionState> = _dailyCheckSessionState
 
     private var connectJob: Job? = null
     private var readJob: Job? = null
     private var fullScanJob: Job? = null
+    private var dailyCheckJob: Job? = null
     private var session: ElmSession? = null
     private var obdService: ObdService? = null
     private var supportedPids: Set<Int>? = null
@@ -105,6 +108,7 @@ class ConnectionViewModel(
                             connectionState.value.status == ConnectionState.Status.Initializing
                         ) {
                             updateConnectionState { copy(status = ConnectionState.Status.Idle) }
+                            resetDailyCheckSession()
                         }
                     }
                     ConnectionStatus.Connected -> {
@@ -151,6 +155,7 @@ class ConnectionViewModel(
                                     log = appendLog("Wi-Fi соединение завершено.")
                                 )
                             }
+                            resetDailyCheckSession()
                         }
                     }
                     WifiConnectionStatus.Failed -> {
@@ -165,6 +170,7 @@ class ConnectionViewModel(
                                         ?: "Не удалось установить Wi-Fi соединение."
                                 )
                             }
+                            resetDailyCheckSession()
                         }
                     }
                 }
@@ -364,6 +370,7 @@ class ConnectionViewModel(
         readJob = null
         fullScanJob?.cancel()
         fullScanJob = null
+        resetDailyCheckSession()
         viewModelScope.launch {
             try {
                 session?.close()
@@ -435,6 +442,7 @@ class ConnectionViewModel(
         connectJob?.cancel()
         readJob?.cancel()
         fullScanJob?.cancel()
+        dailyCheckJob?.cancel()
         viewModelScope.launch {
             try {
                 session?.close()
@@ -741,6 +749,7 @@ class ConnectionViewModel(
                 log = appendLog("OBD сервис готов, начинаем чтение данных.")
             )
         }
+        startDailyCheckSession()
         startReading(service, supportedPidSetOrNull)
     }
 
@@ -853,6 +862,43 @@ class ConnectionViewModel(
                 delay(LIVE_DATA_REFRESH_MILLIS)
             }
         }
+    }
+
+
+    private fun startDailyCheckSession() {
+        dailyCheckJob?.cancel()
+        _dailyCheckSessionState.value = DailyCheckSessionState(
+            stage = DailyCheckStage.ConnectingAdapter,
+            elapsedSeconds = 0,
+            isActive = true,
+            isCompleted = false
+        )
+        dailyCheckJob = viewModelScope.launch {
+            var elapsedSeconds = 0
+            while (isActive && elapsedSeconds < DAILY_CHECK_TOTAL_DURATION_SECONDS) {
+                delay(1_000L)
+                elapsedSeconds += 1
+                val stage = when {
+                    elapsedSeconds < DAILY_CHECK_CONNECT_STAGE_SECONDS -> DailyCheckStage.ConnectingAdapter
+                    elapsedSeconds < DAILY_CHECK_READ_STAGE_SECONDS -> DailyCheckStage.ReadingParameters
+                    elapsedSeconds < DAILY_CHECK_ANALYZE_STAGE_SECONDS -> DailyCheckStage.AnalyzingState
+                    else -> DailyCheckStage.Completed
+                }
+                _dailyCheckSessionState.value = DailyCheckSessionState(
+                    stage = stage,
+                    elapsedSeconds = elapsedSeconds,
+                    isActive = stage != DailyCheckStage.Completed,
+                    isCompleted = stage == DailyCheckStage.Completed
+                )
+            }
+            dailyCheckJob = null
+        }
+    }
+
+    private fun resetDailyCheckSession() {
+        dailyCheckJob?.cancel()
+        dailyCheckJob = null
+        _dailyCheckSessionState.value = DailyCheckSessionState()
     }
 
     private fun shouldReadDtcs(nowMillis: Long): Boolean {
@@ -995,6 +1041,10 @@ class ConnectionViewModel(
         private const val WIFI_CONNECT_RETRY_DELAY_MILLIS = 1_500L
         private const val WIFI_CONNECT_MAX_ATTEMPTS = 3
         private const val DIAGNOSTICS_LOG_THROTTLE_MILLIS = 5_000L
+        private const val DAILY_CHECK_CONNECT_STAGE_SECONDS = 4
+        private const val DAILY_CHECK_READ_STAGE_SECONDS = 10
+        private const val DAILY_CHECK_ANALYZE_STAGE_SECONDS = 15
+        private const val DAILY_CHECK_TOTAL_DURATION_SECONDS = 15
     }
 }
 
@@ -1003,6 +1053,20 @@ private data class SmokeCheckResult(
     val elmSummary: String? = null,
     val ecuSummary: String? = null,
     val elmErrorMessage: String? = null
+)
+
+enum class DailyCheckStage {
+    ConnectingAdapter,
+    ReadingParameters,
+    AnalyzingState,
+    Completed
+}
+
+data class DailyCheckSessionState(
+    val stage: DailyCheckStage = DailyCheckStage.ConnectingAdapter,
+    val elapsedSeconds: Int = 0,
+    val isActive: Boolean = false,
+    val isCompleted: Boolean = false
 )
 
 data class ConnectionState(
