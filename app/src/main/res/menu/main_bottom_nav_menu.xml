@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/dailyCheckResultFragment"
-        android:icon="@android:drawable/ic_menu_view"
-        android:title="@string/nav_daily_check" />
-    <item
         android:id="@+id/connectionFragment"
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/nav_connection" />
+    <item
+        android:id="@+id/dailyCheckResultFragment"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="@string/nav_daily_check" />
     <item
         android:id="@+id/settingsFragment"
         android:icon="@android:drawable/ic_menu_preferences"

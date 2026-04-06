@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.avtodigix.MainActivity
 import com.example.avtodigix.R
+import com.example.avtodigix.connection.ConnectionState
 import com.example.avtodigix.connection.SelectedDeviceStore
 import com.example.avtodigix.dailycheck.baseline.VehicleBaselineCalculator
 import com.example.avtodigix.databinding.FragmentDailyCheckResultBinding
@@ -48,7 +49,12 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
 
         binding.dailyCheckNoDataCtaButton.setOnClickListener {
             (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_empty_start")
-            findNavController().navigate(R.id.dailyCheckProgressFragment)
+            val connectionState = (requireActivity() as MainActivity).connectionViewModel.connectionState.value
+            if (connectionState.status == ConnectionState.Status.Connected) {
+                findNavController().navigate(R.id.dailyCheckProgressFragment)
+            } else {
+                findNavController().navigate(R.id.connectionFragment)
+            }
         }
 
         val repository = DailyCheckSessionRepository(AppDatabase.create(requireContext()).dailyCheckSessionDao())
