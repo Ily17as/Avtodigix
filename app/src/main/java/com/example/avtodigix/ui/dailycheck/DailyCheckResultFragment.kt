@@ -2,6 +2,9 @@ package com.example.avtodigix.ui.dailycheck
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -16,6 +19,7 @@ import com.example.avtodigix.domain.TrafficLightStatus
 import com.example.avtodigix.domain.resolveVehicleId
 import com.example.avtodigix.storage.AppDatabase
 import com.example.avtodigix.storage.DailyCheckSessionRepository
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 
 class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) {
@@ -99,12 +103,10 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
 
     private fun bindSessionData(session: CheckSession, previousSession: CheckSession?) {
         latestSession = session
+        val overallUiStatus = overallUiStatus(session = session)
         binding.dailyCheckScore.text = "${scoreByTrafficLightStatus(session)} / 100".ifBlank { EMPTY_VALUE }
-        binding.dailyCheckOverallStatus.text = when (session.trafficLightStatus) {
-            TrafficLightStatus.GREEN -> "Состояние: можно ехать"
-            TrafficLightStatus.YELLOW -> "Состояние: требуется внимание"
-            TrafficLightStatus.RED -> "Состояние: ехать не рекомендуется"
-        }.ifBlank { EMPTY_VALUE }
+        binding.dailyCheckOverallStatus.text = overallStatusTitle(overallUiStatus = overallUiStatus).ifBlank { EMPTY_VALUE }
+        binding.dailyCheckOverallStatus.setTextColor(ContextCompat.getColor(requireContext(), overallUiStatus.textColorRes))
 
         val dtcCount = session.rawDtcList.size
         binding.dailyCheckSummary.text = when {
@@ -131,7 +133,7 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
 
         val engineCard = buildSystemCard(
             title = getString(R.string.daily_check_system_engine_title),
-            status = statusLabelByTrafficLightStatus(session.trafficLightStatus),
+            uiStatus = if (session.success) uiStatusByTrafficLightStatus(session.trafficLightStatus) else UiStatus.ERROR,
             metricKey = "Engine RPM",
             metricSuffix = "об/мин",
             previousSession = previousSession,
@@ -139,7 +141,11 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         )
         val fuelCard = buildSystemCard(
             title = getString(R.string.daily_check_system_fuel_title),
-            status = statusLabelByTrafficLightStatus(session.trafficLightStatus),
+            uiStatus = when {
+                !session.success -> UiStatus.ERROR
+                dtcCount > 0 -> UiStatus.ATTENTION
+                else -> UiStatus.OK
+            },
             metricKey = null,
             metricSuffix = null,
             previousSession = previousSession,
@@ -147,7 +153,11 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         )
         val batteryCard = buildSystemCard(
             title = getString(R.string.daily_check_system_battery_title),
-            status = statusLabelByTrafficLightStatus(session.trafficLightStatus),
+            uiStatus = statusByMetric(
+                metricKey = "Battery voltage (V)",
+                normalRange = 12.2..14.8,
+                fallback = uiStatusByTrafficLightStatus(session.trafficLightStatus)
+            ),
             metricKey = "Battery voltage (V)",
             metricSuffix = "В",
             previousSession = previousSession,
@@ -155,7 +165,11 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         )
         val coolingCard = buildSystemCard(
             title = getString(R.string.daily_check_system_cooling_title),
-            status = statusLabelByTrafficLightStatus(session.trafficLightStatus),
+            uiStatus = statusByMetric(
+                metricKey = "Coolant temp (C)",
+                normalRange = 70.0..105.0,
+                fallback = uiStatusByTrafficLightStatus(session.trafficLightStatus)
+            ),
             metricKey = "Coolant temp (C)",
             metricSuffix = "°C",
             previousSession = previousSession,
@@ -163,7 +177,11 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         )
         val errorsCard = buildSystemCard(
             title = getString(R.string.daily_check_system_errors_title),
-            status = if (dtcCount == 0) "Норма" else "Есть ошибки",
+            uiStatus = when {
+                !session.success -> UiStatus.ERROR
+                dtcCount > 0 -> UiStatus.ERROR
+                else -> UiStatus.OK
+            },
             metricText = "DTC: $dtcCount",
             previousSession = previousSession,
             recommendation = if (dtcCount == 0) "Наблюдение без действий." else "Рекомендуется дополнительная диагностика."
@@ -180,6 +198,11 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         binding.dailyCheckBatteryStatus.text = batteryCard.status.ifBlank { EMPTY_VALUE }
         binding.dailyCheckCoolingStatus.text = coolingCard.status.ifBlank { EMPTY_VALUE }
         binding.dailyCheckErrorsStatus.text = errorsCard.status.ifBlank { EMPTY_VALUE }
+        renderSystemRow(binding.dailyCheckEngineCard, binding.dailyCheckEngineIcon, binding.dailyCheckEngineStatus, engineCard.uiStatus)
+        renderSystemRow(binding.dailyCheckFuelCard, binding.dailyCheckFuelIcon, binding.dailyCheckFuelStatus, fuelCard.uiStatus)
+        renderSystemRow(binding.dailyCheckBatteryCard, binding.dailyCheckBatteryIcon, binding.dailyCheckBatteryStatus, batteryCard.uiStatus)
+        renderSystemRow(binding.dailyCheckCoolingCard, binding.dailyCheckCoolingIcon, binding.dailyCheckCoolingStatus, coolingCard.uiStatus)
+        renderSystemRow(binding.dailyCheckErrorsCard, binding.dailyCheckErrorsIcon, binding.dailyCheckErrorsStatus, errorsCard.uiStatus)
 
         binding.dailyCheckRecommendationText.text = (
             errorsCard.recommendation.takeUnless { it == EMPTY_VALUE }
@@ -206,7 +229,7 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
 
     private fun buildSystemCard(
         title: String,
-        status: String,
+        uiStatus: UiStatus,
         metricKey: String? = null,
         metricSuffix: String? = null,
         metricText: String? = null,
@@ -223,10 +246,11 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         }
         return SystemCardDetails(
             systemType = title,
-            status = status.ifBlank { EMPTY_VALUE },
+            status = uiStatus.label,
             metrics = metricsValue.orEmpty().ifBlank { EMPTY_VALUE },
             baselineComparison = buildBaselineComparison(metricKey = metricKey, previousSession = previousSession),
-            recommendation = recommendation.orEmpty().ifBlank { EMPTY_VALUE }
+            recommendation = recommendation.orEmpty().ifBlank { EMPTY_VALUE },
+            uiStatus = uiStatus
         )
     }
 
@@ -248,14 +272,47 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
             status = EMPTY_VALUE,
             metrics = EMPTY_VALUE,
             baselineComparison = EMPTY_VALUE,
-            recommendation = EMPTY_VALUE
+            recommendation = EMPTY_VALUE,
+            uiStatus = UiStatus.INSUFFICIENT_DATA
         )
     }
 
-    private fun statusLabelByTrafficLightStatus(status: TrafficLightStatus): String = when (status) {
-        TrafficLightStatus.GREEN -> "Норма"
-        TrafficLightStatus.YELLOW -> "Внимание"
-        TrafficLightStatus.RED -> "Критично"
+    private fun overallUiStatus(session: CheckSession): UiStatus = when {
+        !session.success -> UiStatus.ERROR
+        session.trafficLightStatus == TrafficLightStatus.RED -> UiStatus.ERROR
+        session.trafficLightStatus == TrafficLightStatus.YELLOW -> UiStatus.ATTENTION
+        session.keyMetrics.isEmpty() -> UiStatus.INSUFFICIENT_DATA
+        else -> UiStatus.OK
+    }
+
+    private fun uiStatusByTrafficLightStatus(status: TrafficLightStatus): UiStatus = when (status) {
+        TrafficLightStatus.GREEN -> UiStatus.OK
+        TrafficLightStatus.YELLOW -> UiStatus.ATTENTION
+        TrafficLightStatus.RED -> UiStatus.ERROR
+    }
+
+    private fun statusByMetric(metricKey: String, normalRange: ClosedFloatingPointRange<Double>, fallback: UiStatus): UiStatus {
+        val metric = systemCardsMetricValue(metricKey) ?: return UiStatus.INSUFFICIENT_DATA
+        return when {
+            metric in normalRange -> UiStatus.OK
+            fallback == UiStatus.ERROR -> UiStatus.ERROR
+            else -> UiStatus.ATTENTION
+        }
+    }
+
+    private fun overallStatusTitle(overallUiStatus: UiStatus): String = when (overallUiStatus) {
+        UiStatus.OK -> "Состояние: всё в норме"
+        UiStatus.ATTENTION -> "Состояние: требуется внимание"
+        UiStatus.ERROR -> "Состояние: ехать не рекомендуется"
+        UiStatus.INSUFFICIENT_DATA -> "Состояние: недостаточно данных"
+    }
+
+    private fun renderSystemRow(card: MaterialCardView, icon: ImageView, statusView: TextView, uiStatus: UiStatus) {
+        icon.setImageResource(uiStatus.iconRes)
+        icon.setColorFilter(ContextCompat.getColor(requireContext(), uiStatus.textColorRes))
+        statusView.setBackgroundResource(uiStatus.chipBackgroundRes)
+        statusView.setTextColor(ContextCompat.getColor(requireContext(), uiStatus.textColorRes))
+        card.strokeColor = ContextCompat.getColor(requireContext(), uiStatus.strokeColorRes)
     }
 
     private fun formatMetricValue(value: Double): String = String.format("%.2f", value)
@@ -383,7 +440,45 @@ class DailyCheckResultFragment : Fragment(R.layout.fragment_daily_check_result) 
         val status: String,
         val metrics: String,
         val baselineComparison: String,
-        val recommendation: String
+        val recommendation: String,
+        val uiStatus: UiStatus
+    )
+
+    private enum class UiStatus(
+        val label: String,
+        val chipBackgroundRes: Int,
+        val textColorRes: Int,
+        val strokeColorRes: Int,
+        val iconRes: Int
+    ) {
+        OK(
+            label = "OK",
+            chipBackgroundRes = R.drawable.bg_status_chip_ok,
+            textColorRes = R.color.dc_status_ok,
+            strokeColorRes = R.color.dc_status_ok,
+            iconRes = android.R.drawable.checkbox_on_background
+        ),
+        ATTENTION(
+            label = "ATTENTION",
+            chipBackgroundRes = R.drawable.bg_status_chip_warning,
+            textColorRes = R.color.dc_status_warn,
+            strokeColorRes = R.color.dc_status_warn,
+            iconRes = android.R.drawable.ic_dialog_alert
+        ),
+        ERROR(
+            label = "ERROR",
+            chipBackgroundRes = R.drawable.bg_status_chip_error,
+            textColorRes = R.color.dc_status_error,
+            strokeColorRes = R.color.dc_status_error,
+            iconRes = android.R.drawable.stat_notify_error
+        ),
+        INSUFFICIENT_DATA(
+            label = "INSUFFICIENT_DATA",
+            chipBackgroundRes = R.drawable.bg_status_chip_unknown,
+            textColorRes = R.color.dc_status_unknown,
+            strokeColorRes = R.color.dc_status_unknown,
+            iconRes = android.R.drawable.ic_menu_help
+        )
     )
 
     companion object {

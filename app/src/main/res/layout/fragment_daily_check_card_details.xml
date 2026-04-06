@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_daily_check_screen"
     android:fillViewport="true"
     tools:context=".ui.dailycheck.DailyCheckCardDetailsFragment">
 
@@ -11,13 +12,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/dc_screen_padding">
 
         <TextView
             android:id="@+id/dailyCheckDetailsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+            android:textColor="@color/dc_text_primary"
             tools:text="Двигатель: подробности" />
 
         <TextView
@@ -25,13 +27,16 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/daily_check_details_subtitle"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="@color/dc_text_secondary" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            app:cardUseCompatPadding="true">
+            android:background="@drawable/bg_daily_check_card"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -43,7 +48,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/daily_check_details_status_title"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/dc_text_primary" />
 
                 <TextView
                     android:id="@+id/dailyCheckDetailsStatusMeaning"
@@ -51,6 +57,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="@color/dc_text_secondary"
                     tools:text="Статус: Норма. Это значит, что система работает без риска для поездки." />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -59,7 +66,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            app:cardUseCompatPadding="true">
+            android:background="@drawable/bg_daily_check_card_small"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -71,7 +80,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/daily_check_details_metrics_title"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/dc_text_primary" />
 
                 <TextView
                     android:id="@+id/dailyCheckDetailsMetrics"
@@ -79,6 +89,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="@color/dc_text_secondary"
                     tools:text="Сейчас: холостой ход 760 об/мин, температура 92°C, пропусков нет." />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -88,7 +99,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            app:cardUseCompatPadding="true">
+            android:background="@drawable/bg_daily_check_card_small"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -100,7 +113,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/daily_check_details_baseline_title"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/dc_text_primary" />
 
                 <TextView
                     android:id="@+id/dailyCheckDetailsBaseline"
@@ -108,6 +122,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="@color/dc_text_secondary"
                     tools:text="Сравнение: почти как обычно, отклонение минимальное." />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -116,7 +131,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            app:cardUseCompatPadding="true">
+            android:background="@drawable/bg_daily_check_card"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -128,7 +145,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/daily_check_details_next_actions_title"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/dc_text_primary" />
 
                 <TextView
                     android:id="@+id/dailyCheckDetailsNextActions"
@@ -136,6 +154,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="@color/dc_text_secondary"
                     tools:text="Что делать: просто наблюдать; если появятся рывки — сделать расширенную диагностику." />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

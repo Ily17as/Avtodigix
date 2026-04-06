@@ -2,4 +2,9 @@
     <dimen name="feedback_fab_margin_bottom">24dp</dimen>
     <dimen name="feedback_fab_margin_end">20dp</dimen>
     <dimen name="feedback_fab_clearance_from_bottom_nav">16dp</dimen>
+
+    <dimen name="dc_screen_padding">16dp</dimen>
+    <dimen name="dc_card_radius">18dp</dimen>
+    <dimen name="dc_card_radius_small">14dp</dimen>
+    <dimen name="dc_chip_radius">12dp</dimen>
 </resources>
