@@ -316,6 +316,18 @@
     <string name="daily_check_no_data_title">Пока нет данных проверки</string>
     <string name="daily_check_no_data_message">Запустите ежедневную проверку, чтобы увидеть результат и рекомендации.</string>
     <string name="daily_check_no_data_cta">Запустить проверку</string>
+    <string name="daily_check_no_data_preview_title">Как будет выглядеть результат после подключения</string>
+    <string name="daily_check_no_data_preview_subtitle">Это демонстрация экрана с индикаторами-светофорами и статусами систем.</string>
+    <string name="daily_check_preview_score">84 / 100</string>
+    <string name="daily_check_preview_overall_status">Требуется внимание</string>
+    <string name="daily_check_preview_badge">Демо-режим</string>
+    <string name="daily_check_preview_drive_yes">Можно ехать</string>
+    <string name="daily_check_preview_drive_reason">Критичных отклонений нет, но есть сигналы для наблюдения.</string>
+    <string name="daily_check_preview_engine_status">Норма</string>
+    <string name="daily_check_preview_fuel_status">Внимание</string>
+    <string name="daily_check_preview_battery_status">Норма</string>
+    <string name="daily_check_preview_cooling_status">Норма</string>
+    <string name="daily_check_preview_errors_status">Есть сигналы</string>
     <string name="daily_check_no_history_message">Истории пока нет — показываем только текущий статус без сравнений.</string>
 
     <string name="daily_check_drive_question_title">Можно ли ехать</string>
