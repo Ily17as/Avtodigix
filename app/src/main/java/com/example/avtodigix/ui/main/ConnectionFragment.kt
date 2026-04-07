@@ -156,12 +156,29 @@ class ConnectionFragment : Fragment(R.layout.fragment_connection) {
         if (previousStatus != ConnectionState.Status.Connected && state.status == ConnectionState.Status.Connected) {
             (requireActivity() as MainActivity).analyticsTracker.trackEvent("daily_check_started")
             Snackbar.make(binding.root, getString(R.string.connection_success_snackbar), Snackbar.LENGTH_SHORT).show()
-            findNavController().navigate(R.id.action_connectionFragment_to_dailyCheckProgressFragment)
+            navigateToDailyCheckProgressSafely()
         }
         previousStatus = state.status
 
         if (state.permissionStatus == PermissionStatus.Requested) {
             requestBluetoothPermissionsIfNeeded()
+        }
+    }
+
+    private fun navigateToDailyCheckProgressSafely() {
+        val navController = findNavController()
+        val currentDestination = navController.currentDestination ?: return
+        if (currentDestination.id != R.id.connectionFragment) {
+            return
+        }
+        val hasAction = currentDestination.getAction(
+            R.id.action_connectionFragment_to_dailyCheckProgressFragment
+        ) != null
+        if (!hasAction) {
+            return
+        }
+        runCatching {
+            navController.navigate(R.id.action_connectionFragment_to_dailyCheckProgressFragment)
         }
     }
 
