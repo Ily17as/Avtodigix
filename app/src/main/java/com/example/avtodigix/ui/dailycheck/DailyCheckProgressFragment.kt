@@ -31,7 +31,7 @@ class DailyCheckProgressFragment : Fragment(R.layout.fragment_daily_check_progre
             (requireActivity() as MainActivity).connectionViewModel.onConnectRequested()
         }
         binding.dailyCheckOpenLastResultButton.setOnClickListener {
-            findNavController().navigate(R.id.action_dailyCheckProgressFragment_to_dailyCheckResultFragment)
+            navigateToResultSafely()
         }
 
         lifecycleScope.launch {
@@ -82,7 +82,22 @@ class DailyCheckProgressFragment : Fragment(R.layout.fragment_daily_check_progre
 
         if (state.isCompleted && !hasNavigatedToResult) {
             hasNavigatedToResult = true
-            findNavController().navigate(R.id.action_dailyCheckProgressFragment_to_dailyCheckResultFragment)
+            navigateToResultSafely()
+        }
+    }
+
+    private fun navigateToResultSafely() {
+        val navController = findNavController()
+        val destination = navController.currentDestination ?: return
+        if (destination.id != R.id.dailyCheckProgressFragment) {
+            return
+        }
+        val action = destination.getAction(R.id.action_dailyCheckProgressFragment_to_dailyCheckResultFragment)
+        if (action == null) {
+            return
+        }
+        runCatching {
+            navController.navigate(R.id.action_dailyCheckProgressFragment_to_dailyCheckResultFragment)
         }
     }
 
